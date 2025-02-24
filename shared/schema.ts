@@ -37,6 +37,16 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
+// Change password schema
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 export const insertTeacherSchema = createInsertSchema(teachers);
 export const insertScheduleSchema = createInsertSchema(schedules);
 export const insertAbsenceSchema = createInsertSchema(absences);
@@ -47,3 +57,4 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Teacher = typeof teachers.$inferSelect;
 export type Schedule = typeof schedules.$inferSelect;
 export type Absence = typeof absences.$inferSelect;
+export type ChangePassword = z.infer<typeof changePasswordSchema>;

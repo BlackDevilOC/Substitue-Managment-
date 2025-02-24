@@ -1,4 +1,4 @@
-import { Home, Calendar, UserMinus, UserCheck } from "lucide-react";
+import { Home, Calendar, UserMinus, UserCheck, User } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 export default function BottomNav() {
@@ -9,11 +9,12 @@ export default function BottomNav() {
     { icon: Calendar, label: "Schedule", href: "/schedule" },
     { icon: UserMinus, label: "Absences", href: "/absences" },
     { icon: UserCheck, label: "Substitutes", href: "/substitutes" },
+    { icon: User, label: "Profile", href: "/profile" },
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-background border-t h-16">
-      <div className="grid grid-cols-4 h-full max-w-md mx-auto">
+      <div className="grid grid-cols-5 h-full max-w-md mx-auto">
         {items.map(({ icon: Icon, label, href }) => (
           <Link
             key={href}

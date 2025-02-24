@@ -118,20 +118,43 @@ export default function HomePage() {
 
   const isLoading = loadingAbsences || loadingTeachers || loadingSchedule;
 
-  // Filter current period's schedule
+  // Update the currentTeachers memo to include absence checks
   const currentTeachers = React.useMemo(() => {
-    if (!currentSchedule || !teachers) return [];
+    if (!currentSchedule || !teachers || !absences) return [];
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+
     return currentSchedule
       .filter(s => s.period === currentPeriod)
       .map(schedule => {
         const teacher = teachers.find(t => t.id === schedule.teacherId);
+        const isAbsent = absences.some(
+          a => a.teacherId === teacher?.id && 
+          format(new Date(a.date), "yyyy-MM-dd") === todayStr
+        );
+
+        // If teacher is absent, try to find substitute
+        let substituteTeacher = null;
+        if (isAbsent) {
+          const absence = absences.find(
+            a => a.teacherId === teacher?.id && 
+            format(new Date(a.date), "yyyy-MM-dd") === todayStr
+          );
+          if (absence?.substituteId) {
+            substituteTeacher = teachers.find(t => t.id === absence.substituteId);
+          }
+        }
+
         return {
           className: schedule.className,
-          teacher: teacher?.name || "No teacher"
+          teacher: isAbsent 
+            ? substituteTeacher 
+              ? `${substituteTeacher.name} (Substitute)`
+              : "Teacher Absent"
+            : teacher?.name || "No teacher"
         };
       })
       .sort((a, b) => a.className.localeCompare(b.className));
-  }, [currentSchedule, teachers, currentPeriod]);
+  }, [currentSchedule, teachers, absences, currentPeriod]);
 
   const handleTimetableUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -197,15 +220,27 @@ export default function HomePage() {
                   Current Classes
                 </CardTitle>
               </CardHeader>
+              {/* Update the CardContent section to show status colors */}
               <CardContent>
                 <div className="text-sm text-muted-foreground mb-2">
                   {format(new Date(), "EEEE, MMMM d")} - Period {currentPeriod}
                 </div>
                 <div className="space-y-2">
                   {currentTeachers.map(({ className, teacher }) => (
-                    <div key={className} className="flex justify-between items-center p-2 border rounded-md">
+                    <div 
+                      key={className} 
+                      className={`flex justify-between items-center p-2 border rounded-md ${
+                        teacher === "Teacher Absent" ? "bg-red-50" :
+                        teacher.includes("(Substitute)") ? "bg-yellow-50" :
+                        "bg-white"
+                      }`}
+                    >
                       <span className="font-medium">{className.toUpperCase()}</span>
-                      <span className="text-muted-foreground">{teacher}</span>
+                      <span className={`text-sm ${
+                        teacher === "Teacher Absent" ? "text-red-600" :
+                        teacher.includes("(Substitute)") ? "text-yellow-600" :
+                        "text-muted-foreground"
+                      }`}>{teacher}</span>
                     </div>
                   ))}
                 </div>

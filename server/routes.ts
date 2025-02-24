@@ -2,10 +2,13 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { insertTeacherSchema, insertScheduleSchema, insertAbsenceSchema } from "@shared/schema";
+import { insertTeacherSchema, insertScheduleSchema, insertAbsenceSchema, changePasswordSchema } from "@shared/schema";
 import { processTimetableCSV, processSubstituteCSV } from "./csv-handler";
 import multer from "multer";
+import { scrypt, timingSafeEqual, randomBytes } from "crypto";
+import { promisify } from "util";
 
+const scryptAsync = promisify(scrypt);
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: {
@@ -15,6 +18,40 @@ const upload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
+
+  // User routes
+  app.post("/api/user/change-password", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const parsed = changePasswordSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json(parsed.error);
+
+    try {
+      const user = await storage.getUser(req.user!.id);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      // Verify current password
+      const [hashedCurrent, salt] = user.password.split(".");
+      const hashedCurrentBuf = Buffer.from(hashedCurrent, "hex");
+      const suppliedBuf = (await scryptAsync(parsed.data.currentPassword, salt, 64)) as Buffer;
+
+      if (!timingSafeEqual(hashedCurrentBuf, suppliedBuf)) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+
+      // Hash new password
+      const newSalt = randomBytes(16).toString("hex");
+      const newHashedBuf = (await scryptAsync(parsed.data.newPassword, newSalt, 64)) as Buffer;
+      const newPassword = `${newHashedBuf.toString("hex")}.${newSalt}`;
+
+      // Update password
+      await storage.updateUserPassword(user.id, newPassword);
+      res.json({ message: "Password updated successfully" });
+    } catch (error: any) {
+      console.error('Password change error:', error);
+      res.status(500).json({ message: "Failed to change password" });
+    }
+  });
 
   // CSV Upload Routes
   app.post("/api/upload/timetable", upload.single('file'), async (req, res) => {
@@ -34,7 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Timetable uploaded successfully",
         schedulesCreated: schedules.length
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Timetable upload error:', error);
       res.status(400).json({ 
         message: "Failed to process timetable file",
@@ -54,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Substitute teachers uploaded successfully",
         teachersCreated: teachers.length
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Substitute upload error:', error);
       res.status(400).json({ 
         message: "Failed to process substitute teachers file",
