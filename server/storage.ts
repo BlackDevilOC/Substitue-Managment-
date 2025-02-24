@@ -1,89 +1,107 @@
 import { IStorage } from "./types";
-import { User, InsertUser, Teacher, Schedule, Absence } from "@shared/schema";
+import type { User, InsertUser, Teacher, Schedule, Absence, HistoricalTimetable, HistoricalTeacher, TeacherAttendance } from "@shared/schema";
+import { users, teachers, schedules, absences, historicalTimetables, historicalTeachers, teacherAttendance } from "@shared/schema";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private teachers: Map<number, Teacher>;
-  private schedules: Map<number, Schedule>;
-  private absences: Map<number, Absence>;
+export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
-  currentId: number;
 
   constructor() {
-    this.users = new Map();
-    this.teachers = new Map();
-    this.schedules = new Map();
-    this.absences = new Map();
-    this.currentId = 1;
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000,
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
     });
   }
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    const user: User = { ...insertUser, id, isAdmin: false };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  async updateUserPassword(id: number, password: string): Promise<void> {
+    await db.update(users).set({ password }).where(eq(users.id, id));
   }
 
   // Teacher methods
   async createTeacher(teacher: Omit<Teacher, "id">): Promise<Teacher> {
-    const id = this.currentId++;
-    const newTeacher = { ...teacher, id };
-    this.teachers.set(id, newTeacher);
+    const [newTeacher] = await db.insert(teachers).values(teacher).returning();
     return newTeacher;
   }
 
   async getTeachers(): Promise<Teacher[]> {
-    return Array.from(this.teachers.values());
+    return db.select().from(teachers);
   }
 
   // Schedule methods
   async createSchedule(schedule: Omit<Schedule, "id">): Promise<Schedule> {
-    const id = this.currentId++;
-    const newSchedule = { ...schedule, id };
-    this.schedules.set(id, newSchedule);
+    const [newSchedule] = await db.insert(schedules).values(schedule).returning();
     return newSchedule;
   }
 
   async getSchedulesByDay(day: string): Promise<Schedule[]> {
-    return Array.from(this.schedules.values()).filter(s => s.day === day);
+    return db.select().from(schedules).where(eq(schedules.day, day));
   }
 
   // Absence methods
   async createAbsence(absence: Omit<Absence, "id">): Promise<Absence> {
-    const id = this.currentId++;
-    const newAbsence = { ...absence, id };
-    this.absences.set(id, newAbsence);
+    const [newAbsence] = await db.insert(absences).values(absence).returning();
     return newAbsence;
   }
 
   async getAbsences(): Promise<Absence[]> {
-    return Array.from(this.absences.values());
+    return db.select().from(absences);
   }
 
   async assignSubstitute(absenceId: number, substituteId: number): Promise<void> {
-    const absence = this.absences.get(absenceId);
-    if (absence) {
-      this.absences.set(absenceId, { ...absence, substituteId });
-    }
+    await db.update(absences)
+      .set({ substituteId })
+      .where(eq(absences.id, absenceId));
+  }
+
+  // Historical tracking methods
+  async saveHistoricalTimetable(data: Omit<HistoricalTimetable, "id">): Promise<HistoricalTimetable> {
+    const [record] = await db.insert(historicalTimetables).values(data).returning();
+    return record;
+  }
+
+  async saveHistoricalTeacher(data: Omit<HistoricalTeacher, "id">): Promise<HistoricalTeacher> {
+    const [record] = await db.insert(historicalTeachers).values(data).returning();
+    return record;
+  }
+
+  async recordTeacherAttendance(data: Omit<TeacherAttendance, "id">): Promise<TeacherAttendance> {
+    const [record] = await db.insert(teacherAttendance).values(data).returning();
+    return record;
+  }
+
+  async getTeacherAttendance(teacherId: number, date: Date): Promise<TeacherAttendance | undefined> {
+    const [record] = await db.select()
+      .from(teacherAttendance)
+      .where(
+        and(
+          eq(teacherAttendance.teacherId, teacherId),
+          eq(teacherAttendance.date, date)
+        )
+      );
+    return record;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

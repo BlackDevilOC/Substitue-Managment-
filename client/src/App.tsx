@@ -10,6 +10,7 @@ import SchedulePage from "@/pages/schedule-page";
 import AbsencePage from "@/pages/absence-page";
 import SubstitutesPage from "@/pages/substitutes-page";
 import ProfilePage from "@/pages/profile-page";
+import ManageAbsencesPage from "@/pages/manage-absences";
 import { ProtectedRoute } from "./lib/protected-route";
 import BottomNav from "./components/bottom-nav";
 
@@ -22,6 +23,7 @@ function Router() {
       <ProtectedRoute path="/absences" component={AbsencePage} />
       <ProtectedRoute path="/substitutes" component={SubstitutesPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
+      <ProtectedRoute path="/manage-absences" component={ManageAbsencesPage} />
       <Route component={NotFound} />
     </Switch>
   );

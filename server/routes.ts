@@ -60,7 +60,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const fileContent = req.file.buffer.toString('utf-8');
-      const schedules = await processTimetableCSV(fileContent);
+      const schedules = await processTimetableCSV(fileContent, req.file.originalname);
 
       // Save all schedules
       for (const schedule of schedules) {
@@ -86,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const fileContent = req.file.buffer.toString('utf-8');
-      const teachers = await processSubstituteCSV(fileContent);
+      const teachers = await processSubstituteCSV(fileContent, req.file.originalname);
       res.status(200).json({ 
         message: "Substitute teachers uploaded successfully",
         teachersCreated: teachers.length

@@ -2,13 +2,20 @@ import { parse } from 'csv-parse/sync';
 import { Teacher, Schedule } from '@shared/schema';
 import { storage } from './storage';
 
-export async function processTimetableCSV(fileContent: string): Promise<Schedule[]> {
+export async function processTimetableCSV(fileContent: string, fileName: string): Promise<Schedule[]> {
   try {
+    // Save historical record first
+    await storage.saveHistoricalTimetable({
+      fileName,
+      content: fileContent,
+      uploadedAt: new Date()
+    });
+
     const records = parse(fileContent, {
       columns: false,
       skip_empty_lines: true,
       trim: true,
-      relax_column_count: true // Allow inconsistent column counts
+      relax_column_count: true
     });
 
     if (records.length < 2) {
@@ -23,8 +30,6 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
     // Skip header row
     for (let i = 1; i < records.length; i++) {
       const row = records[i];
-
-      // Skip empty rows
       if (!row[0] || !row[1]) continue;
 
       const day = row[0].toLowerCase().trim();
@@ -39,11 +44,18 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
       for (let j = 2; j < Math.min(row.length, validClasses.length + 2); j++) {
         const teacherName = row[j]?.trim();
         if (teacherName && teacherName.toLowerCase() !== 'empty') {
-          // Find or create teacher
           let teacher = await findOrCreateTeacher(teacherName);
 
+          // Record teacher attendance
+          await storage.recordTeacherAttendance({
+            teacherId: teacher.id,
+            date: new Date(),
+            isPresent: true,
+            notes: `Scheduled for ${day} period ${period}, class ${validClasses[j - 2]}`
+          });
+
           schedules.push({
-            id: 0, // Will be set by storage
+            id: 0,
             day,
             period,
             teacherId: teacher.id,
@@ -60,8 +72,15 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
   }
 }
 
-export async function processSubstituteCSV(fileContent: string): Promise<Teacher[]> {
+export async function processSubstituteCSV(fileContent: string, fileName: string): Promise<Teacher[]> {
   try {
+    // Save historical record first
+    await storage.saveHistoricalTeacher({
+      fileName,
+      content: fileContent,
+      uploadedAt: new Date()
+    });
+
     const records = parse(fileContent, {
       columns: false,
       skip_empty_lines: true,
@@ -71,7 +90,6 @@ export async function processSubstituteCSV(fileContent: string): Promise<Teacher
 
     const teachers: Teacher[] = [];
 
-    // Process each row (no header needed)
     for (let i = 0; i < records.length; i++) {
       const row = records[i];
       if (row.length < 1) continue;
