@@ -3,14 +3,46 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Calendar, UserCheck, UserMinus, LogOut, Upload } from "lucide-react";
+import { Loader2, Calendar, UserCheck, UserMinus, LogOut, Upload, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { format } from "date-fns";
+import React from "react";
+
+function getCurrentPeriod() {
+  const now = new Date();
+  const hours = now.getHours();
+  // This is a simple mapping, adjust the times according to your school schedule
+  if (hours < 9) return 1;
+  if (hours < 10) return 2;
+  if (hours < 11) return 3;
+  if (hours < 12) return 4;
+  if (hours < 13) return 5;
+  if (hours < 14) return 6;
+  if (hours < 15) return 7;
+  return 8;
+}
+
+function getDayOfWeek() {
+  const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+  return days[new Date().getDay()];
+}
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
+  const currentDay = getDayOfWeek();
+  const currentPeriod = getCurrentPeriod();
+
+  const { data: currentSchedule, isLoading: loadingSchedule } = useQuery({
+    queryKey: ["/api/schedule", currentDay],
+    queryFn: async () => {
+      const res = await fetch(`/api/schedule/${currentDay}`);
+      if (!res.ok) throw new Error('Failed to fetch schedule');
+      return res.json();
+    }
+  });
 
   const { data: absences, isLoading: loadingAbsences } = useQuery({
     queryKey: ["/api/absences"],
@@ -84,39 +116,22 @@ export default function HomePage() {
     },
   });
 
-  const isLoading = loadingAbsences || loadingTeachers;
+  const isLoading = loadingAbsences || loadingTeachers || loadingSchedule;
 
-  const handleTimetableUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.type !== 'text/csv') {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload a CSV file",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    uploadTimetableMutation.mutate(file);
-  };
-
-  const handleSubstitutesUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.type !== 'text/csv') {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload a CSV file",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    uploadSubstitutesMutation.mutate(file);
-  };
+  // Filter current period's schedule
+  const currentTeachers = React.useMemo(() => {
+    if (!currentSchedule || !teachers) return [];
+    return currentSchedule
+      .filter(s => s.period === currentPeriod)
+      .map(schedule => {
+        const teacher = teachers.find(t => t.id === schedule.teacherId);
+        return {
+          className: schedule.className,
+          teacher: teacher?.name || "No teacher"
+        };
+      })
+      .sort((a, b) => a.className.localeCompare(b.className));
+  }, [currentSchedule, teachers, currentPeriod]);
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -143,6 +158,28 @@ export default function HomePage() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Current Classes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-muted-foreground mb-2">
+                  {format(new Date(), "EEEE, MMMM d")} - Period {currentPeriod}
+                </div>
+                <div className="space-y-2">
+                  {currentTeachers.map(({ className, teacher }) => (
+                    <div key={className} className="flex justify-between items-center p-2 border rounded-md">
+                      <span className="font-medium">{className.toUpperCase()}</span>
+                      <span className="text-muted-foreground">{teacher}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

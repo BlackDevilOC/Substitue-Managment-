@@ -10,14 +10,21 @@ const CLASSES = ["10a", "10b", "10c", "9a", "9b", "9c", "8a", "8b", "8c", "7a", 
 
 export default function SchedulePage() {
   const [selectedDay, setSelectedDay] = useState(DAYS[0]);
-  
-  const { data: schedule, isLoading } = useQuery({
+
+  const { data: schedules, isLoading: loadingSchedules } = useQuery({
     queryKey: ["/api/schedule", selectedDay],
+    queryFn: async () => {
+      const res = await fetch(`/api/schedule/${selectedDay}`);
+      if (!res.ok) throw new Error('Failed to fetch schedule');
+      return res.json();
+    }
   });
 
-  const { data: teachers } = useQuery({
+  const { data: teachers, isLoading: loadingTeachers } = useQuery({
     queryKey: ["/api/teachers"],
   });
+
+  const isLoading = loadingSchedules || loadingTeachers;
 
   if (isLoading) {
     return (
@@ -53,10 +60,10 @@ export default function SchedulePage() {
                 <div className="text-lg font-semibold">Period {period}</div>
                 <div className="grid grid-cols-3 sm:col-span-2 gap-2">
                   {CLASSES.map(className => {
-                    const teacherId = schedule?.find(s => 
-                      s.period === period && s.className === className
-                    )?.teacherId;
-                    const teacher = teachers?.find(t => t.id === teacherId);
+                    const schedule = schedules?.find(s => 
+                      s.period === period && s.className.toLowerCase() === className.toLowerCase()
+                    );
+                    const teacher = teachers?.find(t => t.id === schedule?.teacherId);
 
                     return (
                       <div
