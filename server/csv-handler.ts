@@ -7,10 +7,11 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
     const records = parse(fileContent, {
       columns: false,
       skip_empty_lines: true,
-      trim: true
+      trim: true,
+      relax_column_count: true // Allow inconsistent column counts
     });
 
-    if (records.length < 2) { // At least header + one data row
+    if (records.length < 2) {
       throw new Error("CSV file must contain at least a header row and one data row");
     }
 
@@ -22,21 +23,22 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
     // Skip header row
     for (let i = 1; i < records.length; i++) {
       const row = records[i];
-      if (row.length < 3) { // day, period, and at least one teacher
-        throw new Error(`Invalid row format at line ${i + 1}`);
-      }
 
-      const day = row[0].toLowerCase();
-      const period = parseInt(row[1]);
+      // Skip empty rows
+      if (!row[0] || !row[1]) continue;
+
+      const day = row[0].toLowerCase().trim();
+      const period = parseInt(row[1].trim());
 
       if (isNaN(period)) {
-        throw new Error(`Invalid period number at line ${i + 1}`);
+        console.warn(`Skipping invalid period number at line ${i + 1}`);
+        continue;
       }
 
-      // Each subsequent column represents a teacher for a class
-      for (let j = 2; j < row.length && j - 2 < validClasses.length; j++) {
-        const teacherName = row[j].trim();
-        if (teacherName) {
+      // Process each teacher column
+      for (let j = 2; j < Math.min(row.length, validClasses.length + 2); j++) {
+        const teacherName = row[j]?.trim();
+        if (teacherName && teacherName.toLowerCase() !== 'empty') {
           // Find or create teacher
           let teacher = await findOrCreateTeacher(teacherName);
 
@@ -52,7 +54,7 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
     }
 
     return schedules;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing timetable CSV:', error);
     throw new Error(`Failed to process timetable: ${error.message}`);
   }
@@ -63,33 +65,28 @@ export async function processSubstituteCSV(fileContent: string): Promise<Teacher
     const records = parse(fileContent, {
       columns: false,
       skip_empty_lines: true,
-      trim: true
+      trim: true,
+      relax_column_count: true
     });
-
-    if (records.length < 2) {
-      throw new Error("CSV file must contain at least a header row and one data row");
-    }
 
     const teachers: Teacher[] = [];
 
-    // Process each row (skip header)
-    for (let i = 1; i < records.length; i++) {
+    // Process each row (no header needed)
+    for (let i = 0; i < records.length; i++) {
       const row = records[i];
-      if (row.length < 2) {
-        throw new Error(`Invalid row format at line ${i + 1}`);
-      }
+      if (row.length < 1) continue;
 
-      const [name, phoneNumber] = row;
-      if (!name || !phoneNumber) {
-        throw new Error(`Missing name or phone number at line ${i + 1}`);
-      }
+      const name = row[0]?.trim();
+      const phoneNumber = row[1]?.trim() || null;
 
-      const teacher = await findOrCreateTeacher(name.trim(), true, phoneNumber.trim());
-      teachers.push(teacher);
+      if (name) {
+        const teacher = await findOrCreateTeacher(name, true, phoneNumber);
+        teachers.push(teacher);
+      }
     }
 
     return teachers;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing substitute CSV:', error);
     throw new Error(`Failed to process substitute data: ${error.message}`);
   }
@@ -98,22 +95,24 @@ export async function processSubstituteCSV(fileContent: string): Promise<Teacher
 async function findOrCreateTeacher(
   name: string,
   isSubstitute: boolean = false,
-  phoneNumber?: string
+  phoneNumber?: string | null
 ): Promise<Teacher> {
   try {
     const teachers = await storage.getTeachers();
-    const existingTeacher = teachers.find(t => t.name.toLowerCase() === name.toLowerCase());
+    const existingTeacher = teachers.find(
+      t => t.name.toLowerCase() === name.toLowerCase()
+    );
 
     if (existingTeacher) {
       return existingTeacher;
     }
 
     return await storage.createTeacher({
-      name,
+      name: name.trim(),
       isSubstitute,
       phoneNumber: phoneNumber || null
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error finding/creating teacher:', error);
     throw new Error(`Failed to process teacher data: ${error.message}`);
   }
