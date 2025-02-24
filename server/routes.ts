@@ -60,7 +60,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const fileContent = req.file.buffer.toString('utf-8');
-      const schedules = await processTimetableCSV(fileContent, req.file.originalname);
+      const schedules = await processTimetableCSV(fileContent);
 
       // Save all schedules
       for (const schedule of schedules) {
@@ -86,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const fileContent = req.file.buffer.toString('utf-8');
-      const teachers = await processSubstituteCSV(fileContent, req.file.originalname);
+      const teachers = await processSubstituteCSV(fileContent);
       res.status(200).json({ 
         message: "Substitute teachers uploaded successfully",
         teachersCreated: teachers.length
@@ -100,7 +100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Existing routes...
+  // API Routes
   app.get("/api/teachers", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const teachers = await storage.getTeachers();
