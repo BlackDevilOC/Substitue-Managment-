@@ -30,19 +30,22 @@ export default function HomePage() {
         body: formData,
       });
 
-      if (!res.ok) throw new Error('Failed to upload timetable');
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to upload timetable');
+      }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/schedule"] });
       toast({
         title: "Success",
-        description: "Timetable uploaded successfully",
+        description: `Timetable uploaded successfully. Created ${data.schedulesCreated} schedule entries.`,
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: "Error uploading timetable",
         description: error.message,
         variant: "destructive",
       });
@@ -59,19 +62,22 @@ export default function HomePage() {
         body: formData,
       });
 
-      if (!res.ok) throw new Error('Failed to upload substitute teachers');
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to upload substitute teachers');
+      }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
       toast({
         title: "Success",
-        description: "Substitute teachers uploaded successfully",
+        description: `Substitute teachers uploaded successfully. Added ${data.teachersCreated} teachers.`,
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: "Error uploading substitutes",
         description: error.message,
         variant: "destructive",
       });
@@ -82,24 +88,42 @@ export default function HomePage() {
 
   const handleTimetableUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      uploadTimetableMutation.mutate(file);
+    if (!file) return;
+
+    if (file.type !== 'text/csv') {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a CSV file",
+        variant: "destructive",
+      });
+      return;
     }
+
+    uploadTimetableMutation.mutate(file);
   };
 
   const handleSubstitutesUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      uploadSubstitutesMutation.mutate(file);
+    if (!file) return;
+
+    if (file.type !== 'text/csv') {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a CSV file",
+        variant: "destructive",
+      });
+      return;
     }
+
+    uploadSubstitutesMutation.mutate(file);
   };
 
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Welcome, {user?.username}!</h1>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="icon"
           onClick={() => logoutMutation.mutate()}
           disabled={logoutMutation.isPending}

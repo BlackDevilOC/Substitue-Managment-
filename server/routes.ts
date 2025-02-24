@@ -6,7 +6,12 @@ import { insertTeacherSchema, insertScheduleSchema, insertAbsenceSchema } from "
 import { processTimetableCSV, processSubstituteCSV } from "./csv-handler";
 import multer from "multer";
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -25,9 +30,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createSchedule(schedule);
       }
 
-      res.status(200).json({ message: "Timetable uploaded successfully" });
+      res.status(200).json({ 
+        message: "Timetable uploaded successfully",
+        schedulesCreated: schedules.length
+      });
     } catch (error) {
-      res.status(400).json({ message: "Failed to process timetable file" });
+      console.error('Timetable upload error:', error);
+      res.status(400).json({ 
+        message: "Failed to process timetable file",
+        error: error.message 
+      });
     }
   });
 
@@ -37,10 +49,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const fileContent = req.file.buffer.toString('utf-8');
-      await processSubstituteCSV(fileContent);
-      res.status(200).json({ message: "Substitute teachers uploaded successfully" });
+      const teachers = await processSubstituteCSV(fileContent);
+      res.status(200).json({ 
+        message: "Substitute teachers uploaded successfully",
+        teachersCreated: teachers.length
+      });
     } catch (error) {
-      res.status(400).json({ message: "Failed to process substitute teachers file" });
+      console.error('Substitute upload error:', error);
+      res.status(400).json({ 
+        message: "Failed to process substitute teachers file",
+        error: error.message
+      });
     }
   });
 
