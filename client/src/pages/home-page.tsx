@@ -10,10 +10,10 @@ import { queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
 import React, { useState } from "react";
 
+// Previous helper functions remain unchanged
 function getCurrentPeriod() {
   const now = new Date();
   const hours = now.getHours();
-  // This is a simple mapping, adjust the times according to your school schedule
   if (hours < 9) return 1;
   if (hours < 10) return 2;
   if (hours < 11) return 3;
@@ -39,6 +39,7 @@ export default function HomePage() {
   const currentDay = getDayOfWeek();
   const [currentPeriod, setCurrentPeriod] = useState(getInitialPeriod());
 
+  // Queries remain unchanged
   const { data: currentSchedule, isLoading: loadingSchedule } = useQuery({
     queryKey: ["/api/schedule", currentDay],
     queryFn: async () => {
@@ -56,16 +57,15 @@ export default function HomePage() {
     queryKey: ["/api/teachers"],
   });
 
+  // Mutations remain unchanged
   const uploadTimetableMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-
       const res = await fetch('/api/upload/timetable', {
         method: 'POST',
         body: formData,
       });
-
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Failed to upload timetable');
@@ -92,12 +92,10 @@ export default function HomePage() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-
       const res = await fetch('/api/upload/substitutes', {
         method: 'POST',
         body: formData,
       });
-
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Failed to upload substitute teachers');
@@ -122,7 +120,7 @@ export default function HomePage() {
 
   const isLoading = loadingAbsences || loadingTeachers || loadingSchedule;
 
-  // Update the currentTeachers memo to include absence checks
+  // Current teachers calculation remains unchanged
   const currentTeachers = React.useMemo(() => {
     if (!currentSchedule || !teachers || !absences) return [];
     const todayStr = format(new Date(), "yyyy-MM-dd");
@@ -136,7 +134,6 @@ export default function HomePage() {
           format(new Date(a.date), "yyyy-MM-dd") === todayStr
         );
 
-        // If teacher is absent, try to find substitute
         let substituteTeacher = null;
         if (isAbsent) {
           const absence = absences.find(
@@ -163,7 +160,6 @@ export default function HomePage() {
   const handleTimetableUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     if (file.type !== 'text/csv') {
       toast({
         title: "Invalid file type",
@@ -172,14 +168,12 @@ export default function HomePage() {
       });
       return;
     }
-
     uploadTimetableMutation.mutate(file);
   };
 
   const handleSubstitutesUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     if (file.type !== 'text/csv') {
       toast({
         title: "Invalid file type",
@@ -188,19 +182,20 @@ export default function HomePage() {
       });
       return;
     }
-
     uploadSubstitutesMutation.mutate(file);
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Welcome, {user?.username}!</h1>
+    <div className="container mx-auto px-4 py-6 space-y-6">
+      {/* Header Section */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold truncate">Welcome, {user?.username}!</h1>
         <Button
           variant="outline"
           size="icon"
           onClick={() => logoutMutation.mutate()}
           disabled={logoutMutation.isPending}
+          className="shrink-0"
         >
           {logoutMutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -210,138 +205,146 @@ export default function HomePage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4"> {/* 2x2 grid */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Upload Card */}
+        <Card className="col-span-1 sm:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
               <Upload className="h-5 w-5" />
               Upload Files
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
+            <div className="space-y-2">
               <Input
                 type="file"
                 accept=".csv"
                 onChange={handleTimetableUpload}
                 disabled={uploadTimetableMutation.isPending}
+                className="text-sm"
               />
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground">
                 Upload timetable CSV
               </p>
             </div>
-            <div>
+            <div className="space-y-2">
               <Input
                 type="file"
                 accept=".csv"
                 onChange={handleSubstitutesUpload}
                 disabled={uploadSubstitutesMutation.isPending}
+                className="text-sm"
               />
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground">
                 Upload substitute teachers CSV
               </p>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Schedule Overview
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">View and manage daily schedules</p>
-            <Link href="/schedule">
-              <Button className="w-full mt-4">View Schedule</Button>
-            </Link>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserMinus className="h-5 w-5" />
-              Absent Teachers
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{absences?.length || 0}</p>
-            <p className="text-muted-foreground">teachers marked absent today</p>
-            <Link href="/absences">
-              <Button className="w-full mt-4">Manage Absences</Button>
-            </Link>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserCheck className="h-5 w-5" />
-              Substitute Teachers
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              {teachers?.filter(t => t.isSubstitute)?.length || 0}
-            </p>
-            <p className="text-muted-foreground">available substitutes</p>
-            <Link href="/substitutes">
-              <Button className="w-full mt-4">View Substitutes</Button>
-            </Link>
-          </CardContent>
-        </Card>
+
+        {/* Quick Stats Cards */}
+        <Link href="/schedule" className="block">
+          <Card className="h-full hover:bg-accent/5 transition-colors">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Schedule Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">View and manage daily schedules</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/absences" className="block">
+          <Card className="h-full hover:bg-accent/5 transition-colors">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                <UserMinus className="h-5 w-5" />
+                Absent Teachers
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{absences?.length || 0}</p>
+              <p className="text-sm text-muted-foreground">teachers marked absent today</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/substitutes" className="block">
+          <Card className="h-full hover:bg-accent/5 transition-colors">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                <UserCheck className="h-5 w-5" />
+                Substitute Teachers
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">
+                {teachers?.filter(t => t.isSubstitute)?.length || 0}
+              </p>
+              <p className="text-sm text-muted-foreground">available substitutes</p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-            <Card className="w-[95%] mx-auto">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Current Classes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-between items-center mb-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setCurrentPeriod(p => p === 1 ? 8 : p - 1)}
-                  >
-                    Previous Period
-                  </Button>
-                  <div className="text-sm text-muted-foreground">
-                    {format(new Date(), "EEEE, MMMM d")} - Period {currentPeriod}
-                  </div>
-                  <Button 
-                    variant="outline"
-                    onClick={() => setCurrentPeriod(p => p === 8 ? 1 : p + 1)}
-                  >
-                    Next Period
-                  </Button>
-                </div>
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {currentTeachers.map(({ className, teacher }) => (
-                    <div 
-                      key={className} 
-                      className={`flex flex-col p-3 border rounded-md ${
-                        teacher === "Teacher Absent" ? "bg-red-50" :
-                        teacher.includes("(Substitute)") ? "bg-yellow-50" :
-                        "bg-white"
-                      }`}
-                    >
-                      <span className="font-medium text-lg mb-1">{className.toUpperCase()}</span>
-                      <span className={`text-sm ${
-                        teacher === "Teacher Absent" ? "text-red-600" :
-                        teacher.includes("(Substitute)") ? "text-yellow-600" :
-                        "text-muted-foreground"
-                      }`}>{teacher}</span>
-                    </div>
-                  ))}
-                </div>
-                <Button onClick={() => setCurrentPeriod(p => p === 8 ? 1 : p + 1)}>Next Period</Button>
-              </CardContent>
-            </Card>
-
-          
+      {/* Current Classes Section */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Current Classes
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setCurrentPeriod(p => p === 1 ? 8 : p - 1)}
+              className="w-full sm:w-auto"
+            >
+              Previous Period
+            </Button>
+            <div className="text-sm text-center text-muted-foreground">
+              {format(new Date(), "EEEE, MMMM d")} - Period {currentPeriod}
+            </div>
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPeriod(p => p === 8 ? 1 : p + 1)}
+              className="w-full sm:w-auto"
+            >
+              Next Period
+            </Button>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {currentTeachers.map(({ className, teacher }) => (
+              <div 
+                key={className} 
+                className={`p-3 rounded-lg border ${
+                  teacher === "Teacher Absent" ? "bg-destructive/5 border-destructive/20" :
+                  teacher.includes("(Substitute)") ? "bg-warning/5 border-warning/20" :
+                  ""
+                }`}
+              >
+                <div className="font-medium">{className.toUpperCase()}</div>
+                <div className={`text-sm ${
+                  teacher === "Teacher Absent" ? "text-destructive" :
+                  teacher.includes("(Substitute)") ? "text-warning-foreground" :
+                  "text-muted-foreground"
+                }`}>
+                  {teacher}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
