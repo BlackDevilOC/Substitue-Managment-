@@ -65,20 +65,64 @@ export default function HomePage() {
         method: 'POST',
         body: formData,
       });
-      if (!res.ok) throw new Error('Failed to upload timetable');
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to upload timetable');
+      }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/schedule"] });
       toast({
         title: "Success",
-        description: "Timetable uploaded successfully",
+        description: `Timetable uploaded successfully. Created ${data.schedulesCreated} schedule entries.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error uploading timetable",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const uploadSubstitutesMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload/substitutes', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to upload substitute teachers');
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
+      toast({
+        title: "Success",
+        description: `Substitute teachers uploaded successfully. Added ${data.teachersCreated} teachers.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error uploading substitutes",
+        description: error.message,
+        variant: "destructive",
       });
     },
   });
 
   const isLoading = loadingAbsences || loadingTeachers || loadingSchedule;
 
+  // Update the currentTeachers memo to include absence checks
   const currentTeachers = React.useMemo(() => {
     if (!currentSchedule || !teachers || !absences) return [];
     const todayStr = format(new Date(), "yyyy-MM-dd");
@@ -92,6 +136,7 @@ export default function HomePage() {
           format(new Date(a.date), "yyyy-MM-dd") === todayStr
         );
 
+        // If teacher is absent, try to find substitute
         let substituteTeacher = null;
         if (isAbsent) {
           const absence = absences.find(
@@ -115,74 +160,173 @@ export default function HomePage() {
       .sort((a, b) => a.className.localeCompare(b.className));
   }, [currentSchedule, teachers, absences, currentPeriod]);
 
+  const handleTimetableUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'text/csv') {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a CSV file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    uploadTimetableMutation.mutate(file);
+  };
+
+  const handleSubstitutesUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'text/csv') {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a CSV file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    uploadSubstitutesMutation.mutate(file);
+  };
+
   return (
-    <div className="container p-4">
-      <div className="grid gap-4">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Schedule</h1>
-          <Button variant="destructive" onClick={() => logoutMutation.mutate()}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Current Schedule - Period {currentPeriod}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <Button onClick={() => setCurrentPeriod(p => p === 1 ? 8 : p - 1)}>Previous Period</Button>
-                <span className="mx-2">Period {currentPeriod}</span>
-                <Button onClick={() => setCurrentPeriod(p => p === 8 ? 1 : p + 1)}>Next Period</Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Upload Timetable</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Input
-                type="file"
-                accept=".csv"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) uploadTimetableMutation.mutate(file);
-                }}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        {isLoading ? (
-          <Card>
-            <CardContent className="p-8">
-              <div className="flex justify-center">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Classes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {currentTeachers.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center p-2 border rounded">
-                    <span>{item.className}</span>
-                    <span>{item.teacher}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+    <div className="container mx-auto p-4 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Welcome, {user?.username}!</h1>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => logoutMutation.mutate()}
+          disabled={logoutMutation.isPending}
+        >
+          {logoutMutation.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <LogOut className="h-4 w-4" />
+          )}
+        </Button>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Upload className="h-5 w-5" />
+            Upload Files
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Input
+              type="file"
+              accept=".csv"
+              onChange={handleTimetableUpload}
+              disabled={uploadTimetableMutation.isPending}
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              Upload timetable CSV
+            </p>
+          </div>
+          <div>
+            <Input
+              type="file"
+              accept=".csv"
+              onChange={handleSubstitutesUpload}
+              disabled={uploadSubstitutesMutation.isPending}
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              Upload substitute teachers CSV
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Current Classes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-muted-foreground mb-2">
+                  {format(new Date(), "EEEE, MMMM d")} - Period {currentPeriod}
+                </div>
+                <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {currentTeachers.map(({ className, teacher }) => (
+                    <div 
+                      key={className} 
+                      className={`flex flex-col p-3 border rounded-md ${
+                        teacher === "Teacher Absent" ? "bg-red-50" :
+                        teacher.includes("(Substitute)") ? "bg-yellow-50" :
+                        "bg-white"
+                      }`}
+                    >
+                      <span className="font-medium text-lg mb-1">{className.toUpperCase()}</span>
+                      <span className={`text-sm ${
+                        teacher === "Teacher Absent" ? "text-red-600" :
+                        teacher.includes("(Substitute)") ? "text-yellow-600" :
+                        "text-muted-foreground"
+                      }`}>{teacher}</span>
+                    </div>
+                  ))}
+                </div>
+                <Button onClick={() => setCurrentPeriod(p => p === 8 ? 1 : p + 1)}>Next Period</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Schedule Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">View and manage daily schedules</p>
+                <Link href="/schedule">
+                  <Button className="w-full mt-4">View Schedule</Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserMinus className="h-5 w-5" />
+                  Absent Teachers
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{absences?.length || 0}</p>
+                <p className="text-muted-foreground">teachers marked absent today</p>
+                <Link href="/absences">
+                  <Button className="w-full mt-4">Manage Absences</Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCheck className="h-5 w-5" />
+                  Substitute Teachers
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">
+                  {teachers?.filter(t => t.isSubstitute)?.length || 0}
+                </p>
+                <p className="text-muted-foreground">available substitutes</p>
+                <Link href="/substitutes">
+                  <Button className="w-full mt-4">View Substitutes</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
     </div>
   );
 }
