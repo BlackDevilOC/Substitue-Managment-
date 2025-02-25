@@ -1,6 +1,11 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const ASSIGNMENTS_PATH = path.join(__dirname, '../data/teacher_assignments.json');
 const ABSENCES_PATH = path.join(__dirname, '../data/absent_teachers.json');
