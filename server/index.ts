@@ -59,13 +59,12 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client
   const port = process.env.PORT || 5000;
-  const server = app.listen(port, "0.0.0.0", async () => {
+  app.listen(port, "0.0.0.0", async () => {
     console.log(`[express] serving on port ${port}`);
     await loadInitialData();
   }).on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
       console.log(`Port ${port} is busy, trying ${port + 1}`);
-      server.close();
       app.listen(port + 1, "0.0.0.0", async () => {
         console.log(`[express] serving on port ${port + 1}`);
         await loadInitialData();
