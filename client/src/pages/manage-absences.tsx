@@ -1,11 +1,11 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileDown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "wouter";
 
 export default function ManageAbsencesPage() {
-  const navigate = useNavigate();
   const { data: absences } = useQuery({
     queryKey: ["/api/absences"],
   });
@@ -70,16 +70,17 @@ export default function ManageAbsencesPage() {
             {classesNeedingSubstitutes.map((classInfo) => {
               const teacher = teachers?.find(t => t.id === classInfo.teacherId);
               return (
-                <div 
-                  key={`${classInfo.period}-${classInfo.className}`} 
-                  className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
-                  onClick={() => navigate(`/assign-substitute/${classInfo.id}`)}
+                <Link 
+                  key={`${classInfo.period}-${classInfo.className}`}
+                  href={`/assign-substitute/${classInfo.id}`}
                 >
-                  <div className="font-medium">{classInfo.className}</div>
-                  <div className="text-sm text-muted-foreground">
-                    Period {classInfo.period} - {teacher?.name}
+                  <div className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <div className="font-medium">{classInfo.className}</div>
+                    <div className="text-sm text-muted-foreground">
+                      Period {classInfo.period} - {teacher?.name}
+                    </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
             {classesNeedingSubstitutes.length === 0 && (
