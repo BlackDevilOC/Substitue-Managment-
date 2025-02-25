@@ -15,6 +15,16 @@ export default function AssignSubstitutePage() {
     queryKey: ["/api/teachers"],
   });
 
+  const storedAbsences = React.useMemo(() => {
+    const stored = localStorage.getItem('teacherAbsences');
+    return stored ? JSON.parse(stored) : [];
+  }, []);
+
+  const storedSubstitutes = React.useMemo(() => {
+    const stored = localStorage.getItem('substituteAssignments');
+    return stored ? JSON.parse(stored) : {};
+  }, []);
+
   const classInfo = schedule?.find(s => s.id === parseInt(classId || "0"));
   const teacher = teachers?.find(t => t.id === classInfo?.teacherId);
   const availableSubstitutes = teachers?.filter(t => t.isSubstitute) || [];

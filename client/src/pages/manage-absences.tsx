@@ -6,8 +6,12 @@ import { FileDown } from "lucide-react";
 import { Link } from "wouter";
 
 export default function ManageAbsencesPage() {
-  const { data: absences } = useQuery({
+  const { data: absences, isSuccess } = useQuery({
     queryKey: ["/api/absences"],
+    onSuccess: (data) => {
+      // Store absences in localStorage
+      localStorage.setItem('teacherAbsences', JSON.stringify(data));
+    }
   });
 
   const { data: teachers } = useQuery({
@@ -17,6 +21,12 @@ export default function ManageAbsencesPage() {
   const { data: schedule } = useQuery({
     queryKey: ["/api/schedule"],
   });
+
+  // Get stored absences
+  const storedAbsences = React.useMemo(() => {
+    const stored = localStorage.getItem('teacherAbsences');
+    return stored ? JSON.parse(stored) : [];
+  }, [isSuccess]);
 
   const exportReport = () => {
     const report = {
@@ -41,10 +51,12 @@ export default function ManageAbsencesPage() {
     a.click();
   };
 
-  const classesNeedingSubstitutes = schedule?.filter(s => {
-    const teacher = teachers?.find(t => t.id === s.teacherId);
-    return absences?.some(a => a.teacherId === s.teacherId) && !s.substituteId;
-  }) || [];
+  const classesNeedingSubstitutes = React.useMemo(() => {
+    return schedule?.filter(s => {
+      const teacher = teachers?.find(t => t.id === s.teacherId);
+      return storedAbsences?.some(a => a.teacherId === s.teacherId) && !s.substituteId;
+    }) || [];
+  }, [schedule, teachers, storedAbsences]);
 
   const assignedClasses = schedule?.filter(s => {
     const teacher = teachers?.find(t => t.id === s.teacherId);
