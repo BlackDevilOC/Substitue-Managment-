@@ -139,9 +139,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const parsed = insertAbsenceSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
+    
     const absence = await storage.createAbsence(parsed.data);
+    
+    // Also record in CSV file
+    const teacher = await storage.getTeacher(parsed.data.teacherId);
+    if (teacher) {
+      recordAttendance(
+        format(new Date(parsed.data.date), 'yyyy-MM-dd'),
+        teacher.name,
+        'Absent'
+      );
+    }
+    
     res.status(201).json(absence);
   });
+
+app.get("/api/attendance", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const attendance = getAllTeachersAttendance();
+    res.json(attendance);
+});
 
   app.post("/api/absences/:id/substitute", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
