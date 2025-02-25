@@ -1,5 +1,5 @@
 import { IStorage } from "./types";
-import type { User, InsertUser, Teacher, Schedule, Absence } from "@shared/schema";
+import type { User, InsertUser, Teacher, Schedule, Absence, TeacherAttendance, InsertTeacherAttendance } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
@@ -10,6 +10,7 @@ export class MemStorage implements IStorage {
   private teachers: Map<number, Teacher>;
   private schedules: Map<number, Schedule>;
   private absences: Map<number, Absence>;
+  private teacherAttendances: Map<number, TeacherAttendance>; // Added teacher attendance storage
   sessionStore: session.Store;
   currentId: number;
 
@@ -18,6 +19,7 @@ export class MemStorage implements IStorage {
     this.teachers = new Map();
     this.schedules = new Map();
     this.absences = new Map();
+    this.teacherAttendances = new Map(); // Initialize teacher attendance map
     this.currentId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
@@ -96,6 +98,27 @@ export class MemStorage implements IStorage {
       this.absences.set(absenceId, { ...absence, substituteId });
     }
   }
+
+  // Teacher Attendance methods
+  async createTeacherAttendance(attendance: Omit<TeacherAttendance, "id">): Promise<TeacherAttendance> {
+    const id = this.currentId++;
+    const newAttendance = { ...attendance, id };
+    this.teacherAttendances.set(id, newAttendance);
+    return newAttendance;
+  }
+
+  async getTeacherAttendanceByDate(date: string): Promise<TeacherAttendance[]> {
+    const dateObj = new Date(date);
+    return Array.from(this.teacherAttendances.values()).filter(a => a.date.toDateString() === dateObj.toDateString());
+  }
+
+
+  async getTeacherAttendanceBetweenDates(startDate: string, endDate: string): Promise<TeacherAttendance[]> {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return Array.from(this.teacherAttendances.values()).filter(a => a.date >= start && a.date <= end);
+  }
+
 }
 
 export const storage = new MemStorage();
