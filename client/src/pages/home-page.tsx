@@ -255,17 +255,17 @@ export default function HomePage() {
                 <div className="text-sm text-muted-foreground mb-2">
                   {format(new Date(), "EEEE, MMMM d")} - Period {currentPeriod}
                 </div>
-                <div className="space-y-2">
+                <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                   {currentTeachers.map(({ className, teacher }) => (
                     <div 
                       key={className} 
-                      className={`flex justify-between items-center p-2 border rounded-md ${
+                      className={`flex flex-col p-3 border rounded-md ${
                         teacher === "Teacher Absent" ? "bg-red-50" :
                         teacher.includes("(Substitute)") ? "bg-yellow-50" :
                         "bg-white"
                       }`}
                     >
-                      <span className="font-medium">{className.toUpperCase()}</span>
+                      <span className="font-medium text-lg mb-1">{className.toUpperCase()}</span>
                       <span className={`text-sm ${
                         teacher === "Teacher Absent" ? "text-red-600" :
                         teacher.includes("(Substitute)") ? "text-yellow-600" :
