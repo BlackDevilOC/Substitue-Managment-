@@ -1,44 +1,41 @@
-
-import * as fs from 'fs';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const ASSIGNMENTS_PATH = path.join(__dirname, '../data/teacher_assignments.json');
-const ABSENCES_PATH = path.join(__dirname, '../data/absent_teachers.json');
+import { db } from "./db";
+import { teachers, absences, schedules } from "../shared/schema";
+import { eq } from "drizzle-orm";
 
 export const storage = {
-  getTeachers() {
-    const assignments = JSON.parse(fs.readFileSync(ASSIGNMENTS_PATH, 'utf-8'));
-    return Object.keys(assignments.teachers || {});
+  async getTeachers() {
+    return await db.select().from(teachers);
   },
 
-  getSchedulesByDay(day: string) {
-    const assignments = JSON.parse(fs.readFileSync(ASSIGNMENTS_PATH, 'utf-8'));
-    return assignments.teachers?.[day.toLowerCase()] || {};
+  async getTeacher(id: number) {
+    const result = await db.select().from(teachers).where(eq(teachers.id, id));
+    return result[0];
   },
 
-  createAbsence(data: { teacherId: string, date: string }) {
-    const absences = JSON.parse(fs.readFileSync(ABSENCES_PATH, 'utf-8'));
-    absences.absent_teachers.push({
-      name: data.teacherId,
-      date: data.date
-    });
-    fs.writeFileSync(ABSENCES_PATH, JSON.stringify(absences, null, 2));
-    return absences;
+  async createTeacher(data: typeof teachers.$inferInsert) {
+    return (await db.insert(teachers).values(data).returning())[0];
   },
 
-  assignSubstitute(teacherId: string, substituteId: string, date: string) {
-    const assignments = JSON.parse(fs.readFileSync(ASSIGNMENTS_PATH, 'utf-8'));
-    if (!assignments.absences[date]) {
-      assignments.absences[date] = {};
-    }
-    assignments.absences[date][teacherId] = {
-      substitute: substituteId
-    };
-    fs.writeFileSync(ASSIGNMENTS_PATH, JSON.stringify(assignments, null, 2));
+  async getSchedulesByDay(day: string) {
+    return await db.select().from(schedules).where(eq(schedules.day, day));
+  },
+
+  async createSchedule(data: typeof schedules.$inferInsert) {
+    return (await db.insert(schedules).values(data).returning())[0];
+  },
+
+  async getAbsences() {
+    return await db.select().from(absences);
+  },
+
+  async createAbsence(data: typeof absences.$inferInsert) {
+    return (await db.insert(absences).values(data).returning())[0];
+  },
+
+  async assignSubstitute(absenceId: number, substituteId: number) {
+    return await db.update(absences)
+      .set({ substituteId })
+      .where(eq(absences.id, absenceId))
+      .returning();
   }
 };

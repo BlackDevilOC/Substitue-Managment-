@@ -13,70 +13,16 @@ const SUBSTITUTE_PATH = path.join(__dirname, '../data/Substitude_file.csv');
 
 export async function loadInitialData() {
   try {
-    if (fs.existsSync(TIMETABLE_PATH)) {
-      const timetableContent = fs.readFileSync(TIMETABLE_PATH, 'utf-8');
-      const teacherAssignments = convertTimetableToJSON(timetableContent);
-      
-      // Only write if different from existing
-      const existingPath = path.join(__dirname, '../data/teacher_assignments.json');
-      if (!fs.existsSync(existingPath) || 
-          JSON.stringify(teacherAssignments) !== fs.readFileSync(existingPath, 'utf-8')) {
-        fs.writeFileSync(existingPath, JSON.stringify(teacherAssignments, null, 2));
-        console.log('Teacher assignments updated from timetable');
-      }
-    }
+    const timetableContent = fs.readFileSync(TIMETABLE_PATH, 'utf-8');
+    const substituteContent = fs.readFileSync(SUBSTITUTE_PATH, 'utf-8');
 
-    if (fs.existsSync(SUBSTITUTE_PATH)) {
-      await processSubstituteCSV(fs.readFileSync(SUBSTITUTE_PATH, 'utf-8'));
-    }
+    await processTimetableCSV(timetableContent);
+    await processSubstituteCSV(substituteContent);
 
     console.log('Initial data loaded successfully');
   } catch (error) {
     console.error('Error loading initial data:', error);
   }
-}
-
-function convertTimetableToJSON(csvContent: string) {
-  const records = parse(csvContent, {
-    columns: false,
-    skip_empty_lines: true,
-    trim: true
-  });
-
-  const result = {
-    teachers: {},
-    absences: {}
-  };
-
-  const header = records[0];
-  const classes = header.slice(2);
-
-  for (let i = 1; i < records.length; i++) {
-    const row = records[i];
-    const day = row[0].toLowerCase();
-    const period = parseInt(row[1]);
-
-    if (!result.teachers[day]) {
-      result.teachers[day] = {};
-    }
-
-    for (let j = 2; j < row.length; j++) {
-      const teacher = row[j]?.toLowerCase().trim();
-      const className = classes[j - 2];
-
-      if (teacher && teacher !== 'empty') {
-        if (!result.teachers[day][teacher]) {
-          result.teachers[day][teacher] = { periods: [] };
-        }
-        result.teachers[day][teacher].periods.push({
-          period,
-          class: className
-        });
-      }
-    }
-  }
-
-  return result;
 }
 
 export async function processTimetableCSV(fileContent: string): Promise<Schedule[]> {
