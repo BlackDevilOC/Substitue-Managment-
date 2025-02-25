@@ -8,7 +8,7 @@ import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
-import React from "react";
+import React, { useState } from "react";
 
 function getCurrentPeriod() {
   const now = new Date();
@@ -29,11 +29,15 @@ function getDayOfWeek() {
   return days[new Date().getDay()];
 }
 
+function getInitialPeriod() {
+  return getCurrentPeriod();
+}
+
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
   const currentDay = getDayOfWeek();
-  const currentPeriod = getCurrentPeriod();
+  const [currentPeriod, setCurrentPeriod] = useState(getInitialPeriod());
 
   const { data: currentSchedule, isLoading: loadingSchedule } = useQuery({
     queryKey: ["/api/schedule", currentDay],
@@ -244,6 +248,7 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
+                <Button onClick={() => setCurrentPeriod(p => p === 8 ? 1 : p + 1)}>Next Period</Button>
               </CardContent>
             </Card>
 

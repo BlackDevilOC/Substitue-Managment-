@@ -105,7 +105,9 @@ export default function ManageAbsencesPage() {
                   <div>
                     <h3 className="font-semibold">{teacher?.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Classes: {classes.map(c => c.className).join(", ")}
+                      Classes: {classes.map(c => (
+                        `${c.className.toUpperCase()} (Period ${c.period})`
+                      )).join(", ")}
                     </p>
                   </div>
 
