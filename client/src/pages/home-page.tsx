@@ -243,19 +243,7 @@ export default function HomePage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Current Classes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-muted-foreground mb-2">
-                  {format(new Date(), "EEEE, MMMM d")} - Period {currentPeriod}
-                </div>
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   {currentTeachers.map(({ className, teacher }) => (
                     <div 
                       key={className} 
@@ -327,6 +315,41 @@ export default function HomePage() {
               </CardContent>
             </Card>
           </div>
+
+          <Card className="w-[95%] mx-auto mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Current Classes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground mb-2">
+                {format(new Date(), "EEEE, MMMM d")} - Period {currentPeriod}
+              </div>
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                {currentTeachers.map(({ className, teacher }) => (
+                  <div 
+                    key={className} 
+                    className={`flex flex-col p-3 border rounded-md ${
+                      teacher === "Teacher Absent" ? "bg-red-50" :
+                      teacher.includes("(Substitute)") ? "bg-yellow-50" :
+                      "bg-white"
+                    }`}
+                  >
+                    <span className="font-medium text-lg mb-1">{className.toUpperCase()}</span>
+                    <span className={`text-sm ${
+                      teacher === "Teacher Absent" ? "text-red-600" :
+                      teacher.includes("(Substitute)") ? "text-yellow-600" :
+                      "text-gray-600"
+                    }`}>
+                      {teacher}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
     </div>
   );
 }
