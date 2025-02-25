@@ -1,10 +1,9 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Loader2, UserMinus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -76,7 +75,7 @@ export function ManageAbsencesPage() {
     const teacher = teachers?.find(t => t.id === absence.teacherId);
     const substitute = teachers?.find(t => t.id === absence.substituteId);
     const teacherClasses = schedule?.filter(s => s.teacherId === absence.teacherId) || [];
-    
+
     return {
       absence,
       teacher,
@@ -109,7 +108,7 @@ export function ManageAbsencesPage() {
                       Classes: {classes.map(c => c.className).join(", ")}
                     </p>
                   </div>
-                  
+
                   {substitute ? (
                     <div className="text-sm">
                       Substitute: <span className="font-semibold">{substitute.name}</span>
