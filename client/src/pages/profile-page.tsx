@@ -56,9 +56,27 @@ export default function ProfilePage() {
     changePasswordMutation.mutate(data);
   };
 
+  const exportReport = async () => {
+    const res = await fetch('/api/absences/report');
+    const report = await res.json();
+    
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `absence-report-${new Date().toLocaleDateString()}.json`;
+    a.click();
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <h1 className="text-2xl font-bold">Profile Settings</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Profile Settings</h1>
+        <Button onClick={exportReport} variant="outline">
+          <FileDown className="h-4 w-4 mr-2" />
+          Export Report
+        </Button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>

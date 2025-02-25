@@ -71,6 +71,63 @@ export default function ManageAbsencesPage() {
           Export Report
         </Button>
       </div>
+      
+      <div className="grid grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Classes Needing Substitutes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {absentTeachers.length === 0 ? (
+              <p className="text-muted-foreground">No classes need substitutes</p>
+            ) : (
+              <div className="space-y-4">
+                {absentTeachers.map(({teacher, classes}) => (
+                  <div key={teacher?.id} className="space-y-2">
+                    <h3 className="font-medium">{teacher?.name}</h3>
+                    {classes.map((c) => (
+                      <div key={`${c.period}-${c.className}`} className="flex items-center justify-between">
+                        <span>Period {c.period} - {c.className}</span>
+                        {!c.assigned && (
+                          <Button size="sm" onClick={() => assignSubstitute(teacher?.id || 0, c.period, c.className)}>
+                            Assign
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Assigned Substitutes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {absentTeachers.some(({classes}) => classes.some(c => c.assigned)) ? (
+              <div className="space-y-4">
+                {absentTeachers.map(({teacher, classes}) => (
+                  <div key={teacher?.id} className="space-y-2">
+                    {classes.filter(c => c.assigned).map((c) => (
+                      <div key={`${c.period}-${c.className}`}>
+                        <span className="font-medium">{teachers?.find(t => t.id === c.assigned)?.name}</span>
+                        <p className="text-sm text-muted-foreground">
+                          Substituting for {teacher?.name} - Period {c.period} - {c.className}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No substitutes assigned yet</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Unassigned Classes Box */}
