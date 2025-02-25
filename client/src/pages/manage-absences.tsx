@@ -1,43 +1,63 @@
-
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileDown } from "lucide-react";
 import { Link } from "wouter";
 
+interface Teacher {
+  id: string;
+  name: string;
+}
+
+interface Absence {
+  teacherId: string;
+}
+
+interface ScheduleClass {
+  id: string;
+  teacherId: string;
+  className: string;
+  period: number;
+  substituteId?: string;
+}
+
 export default function ManageAbsencesPage() {
-  const { data: absences, isSuccess } = useQuery({
+  const { data: absences = [] } = useQuery<Absence[]>({
     queryKey: ["/api/absences"],
-    onSuccess: (data) => {
-      // Store absences in localStorage
-      localStorage.setItem('teacherAbsences', JSON.stringify(data));
-    }
   });
 
-  const { data: teachers } = useQuery({
+  const { data: teachers = [] } = useQuery<Teacher[]>({
     queryKey: ["/api/teachers"],
   });
 
-  const { data: schedule } = useQuery({
+  const { data: schedule = [] } = useQuery<ScheduleClass[]>({
     queryKey: ["/api/schedule"],
   });
+
+  // Store absences in localStorage whenever they change
+  React.useEffect(() => {
+    if (absences.length > 0) {
+      localStorage.setItem('teacherAbsences', JSON.stringify(absences));
+    }
+  }, [absences]);
 
   // Get stored absences
   const storedAbsences = React.useMemo(() => {
     const stored = localStorage.getItem('teacherAbsences');
     return stored ? JSON.parse(stored) : [];
-  }, [isSuccess]);
+  }, []);
 
   const exportReport = () => {
     const report = {
       date: new Date().toLocaleDateString(),
-      absentTeachers: absences?.map(absence => {
-        const teacher = teachers?.find(t => t.id === absence.teacherId);
-        const classes = schedule?.filter(s => s.teacherId === absence.teacherId)
+      absentTeachers: absences.map(absence => {
+        const teacher = teachers.find(t => t.id === absence.teacherId);
+        const classes = schedule.filter(s => s.teacherId === absence.teacherId)
           .map(s => ({
             className: s.className,
             period: s.period,
-            substitute: s.substituteId ? teachers?.find(t => t.id === s.substituteId)?.name : 'Unassigned'
+            substitute: s.substituteId ? teachers.find(t => t.id === s.substituteId)?.name : 'Unassigned'
           }));
         return { teacher: teacher?.name, classes };
       })
@@ -52,16 +72,16 @@ export default function ManageAbsencesPage() {
   };
 
   const classesNeedingSubstitutes = React.useMemo(() => {
-    return schedule?.filter(s => {
-      const teacher = teachers?.find(t => t.id === s.teacherId);
-      return storedAbsences?.some(a => a.teacherId === s.teacherId) && !s.substituteId;
-    }) || [];
+    return schedule.filter(s => {
+      const teacher = teachers.find(t => t.id === s.teacherId);
+      return storedAbsences.some((a: Absence) => a.teacherId === s.teacherId) && !s.substituteId;
+    });
   }, [schedule, teachers, storedAbsences]);
 
-  const assignedClasses = schedule?.filter(s => {
-    const teacher = teachers?.find(t => t.id === s.teacherId);
-    return absences?.some(a => a.teacherId === s.teacherId) && s.substituteId;
-  }) || [];
+  const assignedClasses = schedule.filter(s => {
+    const teacher = teachers.find(t => t.id === s.teacherId);
+    return absences.some(a => a.teacherId === s.teacherId) && s.substituteId;
+  });
 
   return (
     <div className="container py-6 space-y-6">
@@ -80,7 +100,7 @@ export default function ManageAbsencesPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {classesNeedingSubstitutes.map((classInfo) => {
-              const teacher = teachers?.find(t => t.id === classInfo.teacherId);
+              const teacher = teachers.find(t => t.id === classInfo.teacherId);
               return (
                 <Link 
                   key={`${classInfo.period}-${classInfo.className}`}
@@ -109,8 +129,8 @@ export default function ManageAbsencesPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {assignedClasses.map((classInfo) => {
-              const teacher = teachers?.find(t => t.id === classInfo.teacherId);
-              const substitute = teachers?.find(t => t.id === classInfo.substituteId);
+              const teacher = teachers.find(t => t.id === classInfo.teacherId);
+              const substitute = teachers.find(t => t.id === classInfo.substituteId);
               return (
                 <div key={`${classInfo.period}-${classInfo.className}`} className="p-3 border rounded-lg">
                   <div className="font-medium">{classInfo.className}</div>
