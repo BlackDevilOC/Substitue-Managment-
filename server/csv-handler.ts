@@ -13,12 +13,22 @@ const SUBSTITUTE_PATH = path.join(__dirname, '../data/Substitude_file.csv');
 
 export async function loadInitialData() {
   try {
-    const timetableContent = fs.readFileSync(TIMETABLE_PATH, 'utf-8');
-    const substituteContent = fs.readFileSync(SUBSTITUTE_PATH, 'utf-8');
+    if (fs.existsSync(TIMETABLE_PATH)) {
+      const timetableContent = fs.readFileSync(TIMETABLE_PATH, 'utf-8');
+      const teacherAssignments = convertTimetableToJSON(timetableContent);
+      
+      // Only write if different from existing
+      const existingPath = path.join(__dirname, '../data/teacher_assignments.json');
+      if (!fs.existsSync(existingPath) || 
+          JSON.stringify(teacherAssignments) !== fs.readFileSync(existingPath, 'utf-8')) {
+        fs.writeFileSync(existingPath, JSON.stringify(teacherAssignments, null, 2));
+        console.log('Teacher assignments updated from timetable');
+      }
+    }
 
-    const teacherAssignments = convertTimetableToJSON(timetableContent);
-    fs.writeFileSync(path.join(__dirname, '../data/teacher_assignments.json'), 
-      JSON.stringify(teacherAssignments, null, 2));
+    if (fs.existsSync(SUBSTITUTE_PATH)) {
+      await processSubstituteCSV(fs.readFileSync(SUBSTITUTE_PATH, 'utf-8'));
+    }
 
     console.log('Initial data loaded successfully');
   } catch (error) {

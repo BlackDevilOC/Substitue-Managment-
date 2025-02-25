@@ -43,7 +43,23 @@ export function getTeacherForClass(period: number, className: string) {
   return teacherAssignments[key];
 }
 
+function reloadAssignmentsIfChanged() {
+  const assignments = JSON.parse(fs.readFileSync(ASSIGNMENTS_PATH, 'utf-8'));
+  const timetableContent = fs.readFileSync(TIMETABLE_PATH, 'utf-8');
+  const newAssignments = convertTimetableToJSON(timetableContent);
+  
+  if (JSON.stringify(assignments.teachers) !== JSON.stringify(newAssignments.teachers)) {
+    fs.writeFileSync(ASSIGNMENTS_PATH, JSON.stringify(newAssignments, null, 2));
+    return true;
+  }
+  return false;
+}
+
 export function recordAttendance(date: string, teacherName: string, status: 'Present' | 'Absent', period?: number, className?: string, substituteTeacher?: string) {
+  // Check for timetable changes before recording attendance
+  if (reloadAssignmentsIfChanged()) {
+    console.log('Timetable changes detected and reloaded');
+  }
   // Update JSON assignments
   const assignments = JSON.parse(fs.readFileSync(ASSIGNMENTS_PATH, 'utf-8'));
 
