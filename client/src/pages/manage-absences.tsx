@@ -1,55 +1,48 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileDown } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { api } from '@/lib/api';
 
-export default function ManageAbsences() {
-  const navigate = useNavigate();
-  const { data: schedule } = useQuery({
-    queryKey: ['schedule'],
-    queryFn: () => api.get('/api/schedule').then(res => res.data)
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
+import { FileDown } from "lucide-react";
+
+export default function ManageAbsencesPage() {
+  const { data: absences, isLoading: loadingAbsences } = useQuery({
+    queryKey: ["/api/absences"],
   });
 
   const { data: teachers } = useQuery({
-    queryKey: ['teachers'],
-    queryFn: () => api.get('/api/teachers').then(res => res.data)
+    queryKey: ["/api/teachers"],
   });
 
-  const { data: absences } = useQuery({
-    queryKey: ['absences'],
-    queryFn: () => api.get('/api/absences').then(res => res.data)
+  const { data: schedule } = useQuery({
+    queryKey: ["/api/schedule"],
   });
 
-  const currentClasses = React.useMemo(() => {
-    if (!schedule || !teachers || !absences) return [];
-    const todayStr = format(new Date(), "yyyy-MM-dd");
+  const availableSubstitutes = teachers?.filter(t => t.isSubstitute) || [];
 
-    return schedule.map(s => {
-      const teacher = teachers.find(t => t.id === s.teacherId);
-      const isAbsent = absences.some(
-        a => a.teacherId === teacher?.id && 
-        format(new Date(a.date), "yyyy-MM-dd") === todayStr
-      );
-
-      return {
-        period: s.period,
-        className: s.className,
-        teacher: teacher?.name || "No teacher",
-        isAbsent,
-        teacherId: teacher?.id
-      };
+  const saveAssignment = async (absenceId: number, classInfo: any, substituteId: number) => {
+    const res = await fetch(`/api/absences/${absenceId}/substitute`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ substituteId }),
     });
-  }, [schedule, teachers, absences]);
+    if (!res.ok) throw new Error("Failed to assign substitute");
+  };
 
   const exportReport = () => {
     const report = {
       date: new Date().toLocaleDateString(),
-      classes: currentClasses
+      absentTeachers: absentTeachers.map(({ teacher, classes }) => ({
+        name: teacher?.name,
+        classes: classes.map(c => ({
+          className: c.className,
+          period: c.period,
+          substitute: c.assigned ? teachers?.find(t => t.id === c.assigned)?.name : 'Unassigned'
+        }))
+      }))
     };
+
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -57,6 +50,17 @@ export default function ManageAbsences() {
     a.download = `absence-report-${report.date}.json`;
     a.click();
   };
+
+  const absentTeachers = absences?.map(absence => {
+    const teacher = teachers?.find(t => t.id === absence.teacherId);
+    const classes = schedule?.filter(s => s.teacherId === absence.teacherId)
+      .map(s => ({
+        period: s.period,
+        className: s.className,
+        assigned: s.substituteId
+      })) || [];
+    return { absence, teacher, classes };
+  }) || [];
 
   return (
     <div className="container py-6 space-y-6">
@@ -67,30 +71,34 @@ export default function ManageAbsences() {
           Export Report
         </Button>
       </div>
-
+      
       <div className="grid grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Classes Needing Substitutes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              {currentClasses.map((c) => (
-                <div 
-                  key={`${c.period}-${c.className}`}
-                  className={`p-4 rounded-lg border cursor-pointer ${c.isAbsent ? 'bg-red-50 border-red-200' : ''}`}
-                  onClick={() => navigate(`/assign-substitute/${c.className}/${c.period}`)}
-                >
-                  <div className="font-medium">{c.className}</div>
-                  <div className="text-sm text-muted-foreground">
-                    Period {c.period}
+            {absentTeachers.length === 0 ? (
+              <p className="text-muted-foreground">No classes need substitutes</p>
+            ) : (
+              <div className="space-y-4">
+                {absentTeachers.map(({teacher, classes}) => (
+                  <div key={teacher?.id} className="space-y-2">
+                    <h3 className="font-medium">{teacher?.name}</h3>
+                    {classes.map((c) => (
+                      <div key={`${c.period}-${c.className}`} className="flex items-center justify-between">
+                        <span>Period {c.period} - {c.className}</span>
+                        {!c.assigned && (
+                          <Button size="sm" onClick={() => assignSubstitute(teacher?.id || 0, c.period, c.className)}>
+                            Assign
+                          </Button>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                  <div className={c.isAbsent ? 'text-red-500' : ''}>
-                    {c.isAbsent ? 'Teacher Absent' : c.teacher}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -99,30 +107,104 @@ export default function ManageAbsences() {
             <CardTitle>Assigned Substitutes</CardTitle>
           </CardHeader>
           <CardContent>
-            {currentClasses.filter(c => c.isAbsent).length === 0 ? (
-              <p className="text-muted-foreground">No substitutes assigned yet</p>
-            ) : (
+            {absentTeachers.some(({classes}) => classes.some(c => c.assigned)) ? (
               <div className="space-y-4">
-                {currentClasses.filter(c => c.isAbsent).map((c) => {
-                  const substitute = teachers?.find(t => 
-                    schedule?.find(s => 
-                      s.className === c.className && 
-                      s.period === c.period
-                    )?.substituteId === t.id
-                  );
+                {absentTeachers.map(({teacher, classes}) => (
+                  <div key={teacher?.id} className="space-y-2">
+                    {classes.filter(c => c.assigned).map((c) => (
+                      <div key={`${c.period}-${c.className}`}>
+                        <span className="font-medium">{teachers?.find(t => t.id === c.assigned)?.name}</span>
+                        <p className="text-sm text-muted-foreground">
+                          Substituting for {teacher?.name} - Period {c.period} - {c.className}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No substitutes assigned yet</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-                  return (
-                    <div key={`${c.period}-${c.className}`} className="p-4 border rounded-lg">
-                      <div className="font-medium">{c.className}</div>
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Unassigned Classes Box */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Classes Needing Substitutes</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {absentTeachers.map(({ absence, teacher, classes }) => (
+              <div key={absence.id} className="space-y-2">
+                {classes.filter(c => !c.assigned).map((c) => (
+                  <div key={`${c.period}-${c.className}`} className="flex items-center justify-between p-2 border rounded">
+                    <div>
+                      <div className="font-medium">{teacher?.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        Period {c.period}
+                        Class {c.className} - Period {c.period}
+                      </div>
+                    </div>
+                    <Select
+                      onValueChange={(value) => {
+                        saveAssignment(absence.id, c, parseInt(value));
+                        toast({
+                          title: "Success",
+                          description: "Substitute assigned successfully",
+                        });
+                      }}
+                    >
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Assign substitute" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableSubstitutes.map(teacher => (
+                          <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                            {teacher.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+            ))}
+            {!absentTeachers.some(({ classes }) => classes.some(c => !c.assigned)) && (
+              <div className="text-center text-muted-foreground py-4">
+                No classes need substitutes
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Assigned Classes Box */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Assigned Substitutes</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {absentTeachers.map(({ teacher, classes }) => (
+              <div key={teacher?.id} className="space-y-2">
+                {classes.filter(c => c.assigned).map((c) => {
+                  const substitute = teachers?.find(t => t.id === c.assigned);
+                  return (
+                    <div key={`${c.period}-${c.className}`} className="p-2 border rounded">
+                      <div className="font-medium">{teacher?.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Class {c.className} - Period {c.period}
                       </div>
                       <div className="text-sm font-medium text-green-600 mt-1">
-                        {substitute ? `Substitute: ${substitute.name}` : 'No substitute assigned'}
+                        Substitute: {substitute?.name}
                       </div>
                     </div>
                   );
                 })}
+              </div>
+            ))}
+            {!absentTeachers.some(({ classes }) => classes.some(c => c.assigned)) && (
+              <div className="text-center text-muted-foreground py-4">
+                No substitutes assigned yet
               </div>
             )}
           </CardContent>
