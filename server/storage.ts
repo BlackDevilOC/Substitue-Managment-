@@ -59,6 +59,10 @@ export class MemStorage implements IStorage {
     return newTeacher;
   }
 
+  async getTeacher(id: number): Promise<Teacher | undefined> {
+    return this.teachers.get(id);
+  }
+
   async getTeachers(): Promise<Teacher[]> {
     return Array.from(this.teachers.values());
   }
@@ -112,13 +116,11 @@ export class MemStorage implements IStorage {
     return Array.from(this.teacherAttendances.values()).filter(a => a.date.toDateString() === dateObj.toDateString());
   }
 
-
   async getTeacherAttendanceBetweenDates(startDate: string, endDate: string): Promise<TeacherAttendance[]> {
     const start = new Date(startDate);
     const end = new Date(endDate);
     return Array.from(this.teacherAttendances.values()).filter(a => a.date >= start && a.date <= end);
   }
-
 }
 
 export const storage = new MemStorage();
