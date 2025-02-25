@@ -57,46 +57,27 @@ export function getAllTeachers(): string[] {
   return Array.from(teachers);
 }
 
-export function recordAttendance(date: string, teacherName: string, status: 'Present' | 'Absent', period?: number, notes?: string) {
+export function recordAttendance(date: string, teacherName: string, status: 'Present' | 'Absent', notes?: string) {
   const record: TeacherAttendance = {
     date,
     teacherName: teacherName.toLowerCase().trim(),
     status,
-    period: period || 0,
     notes
   };
 
   // Save to CSV file
-  const content = `${record.date},${record.teacherName},${record.status},${record.period},${record.notes || ''}\n`;
-  
-  // Create directory if it doesn't exist
-  const dir = path.dirname(ATTENDANCE_FILE_PATH);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  // Create file with header if it doesn't exist
-  if (!fs.existsSync(ATTENDANCE_FILE_PATH)) {
-    fs.writeFileSync(ATTENDANCE_FILE_PATH, 'Date,TeacherName,Status,Period,Notes\n');
-  }
-
+  const content = `${record.date},${record.teacherName},${record.status},${record.notes || ''}\n`;
   fs.appendFileSync(ATTENDANCE_FILE_PATH, content);
-  return record;
-}
 
-export function getAllTeachersAttendance(): TeacherAttendance[] {
-  if (!fs.existsSync(ATTENDANCE_FILE_PATH)) {
-    return [];
-  }
-
-  const content = fs.readFileSync(ATTENDANCE_FILE_PATH, 'utf-8');
-  const records = parse(content, {
-    columns: true,
-    skip_empty_lines: true,
-    trim: true
-  });
-
-  return records;
+  // Also save to local storage
+  const localData = {
+    date: record.date,
+    teacherName: record.teacherName,
+    status: record.status,
+    notes: record.notes
+  };
+  
+  return localData;
 }
 
 export function getAttendanceByDate(date: string): TeacherAttendance[] {
