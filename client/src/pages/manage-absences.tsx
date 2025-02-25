@@ -1,9 +1,10 @@
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileDown } from "lucide-react";
 import { Link } from "wouter";
+import { format } from "date-fns";
 
 interface Teacher {
   id: string;
@@ -11,7 +12,10 @@ interface Teacher {
 }
 
 interface Absence {
+  id: number;
   teacherId: string;
+  date: string;
+  substituteId?: string;
 }
 
 interface ScheduleClass {
@@ -22,9 +26,30 @@ interface ScheduleClass {
   substituteId?: string;
 }
 
+interface LocalStorageData {
+  absences: Absence[];
+  substitutes: {
+    classId: string;
+    substituteId: string;
+    date: string;
+  }[];
+}
+
 export default function ManageAbsencesPage() {
+  const queryClient = useQueryClient();
+  const today = format(new Date(), 'yyyy-MM-dd');
+
   const { data: absences = [] } = useQuery<Absence[]>({
     queryKey: ["/api/absences"],
+    onSuccess: (data) => {
+      const localData = getLocalStorageData();
+      // Merge server data with local data
+      const mergedAbsences = [...data, ...localData.absences.filter(a => !data.find(d => d.id === a.id))];
+      setLocalStorageData({
+        ...localData,
+        absences: mergedAbsences
+      });
+    }
   });
 
   const { data: teachers = [] } = useQuery<Teacher[]>({
@@ -35,31 +60,47 @@ export default function ManageAbsencesPage() {
     queryKey: ["/api/schedule"],
   });
 
-  // Store absences in localStorage whenever they change
-  React.useEffect(() => {
-    if (absences.length > 0) {
-      localStorage.setItem('teacherAbsences', JSON.stringify(absences));
-    }
-  }, [absences]);
+  // Local storage functions
+  const getLocalStorageData = (): LocalStorageData => {
+    const stored = localStorage.getItem('teacherAbsenceData');
+    return stored ? JSON.parse(stored) : { absences: [], substitutes: [] };
+  };
 
-  // Get stored absences
-  const storedAbsences = React.useMemo(() => {
-    const stored = localStorage.getItem('teacherAbsences');
-    return stored ? JSON.parse(stored) : [];
+  const setLocalStorageData = (data: LocalStorageData) => {
+    localStorage.setItem('teacherAbsenceData', JSON.stringify(data));
+  };
+
+  // Get current data from local storage
+  const localData = React.useMemo(() => {
+    return getLocalStorageData();
   }, []);
 
   const exportReport = () => {
+    const localData = getLocalStorageData();
     const report = {
       date: new Date().toLocaleDateString(),
       absentTeachers: absences.map(absence => {
         const teacher = teachers.find(t => t.id === absence.teacherId);
-        const classes = schedule.filter(s => s.teacherId === absence.teacherId)
-          .map(s => ({
+        const classesForTeacher = schedule.filter(s => s.teacherId === absence.teacherId);
+        const classes = classesForTeacher.map(s => {
+          const substituteAssignment = localData.substitutes.find(
+            sub => sub.classId === s.id && sub.date === today
+          );
+          const substitute = substituteAssignment 
+            ? teachers.find(t => t.id === substituteAssignment.substituteId)
+            : undefined;
+
+          return {
             className: s.className,
             period: s.period,
-            substitute: s.substituteId ? teachers.find(t => t.id === s.substituteId)?.name : 'Unassigned'
-          }));
-        return { teacher: teacher?.name, classes };
+            substitute: substitute?.name || 'Unassigned'
+          };
+        });
+        return { 
+          teacher: teacher?.name, 
+          date: absence.date,
+          classes 
+        };
       })
     };
 
@@ -67,21 +108,51 @@ export default function ManageAbsencesPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `absence-report-${report.date}.json`;
+    a.download = `absence-report-${format(new Date(), 'yyyy-MM-dd')}.json`;
     a.click();
   };
 
   const classesNeedingSubstitutes = React.useMemo(() => {
     return schedule.filter(s => {
-      const teacher = teachers.find(t => t.id === s.teacherId);
-      return storedAbsences.some((a: Absence) => a.teacherId === s.teacherId) && !s.substituteId;
-    });
-  }, [schedule, teachers, storedAbsences]);
+      // Check if teacher is absent today
+      const isTeacherAbsent = absences.some(a => 
+        a.teacherId === s.teacherId && 
+        a.date === today
+      );
 
-  const assignedClasses = schedule.filter(s => {
-    const teacher = teachers.find(t => t.id === s.teacherId);
-    return absences.some(a => a.teacherId === s.teacherId) && s.substituteId;
-  });
+      // Check if substitute has been assigned
+      const hasSubstitute = localData.substitutes.some(
+        sub => sub.classId === s.id && sub.date === today
+      );
+
+      return isTeacherAbsent && !hasSubstitute;
+    });
+  }, [schedule, absences, localData.substitutes, today]);
+
+  const assignedClasses = React.useMemo(() => {
+    return schedule.filter(s => {
+      // Check if teacher is absent today
+      const isTeacherAbsent = absences.some(a => 
+        a.teacherId === s.teacherId && 
+        a.date === today
+      );
+
+      // Check if substitute has been assigned
+      const hasSubstitute = localData.substitutes.some(
+        sub => sub.classId === s.id && sub.date === today
+      );
+
+      return isTeacherAbsent && hasSubstitute;
+    }).map(s => {
+      const substituteAssignment = localData.substitutes.find(
+        sub => sub.classId === s.id && sub.date === today
+      );
+      return {
+        ...s,
+        substituteId: substituteAssignment?.substituteId
+      };
+    });
+  }, [schedule, absences, localData.substitutes, today]);
 
   return (
     <div className="container py-6 space-y-6">
