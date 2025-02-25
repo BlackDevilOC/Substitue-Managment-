@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const ATTENDANCE_FILE_PATH = path.join(__dirname, '../data/teacher_attendance.csv');
+const ASSIGNMENTS_FILE_PATH = path.join(__dirname, '../data/teacher_assignments.json');
 const TIMETABLE_PATH = path.join(__dirname, '../data/timetable_file.csv');
 const SUBSTITUTE_PATH = path.join(__dirname, '../data/Substitude_file.csv');
 
@@ -87,7 +87,23 @@ export function getTeacherForClass(period: number, className: string) {
   return teacherAssignments[key];
 }
 
-export function recordAttendance(date: string, teacherName: string, status: 'Present' | 'Absent', period?: number, className?: string, notes?: string) {
+export function recordAttendance(date: string, teacherName: string, status: 'Present' | 'Absent', period?: number, className?: string, substituteTeacher?: string) {
+  const assignments = JSON.parse(fs.readFileSync(ASSIGNMENTS_FILE_PATH, 'utf-8'));
+  
+  if (status === 'Absent') {
+    if (!assignments.absences[date]) {
+      assignments.absences[date] = {};
+    }
+    
+    assignments.absences[date][teacherName] = {
+      periods: period ? [period] : [],
+      substitute: substituteTeacher
+    };
+  }
+  
+  fs.writeFileSync(ASSIGNMENTS_FILE_PATH, JSON.stringify(assignments, null, 2));
+  return assignments;
+}
   const record: TeacherAttendance = {
     date,
     teacherName: teacherName.toLowerCase().trim(),
