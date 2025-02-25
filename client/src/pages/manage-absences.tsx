@@ -1,18 +1,24 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, AlertCircle } from "lucide-react";
-import { format } from "date-fns";
-import { queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
 
-export default function ManageAbsencesPage() {
-  const { toast } = useToast();
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { Loader2, UserMinus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "@/components/ui/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+export function ManageAbsencesPage() {
+  const queryClient = useQueryClient();
   const today = format(new Date(), "yyyy-MM-dd");
 
-  const { data: currentSchedule, isLoading: loadingSchedule } = useQuery({
-    queryKey: ["/api/schedule", today],
+  const { data: schedule, isLoading: loadingSchedule } = useQuery({
+    queryKey: ["/api/schedule"],
   });
 
   const { data: teachers, isLoading: loadingTeachers } = useQuery({
@@ -50,25 +56,34 @@ export default function ManageAbsencesPage() {
 
   const isLoading = loadingSchedule || loadingTeachers || loadingAbsences;
 
-  // Get available substitute teachers
-  const substituteTeachers = teachers?.filter(t => t.isSubstitute && !absences?.some(
-    a => (a.teacherId === t.id || a.substituteId === t.id) && 
-    format(new Date(a.date), "yyyy-MM-dd") === today
-  )) || [];
-
-  // Get classes with absent teachers
-  const absentTeacherClasses = currentSchedule?.filter(schedule => {
-    const teacher = teachers?.find(t => t.id === schedule.teacherId);
-    const isAbsent = absences?.some(
-      a => a.teacherId === teacher?.id && 
+  // Get available substitute teachers (not absent and not already assigned)
+  const availableSubstitutes = teachers?.filter(t => {
+    const isAbsentToday = absences?.some(
+      a => a.teacherId === t.id && 
       format(new Date(a.date), "yyyy-MM-dd") === today
     );
-    return isAbsent;
+    const isAssignedToday = absences?.some(
+      a => a.substituteId === t.id && 
+      format(new Date(a.date), "yyyy-MM-dd") === today
+    );
+    return !isAbsentToday && !isAssignedToday;
   }) || [];
 
-  const handleAssignSubstitute = (absenceId: number, substituteId: number) => {
-    assignSubstituteMutation.mutate({ absenceId, substituteId });
-  };
+  // Get absent teachers and their classes
+  const absentTeachers = absences?.filter(
+    a => format(new Date(a.date), "yyyy-MM-dd") === today
+  ).map(absence => {
+    const teacher = teachers?.find(t => t.id === absence.teacherId);
+    const substitute = teachers?.find(t => t.id === absence.substituteId);
+    const teacherClasses = schedule?.filter(s => s.teacherId === absence.teacherId) || [];
+    
+    return {
+      absence,
+      teacher,
+      substitute,
+      classes: teacherClasses
+    };
+  }) || [];
 
   if (isLoading) {
     return (
@@ -83,61 +98,53 @@ export default function ManageAbsencesPage() {
       <h1 className="text-2xl font-bold">Manage Absences</h1>
 
       <div className="grid gap-4">
-        {absentTeacherClasses.map(schedule => {
-          const teacher = teachers?.find(t => t.id === schedule.teacherId);
-          const absence = absences?.find(
-            a => a.teacherId === teacher?.id && 
-            format(new Date(a.date), "yyyy-MM-dd") === today
-          );
-          const substitute = teachers?.find(t => t.id === absence?.substituteId);
-
-          return (
-            <Card key={`${schedule.className}-${schedule.period}`}>
-              <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        {absentTeachers.map(({ absence, teacher, substitute, classes }) => (
+          <Card key={absence.id}>
+            <CardContent className="p-4">
+              <div className="flex flex-col space-y-4">
+                <div className="flex justify-between items-center">
                   <div>
-                    <h3 className="font-medium">
-                      Class {schedule.className.toUpperCase()} - Period {schedule.period}
-                    </h3>
-                    <div className="flex items-center text-sm text-red-600">
-                      <AlertCircle className="h-4 w-4 mr-2" />
-                      Teacher Absent: {teacher?.name}
-                    </div>
-                    {substitute && (
-                      <div className="text-sm text-yellow-600">
-                        Substitute Assigned: {substitute.name}
-                      </div>
-                    )}
+                    <h3 className="font-semibold">{teacher?.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Classes: {classes.map(c => c.className).join(", ")}
+                    </p>
                   </div>
-
-                  {!substitute && (
-                    <div className="w-full sm:w-auto">
-                      <Select 
-                        onValueChange={(value) => handleAssignSubstitute(absence!.id, parseInt(value))}
-                        disabled={assignSubstituteMutation.isPending}
-                      >
-                        <SelectTrigger className="w-full sm:w-[200px]">
-                          <SelectValue placeholder="Assign substitute" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {substituteTeachers.map(teacher => (
-                            <SelectItem key={teacher.id} value={teacher.id.toString()}>
-                              {teacher.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  
+                  {substitute ? (
+                    <div className="text-sm">
+                      Substitute: <span className="font-semibold">{substitute.name}</span>
                     </div>
+                  ) : (
+                    <Select
+                      onValueChange={(value) => 
+                        assignSubstituteMutation.mutate({
+                          absenceId: absence.id,
+                          substituteId: parseInt(value)
+                        })
+                      }
+                      disabled={assignSubstituteMutation.isPending}
+                    >
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Assign substitute" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableSubstitutes.map(teacher => (
+                          <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                            {teacher.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
 
-        {absentTeacherClasses.length === 0 && (
+        {absentTeachers.length === 0 && (
           <div className="text-center text-muted-foreground py-8">
-            No classes with absent teachers today
+            No absent teachers today
           </div>
         )}
       </div>

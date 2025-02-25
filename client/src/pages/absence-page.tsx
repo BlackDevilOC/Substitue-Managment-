@@ -36,6 +36,7 @@ export default function AbsencePage() {
         body: JSON.stringify(parsed.data),
       });
       if (!res.ok) throw new Error("Failed to mark absence");
+      await queryClient.invalidateQueries({ queryKey: ["/api/absences"] });
       return res.json();
     },
     onSuccess: () => {
