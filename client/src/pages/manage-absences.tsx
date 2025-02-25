@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function ManageAbsencesPage() {
+export default function ManageAbsencesPage() {
   const queryClient = useQueryClient();
   const today = format(new Date(), "yyyy-MM-dd");
 
