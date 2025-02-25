@@ -17,8 +17,17 @@ interface TeacherAttendance {
   teacherName: string;
   status: 'Present' | 'Absent';
   period?: number;
+  class?: string;
   notes?: string;
 }
+
+interface TeacherAssignment {
+  teacherName: string;
+  period: number;
+  class: string;
+}
+
+const teacherAssignments: { [key: string]: TeacherAssignment } = {};
 
 export function getAllTeachers(): string[] {
   const teachers = new Set<string>();
@@ -63,7 +72,22 @@ export function getAllTeachers(): string[] {
   return Array.from(teachers);
 }
 
-export function recordAttendance(date: string, teacherName: string, status: 'Present' | 'Absent', period?: number, notes?: string) {
+export function assignTeacher(teacherName: string, period: number, className: string) {
+  const key = `${period}-${className}`;
+  teacherAssignments[key] = {
+    teacherName: teacherName.toLowerCase().trim(),
+    period,
+    class: className.toLowerCase().trim()
+  };
+  return teacherAssignments[key];
+}
+
+export function getTeacherForClass(period: number, className: string) {
+  const key = `${period}-${className}`;
+  return teacherAssignments[key];
+}
+
+export function recordAttendance(date: string, teacherName: string, status: 'Present' | 'Absent', period?: number, className?: string, notes?: string) {
   const record: TeacherAttendance = {
     date,
     teacherName: teacherName.toLowerCase().trim(),
