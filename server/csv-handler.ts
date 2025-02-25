@@ -1,6 +1,25 @@
 import { parse } from 'csv-parse/sync';
 import { Teacher, Schedule } from '@shared/schema';
 import { storage } from './storage';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const TIMETABLE_PATH = path.join(__dirname, '../data/timetable_file.csv');
+const SUBSTITUTE_PATH = path.join(__dirname, '../data/Substitude_file.csv');
+
+export async function loadInitialData() {
+  try {
+    const timetableContent = fs.readFileSync(TIMETABLE_PATH, 'utf-8');
+    const substituteContent = fs.readFileSync(SUBSTITUTE_PATH, 'utf-8');
+    
+    await processTimetableCSV(timetableContent);
+    await processSubstituteCSV(substituteContent);
+    
+    console.log('Initial data loaded successfully');
+  } catch (error) {
+    console.error('Error loading initial data:', error);
+  }
+}
 
 export async function processTimetableCSV(fileContent: string): Promise<Schedule[]> {
   try {
