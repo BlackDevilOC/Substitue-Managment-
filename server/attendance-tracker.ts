@@ -1,74 +1,30 @@
-
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
-import { parse, stringify } from 'csv-parse/sync';
-import { format } from 'date-fns';
+import { parse } from 'csv-parse/sync';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const ASSIGNMENTS_FILE_PATH = path.join(__dirname, '../data/teacher_assignments.json');
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const ASSIGNMENTS_PATH = path.join(__dirname, '../data/teacher_assignments.json');
 const TIMETABLE_PATH = path.join(__dirname, '../data/timetable_file.csv');
-const SUBSTITUTE_PATH = path.join(__dirname, '../data/Substitude_file.csv');
-
-interface TeacherAttendance {
-  date: string;
-  teacherName: string;
-  status: 'Present' | 'Absent';
-  period?: number;
-  class?: string;
-  notes?: string;
-}
-
-interface TeacherAssignment {
-  teacherName: string;
-  period: number;
-  class: string;
-}
-
-const teacherAssignments: { [key: string]: TeacherAssignment } = {};
 
 export function getAllTeachers(): string[] {
+  if (!fs.existsSync(TIMETABLE_PATH)) return [];
+
+  const timetableContent = fs.readFileSync(TIMETABLE_PATH, 'utf-8');
+  const timetableRecords = parse(timetableContent, {
+    columns: false,
+    skip_empty_lines: true,
+    trim: true
+  });
+
   const teachers = new Set<string>();
-  
-  // Read from timetable
-  if (fs.existsSync(TIMETABLE_PATH)) {
-    const timetableContent = fs.readFileSync(TIMETABLE_PATH, 'utf-8');
-    const timetableRecords = parse(timetableContent, {
-      columns: false,
-      skip_empty_lines: true,
-      trim: true
-    });
-
-    // Skip header row and collect teachers
-    for (let i = 1; i < timetableRecords.length; i++) {
-      const row = timetableRecords[i];
-      for (let j = 2; j < row.length; j++) {
-        if (row[j] && row[j].toLowerCase() !== 'empty') {
-          teachers.add(row[j].toLowerCase().trim());
-        }
+  for (let i = 1; i < timetableRecords.length; i++) {
+    const row = timetableRecords[i];
+    for (let j = 2; j < row.length; j++) {
+      if (row[j] && row[j].toLowerCase() !== 'empty') {
+        teachers.add(row[j].toLowerCase().trim());
       }
     }
   }
-
-  // Read from substitute file
-  if (fs.existsSync(SUBSTITUTE_PATH)) {
-    const substituteContent = fs.readFileSync(SUBSTITUTE_PATH, 'utf-8');
-    const substituteRecords = parse(substituteContent, {
-      columns: false,
-      skip_empty_lines: true,
-      trim: true
-    });
-
-    // Collect substitute teachers
-    for (const row of substituteRecords) {
-      if (row[0]) {
-        teachers.add(row[0].toLowerCase().trim());
-      }
-    }
-  }
-
   return Array.from(teachers);
 }
 
@@ -87,93 +43,32 @@ export function getTeacherForClass(period: number, className: string) {
   return teacherAssignments[key];
 }
 
-export function recordAttendance(date: string, teacherName: string, status: 'Present' | 'Absent', period?: number, className?: string, substituteTeacher?: string) {
-  const assignments = JSON.parse(fs.readFileSync(ASSIGNMENTS_FILE_PATH, 'utf-8'));
-  
+export function recordAttendance(date: string, teacherName: string, status: 'Present' | 'Absent', period?: number, className?: string) {
+  const assignments = JSON.parse(fs.readFileSync(ASSIGNMENTS_PATH, 'utf-8'));
+
   if (status === 'Absent') {
     if (!assignments.absences[date]) {
       assignments.absences[date] = {};
     }
-    
-    assignments.absences[date][teacherName] = {
+    assignments.absences[date][teacherName.toLowerCase()] = {
       periods: period ? [period] : [],
-      substitute: substituteTeacher
+      class: className
     };
   }
-  
-  fs.writeFileSync(ASSIGNMENTS_FILE_PATH, JSON.stringify(assignments, null, 2));
+
+  fs.writeFileSync(ASSIGNMENTS_PATH, JSON.stringify(assignments, null, 2));
   return assignments;
 }
-  const record: TeacherAttendance = {
-    date,
-    teacherName: teacherName.toLowerCase().trim(),
-    status,
-    period,
-    class: className,
-    notes
-  };
 
-  // Save to attendance CSV
-  const dir = path.dirname(ATTENDANCE_FILE_PATH);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  if (!fs.existsSync(ATTENDANCE_FILE_PATH)) {
-    fs.writeFileSync(ATTENDANCE_FILE_PATH, 'Date,TeacherName,Status,Period,Class,Notes\n');
-  }
-
-  const content = `${record.date},${record.teacherName},${record.status},${record.period || ''},${record.class || ''},${record.notes || ''}\n`;
-  fs.appendFileSync(ATTENDANCE_FILE_PATH, content);
-
-  // If teacher is absent, also store in absent_teachers.json
-  if (status === 'Absent') {
-    const absentTeachersPath = path.join(__dirname, '../data/absent_teachers.json');
-    let absentTeachers = { absent_teachers: [] };
-    
-    if (fs.existsSync(absentTeachersPath)) {
-      absentTeachers = JSON.parse(fs.readFileSync(absentTeachersPath, 'utf-8'));
-    }
-
-    absentTeachers.absent_teachers.push({
-      name: record.teacherName,
-      date: record.date,
-      period: record.period,
-      class: record.class
-    });
-
-    fs.writeFileSync(absentTeachersPath, JSON.stringify(absentTeachers, null, 2));
-  }
-
-  return record;
+export function getAbsentTeachers(date: string) {
+  const assignments = JSON.parse(fs.readFileSync(ASSIGNMENTS_PATH, 'utf-8'));
+  return assignments.absences[date] || {};
 }
 
-export function getAttendanceByDate(date: string): TeacherAttendance[] {
-  if (!fs.existsSync(ATTENDANCE_FILE_PATH)) {
-    return [];
-  }
+const teacherAssignments: { [key: string]: TeacherAssignment } = {};
 
-  const content = fs.readFileSync(ATTENDANCE_FILE_PATH, 'utf-8');
-  const records = parse(content, {
-    columns: true,
-    skip_empty_lines: true,
-    trim: true
-  });
-
-  return records.filter((record: TeacherAttendance) => record.date === date);
-}
-
-export function getAllTeachersAttendance(): TeacherAttendance[] {
-  if (!fs.existsSync(ATTENDANCE_FILE_PATH)) {
-    return [];
-  }
-
-  const content = fs.readFileSync(ATTENDANCE_FILE_PATH, 'utf-8');
-  const records = parse(content, {
-    columns: true,
-    skip_empty_lines: true,
-    trim: true
-  });
-
-  return records;
+interface TeacherAssignment {
+  teacherName: string;
+  period: number;
+  class: string;
 }

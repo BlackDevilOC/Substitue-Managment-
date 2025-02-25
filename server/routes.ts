@@ -121,12 +121,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(schedule);
   });
 
-  app.post("/api/schedule", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    const parsed = insertScheduleSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json(parsed.error);
-    const schedule = await storage.createSchedule(parsed.data);
-    res.status(201).json(schedule);
+  app.get("/api/teachers", (req, res) => {
+    const teachers = storage.getTeachers();
+    res.json(teachers);
+  });
+
+  app.post("/api/absences", (req, res) => {
+    const { teacherId, date } = req.body;
+    const absence = storage.createAbsence({ teacherId, date });
+    res.status(201).json(absence);
+  });
+
+  app.post("/api/absences/substitute", (req, res) => {
+    const { teacherId, substituteId, date } = req.body;
+    storage.assignSubstitute(teacherId, substituteId, date);
+    res.sendStatus(200);
   });
 
   app.get("/api/absences", async (req, res) => {
