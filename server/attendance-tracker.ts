@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const ASSIGNMENTS_FILE_PATH = path.join(__dirname, '../data/teacher_assignments.json');
+const ATTENDANCE_FILE_PATH = path.join(__dirname, '../data/teacher_attendance.csv');
 const TIMETABLE_PATH = path.join(__dirname, '../data/timetable_file.csv');
 const SUBSTITUTE_PATH = path.join(__dirname, '../data/Substitude_file.csv');
 
@@ -87,64 +87,29 @@ export function getTeacherForClass(period: number, className: string) {
   return teacherAssignments[key];
 }
 
-export function recordAttendance(date: string, teacherName: string, status: 'Present' | 'Absent', period?: number, className?: string, substituteTeacher?: string) {
-  const assignments = JSON.parse(fs.readFileSync(ASSIGNMENTS_FILE_PATH, 'utf-8'));
-  
-  if (status === 'Absent') {
-    if (!assignments.absences[date]) {
-      assignments.absences[date] = {};
-    }
-    
-    assignments.absences[date][teacherName] = {
-      periods: period ? [period] : [],
-      substitute: substituteTeacher
-    };
-  }
-  
-  fs.writeFileSync(ASSIGNMENTS_FILE_PATH, JSON.stringify(assignments, null, 2));
-  return assignments;
-}
+export function recordAttendance(date: string, teacherName: string, status: 'Present' | 'Absent', period?: number, className?: string, notes?: string) {
   const record: TeacherAttendance = {
     date,
     teacherName: teacherName.toLowerCase().trim(),
     status,
     period,
-    class: className,
     notes
   };
 
-  // Save to attendance CSV
+  // Ensure directory exists
   const dir = path.dirname(ATTENDANCE_FILE_PATH);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
+  // Create file with header if it doesn't exist
   if (!fs.existsSync(ATTENDANCE_FILE_PATH)) {
-    fs.writeFileSync(ATTENDANCE_FILE_PATH, 'Date,TeacherName,Status,Period,Class,Notes\n');
+    fs.writeFileSync(ATTENDANCE_FILE_PATH, 'Date,TeacherName,Status,Period,Notes\n');
   }
 
-  const content = `${record.date},${record.teacherName},${record.status},${record.period || ''},${record.class || ''},${record.notes || ''}\n`;
+  // Save to CSV file
+  const content = `${record.date},${record.teacherName},${record.status},${record.period || ''},${record.notes || ''}\n`;
   fs.appendFileSync(ATTENDANCE_FILE_PATH, content);
-
-  // If teacher is absent, also store in absent_teachers.json
-  if (status === 'Absent') {
-    const absentTeachersPath = path.join(__dirname, '../data/absent_teachers.json');
-    let absentTeachers = { absent_teachers: [] };
-    
-    if (fs.existsSync(absentTeachersPath)) {
-      absentTeachers = JSON.parse(fs.readFileSync(absentTeachersPath, 'utf-8'));
-    }
-
-    absentTeachers.absent_teachers.push({
-      name: record.teacherName,
-      date: record.date,
-      period: record.period,
-      class: record.class
-    });
-
-    fs.writeFileSync(absentTeachersPath, JSON.stringify(absentTeachers, null, 2));
-  }
-
   return record;
 }
 
