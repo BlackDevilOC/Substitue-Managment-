@@ -65,8 +65,19 @@ export function recordAttendance(date: string, teacherName: string, status: 'Pre
     notes
   };
 
+  // Save to CSV file
   const content = `${record.date},${record.teacherName},${record.status},${record.notes || ''}\n`;
   fs.appendFileSync(ATTENDANCE_FILE_PATH, content);
+
+  // Also save to local storage
+  const localData = {
+    date: record.date,
+    teacherName: record.teacherName,
+    status: record.status,
+    notes: record.notes
+  };
+  
+  return localData;
 }
 
 export function getAttendanceByDate(date: string): TeacherAttendance[] {
