@@ -43,7 +43,8 @@ export function getTeacherForClass(period: number, className: string) {
   return teacherAssignments[key];
 }
 
-export function recordAttendance(date: string, teacherName: string, status: 'Present' | 'Absent', period?: number, className?: string) {
+export function recordAttendance(date: string, teacherName: string, status: 'Present' | 'Absent', period?: number, className?: string, substituteTeacher?: string) {
+  // Update JSON assignments
   const assignments = JSON.parse(fs.readFileSync(ASSIGNMENTS_PATH, 'utf-8'));
 
   if (status === 'Absent') {
@@ -52,11 +53,15 @@ export function recordAttendance(date: string, teacherName: string, status: 'Pre
     }
     assignments.absences[date][teacherName.toLowerCase()] = {
       periods: period ? [period] : [],
-      class: className
+      substitute: substituteTeacher
     };
   }
-
   fs.writeFileSync(ASSIGNMENTS_PATH, JSON.stringify(assignments, null, 2));
+
+  // Update CSV attendance record
+  const csvRecord = `${date},${teacherName},${status},${substituteTeacher || ''},${className || ''}\n`;
+  fs.appendFileSync(path.join(__dirname, '../data/teacher_attendance.csv'), csvRecord);
+
   return assignments;
 }
 
