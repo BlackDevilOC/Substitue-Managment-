@@ -1,24 +1,25 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { Loader2, UserMinus } from "lucide-react";
+
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "@/hooks/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
+import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { useEffect, useState } from "react";
+
+interface ClassAssignment {
+  period: number;
+  className: string;
+  teacherId: number;
+  substituteId?: number;
+}
 
 export default function ManageAbsencesPage() {
-  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const today = format(new Date(), "yyyy-MM-dd");
-
-  const { data: schedule, isLoading: loadingSchedule } = useQuery({
-    queryKey: ["/api/schedule"],
-  });
+  const [localAssignments, setLocalAssignments] = useState<Record<string, ClassAssignment[]>>({});
 
   const { data: teachers, isLoading: loadingTeachers } = useQuery({
     queryKey: ["/api/teachers"],
@@ -28,59 +29,48 @@ export default function ManageAbsencesPage() {
     queryKey: ["/api/absences"],
   });
 
-  const assignSubstituteMutation = useMutation({
-    mutationFn: async ({ absenceId, substituteId }: { absenceId: number; substituteId: number }) => {
-      const res = await fetch(`/api/absences/${absenceId}/substitute`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ substituteId }),
-      });
-      if (!res.ok) throw new Error("Failed to assign substitute");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/absences"] });
-      toast({
-        title: "Success",
-        description: "Substitute teacher assigned successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
+  const { data: schedule, isLoading: loadingSchedule } = useQuery({
+    queryKey: ["/api/schedule"],
   });
 
-  const isLoading = loadingSchedule || loadingTeachers || loadingAbsences;
+  useEffect(() => {
+    const stored = localStorage.getItem('substituteAssignments');
+    if (stored) {
+      setLocalAssignments(JSON.parse(stored));
+    }
+  }, []);
 
-  // Get available substitute teachers (not absent and not already assigned)
-  const availableSubstitutes = teachers?.filter(t => {
-    const isAbsentToday = absences?.some(
-      a => a.teacherId === t.id && 
-      format(new Date(a.date), "yyyy-MM-dd") === today
-    );
-    const isAssignedToday = absences?.some(
-      a => a.substituteId === t.id && 
-      format(new Date(a.date), "yyyy-MM-dd") === today
-    );
-    return !isAbsentToday && !isAssignedToday;
-  }) || [];
+  const saveAssignment = (absenceId: number, classInfo: ClassAssignment, substituteId: number) => {
+    const key = `${today}-${absenceId}`;
+    const assignments = { 
+      ...localAssignments,
+      [key]: [...(localAssignments[key] || []), { ...classInfo, substituteId }]
+    };
+    setLocalAssignments(assignments);
+    localStorage.setItem('substituteAssignments', JSON.stringify(assignments));
+  };
+
+  const isLoading = loadingSchedule || loadingTeachers || loadingAbsences;
+  const availableSubstitutes = teachers?.filter(t => t.isSubstitute) || [];
 
   // Get absent teachers and their classes
   const absentTeachers = absences?.filter(
     a => format(new Date(a.date), "yyyy-MM-dd") === today
   ).map(absence => {
     const teacher = teachers?.find(t => t.id === absence.teacherId);
-    const substitute = teachers?.find(t => t.id === absence.substituteId);
     const teacherClasses = schedule?.filter(s => s.teacherId === absence.teacherId) || [];
+    const key = `${today}-${absence.id}`;
+    const assignedClasses = localAssignments[key] || [];
 
     return {
       absence,
       teacher,
-      substitute,
-      classes: teacherClasses
+      classes: teacherClasses.map(c => ({
+        ...c,
+        assigned: assignedClasses.find(a => 
+          a.period === c.period && a.className === c.className
+        )?.substituteId
+      }))
     };
   }) || [];
 
@@ -96,34 +86,50 @@ export default function ManageAbsencesPage() {
     <div className="container mx-auto p-4 space-y-6">
       <h1 className="text-2xl font-bold">Manage Absences</h1>
 
+      {/* Assigned Substitutes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Assigned Substitutes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {Object.entries(localAssignments).map(([key, assignments]) => (
+            <div key={key} className="mb-4">
+              {assignments.map((assignment, idx) => {
+                const substitute = teachers?.find(t => t.id === assignment.substituteId);
+                return (
+                  <div key={idx} className="text-sm p-2 border-b">
+                    <span className="font-semibold">{assignment.className}</span> - 
+                    Period {assignment.period} - 
+                    Substitute: {substitute?.name}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Unassigned Classes */}
       <div className="grid gap-4">
-        {absentTeachers.map(({ absence, teacher, substitute, classes }) => (
+        {absentTeachers.map(({ absence, teacher, classes }) => (
           <Card key={absence.id}>
             <CardContent className="p-4">
-              <div className="flex flex-col space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-semibold">{teacher?.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Classes: {classes.map(c => (
-                        `${c.className.toUpperCase()} (Period ${c.period})`
-                      )).join(", ")}
-                    </p>
-                  </div>
-
-                  {substitute ? (
-                    <div className="text-sm">
-                      Substitute: <span className="font-semibold">{substitute.name}</span>
+              <h3 className="font-semibold mb-2">{teacher?.name}</h3>
+              <div className="grid gap-4">
+                {classes.map((c) => !c.assigned && (
+                  <div key={`${c.period}-${c.className}`} className="flex items-center justify-between">
+                    <div>
+                      <span className="font-medium">{c.className.toUpperCase()}</span>
+                      <span className="text-sm text-muted-foreground ml-2">Period {c.period}</span>
                     </div>
-                  ) : (
                     <Select
-                      onValueChange={(value) => 
-                        assignSubstituteMutation.mutate({
-                          absenceId: absence.id,
-                          substituteId: parseInt(value)
-                        })
-                      }
-                      disabled={assignSubstituteMutation.isPending}
+                      onValueChange={(value) => {
+                        saveAssignment(absence.id, c, parseInt(value));
+                        toast({
+                          title: "Success",
+                          description: "Substitute assigned successfully",
+                        });
+                      }}
                     >
                       <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Assign substitute" />
@@ -136,8 +142,8 @@ export default function ManageAbsencesPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                  )}
-                </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
