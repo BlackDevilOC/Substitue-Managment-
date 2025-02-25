@@ -291,8 +291,8 @@ export default function HomePage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
+      <div className="grid grid-cols-1 gap-4">
+            <Card className="w-[95%] mx-auto">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
@@ -300,8 +300,22 @@ export default function HomePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-sm text-muted-foreground mb-2">
-                  {format(new Date(), "EEEE, MMMM d")} - Period {currentPeriod}
+                <div className="flex justify-between items-center mb-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setCurrentPeriod(p => p === 1 ? 8 : p - 1)}
+                  >
+                    Previous Period
+                  </Button>
+                  <div className="text-sm text-muted-foreground">
+                    {format(new Date(), "EEEE, MMMM d")} - Period {currentPeriod}
+                  </div>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setCurrentPeriod(p => p === 8 ? 1 : p + 1)}
+                  >
+                    Next Period
+                  </Button>
                 </div>
                 <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                   {currentTeachers.map(({ className, teacher }) => (
