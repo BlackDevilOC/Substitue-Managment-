@@ -210,13 +210,40 @@ export default function HomePage() {
         </Button>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Upload className="h-5 w-5" />
+            Upload Files
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Input
+              type="file"
+              accept=".csv"
+              onChange={handleTimetableUpload}
+              disabled={uploadTimetableMutation.isPending}
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              Upload timetable CSV
+            </p>
+          </div>
+          <div>
+            <Input
+              type="file"
+              accept=".csv"
+              onChange={handleSubstitutesUpload}
+              disabled={uploadSubstitutesMutation.isPending}
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              Upload substitute teachers CSV
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -224,7 +251,6 @@ export default function HomePage() {
                   Current Classes
                 </CardTitle>
               </CardHeader>
-              {/* Update the CardContent section to show status colors */}
               <CardContent>
                 <div className="text-sm text-muted-foreground mb-2">
                   {format(new Date(), "EEEE, MMMM d")} - Period {currentPeriod}
@@ -249,39 +275,6 @@ export default function HomePage() {
                   ))}
                 </div>
                 <Button onClick={() => setCurrentPeriod(p => p === 8 ? 1 : p + 1)}>Next Period</Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5" />
-                  Upload Files
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleTimetableUpload}
-                    disabled={uploadTimetableMutation.isPending}
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Upload timetable CSV
-                  </p>
-                </div>
-                <div>
-                  <Input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleSubstitutesUpload}
-                    disabled={uploadSubstitutesMutation.isPending}
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Upload substitute teachers CSV
-                  </p>
-                </div>
               </CardContent>
             </Card>
 
@@ -334,8 +327,6 @@ export default function HomePage() {
               </CardContent>
             </Card>
           </div>
-        </>
-      )}
     </div>
   );
 }
