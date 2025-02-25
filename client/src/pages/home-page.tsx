@@ -210,38 +210,86 @@ export default function HomePage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
-            Upload Files
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Input
-              type="file"
-              accept=".csv"
-              onChange={handleTimetableUpload}
-              disabled={uploadTimetableMutation.isPending}
-            />
-            <p className="text-sm text-muted-foreground mt-1">
-              Upload timetable CSV
+      <div className="grid grid-cols-2 gap-4"> {/* 2x2 grid */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              Upload Files
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Input
+                type="file"
+                accept=".csv"
+                onChange={handleTimetableUpload}
+                disabled={uploadTimetableMutation.isPending}
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Upload timetable CSV
+              </p>
+            </div>
+            <div>
+              <Input
+                type="file"
+                accept=".csv"
+                onChange={handleSubstitutesUpload}
+                disabled={uploadSubstitutesMutation.isPending}
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Upload substitute teachers CSV
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Schedule Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">View and manage daily schedules</p>
+            <Link href="/schedule">
+              <Button className="w-full mt-4">View Schedule</Button>
+            </Link>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserMinus className="h-5 w-5" />
+              Absent Teachers
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{absences?.length || 0}</p>
+            <p className="text-muted-foreground">teachers marked absent today</p>
+            <Link href="/absences">
+              <Button className="w-full mt-4">Manage Absences</Button>
+            </Link>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserCheck className="h-5 w-5" />
+              Substitute Teachers
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">
+              {teachers?.filter(t => t.isSubstitute)?.length || 0}
             </p>
-          </div>
-          <div>
-            <Input
-              type="file"
-              accept=".csv"
-              onChange={handleSubstitutesUpload}
-              disabled={uploadSubstitutesMutation.isPending}
-            />
-            <p className="text-sm text-muted-foreground mt-1">
-              Upload substitute teachers CSV
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+            <p className="text-muted-foreground">available substitutes</p>
+            <Link href="/substitutes">
+              <Button className="w-full mt-4">View Substitutes</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
@@ -278,54 +326,7 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Schedule Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">View and manage daily schedules</p>
-                <Link href="/schedule">
-                  <Button className="w-full mt-4">View Schedule</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserMinus className="h-5 w-5" />
-                  Absent Teachers
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{absences?.length || 0}</p>
-                <p className="text-muted-foreground">teachers marked absent today</p>
-                <Link href="/absences">
-                  <Button className="w-full mt-4">Manage Absences</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserCheck className="h-5 w-5" />
-                  Substitute Teachers
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">
-                  {teachers?.filter(t => t.isSubstitute)?.length || 0}
-                </p>
-                <p className="text-muted-foreground">available substitutes</p>
-                <Link href="/substitutes">
-                  <Button className="w-full mt-4">View Substitutes</Button>
-                </Link>
-              </CardContent>
-            </Card>
+          
           </div>
     </div>
   );
