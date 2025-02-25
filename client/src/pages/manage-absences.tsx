@@ -41,15 +41,6 @@ export default function ManageAbsencesPage() {
 
   const { data: absences = [] } = useQuery<Absence[]>({
     queryKey: ["/api/absences"],
-    onSuccess: (data) => {
-      const localData = getLocalStorageData();
-      // Merge server data with local data
-      const mergedAbsences = [...data, ...localData.absences.filter(a => !data.find(d => d.id === a.id))];
-      setLocalStorageData({
-        ...localData,
-        absences: mergedAbsences
-      });
-    }
   });
 
   const { data: teachers = [] } = useQuery<Teacher[]>({
@@ -74,6 +65,17 @@ export default function ManageAbsencesPage() {
   const localData = React.useMemo(() => {
     return getLocalStorageData();
   }, []);
+
+  // Sync local data with server data
+  React.useEffect(() => {
+    if (absences.length > 0) {
+      const localData = getLocalStorageData();
+      setLocalStorageData({
+        ...localData,
+        absences: absences
+      });
+    }
+  }, [absences]);
 
   const exportReport = () => {
     const localData = getLocalStorageData();
@@ -113,35 +115,29 @@ export default function ManageAbsencesPage() {
   };
 
   const classesNeedingSubstitutes = React.useMemo(() => {
-    return schedule.filter(s => {
-      // Check if teacher is absent today
-      const isTeacherAbsent = absences.some(a => 
-        a.teacherId === s.teacherId && 
-        a.date === today
-      );
+    const absentTeacherIds = absences
+      .filter(a => a.date === today)
+      .map(a => a.teacherId);
 
-      // Check if substitute has been assigned
+    return schedule.filter(s => {
+      const isTeacherAbsent = absentTeacherIds.includes(s.teacherId);
       const hasSubstitute = localData.substitutes.some(
         sub => sub.classId === s.id && sub.date === today
       );
-
       return isTeacherAbsent && !hasSubstitute;
     });
   }, [schedule, absences, localData.substitutes, today]);
 
   const assignedClasses = React.useMemo(() => {
-    return schedule.filter(s => {
-      // Check if teacher is absent today
-      const isTeacherAbsent = absences.some(a => 
-        a.teacherId === s.teacherId && 
-        a.date === today
-      );
+    const absentTeacherIds = absences
+      .filter(a => a.date === today)
+      .map(a => a.teacherId);
 
-      // Check if substitute has been assigned
+    return schedule.filter(s => {
+      const isTeacherAbsent = absentTeacherIds.includes(s.teacherId);
       const hasSubstitute = localData.substitutes.some(
         sub => sub.classId === s.id && sub.date === today
       );
-
       return isTeacherAbsent && hasSubstitute;
     }).map(s => {
       const substituteAssignment = localData.substitutes.find(
