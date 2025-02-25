@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { teachers, absences, schedules } from "./schema";
+import { teachers, absences, schedules } from "../shared/schema";
 import { eq } from "drizzle-orm";
 
 export const storage = {
