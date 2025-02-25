@@ -139,7 +139,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const parsed = insertAbsenceSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
+    
     const absence = await storage.createAbsence(parsed.data);
+    const teacher = await storage.getTeacher(parsed.data.teacherId);
+    
+    if (teacher) {
+      const { recordAttendance } = await import('./attendance-tracker.js');
+      recordAttendance(
+        parsed.data.date,
+        teacher.name,
+        'Absent'
+      );
+    }
+    
     res.status(201).json(absence);
   });
 
