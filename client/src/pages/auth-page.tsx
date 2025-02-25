@@ -12,7 +12,7 @@ import { Loader2 } from "lucide-react";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
-  
+
   const loginForm = useForm({
     resolver: zodResolver(insertUserSchema),
     defaultValues: { username: "", password: "" }
@@ -28,16 +28,16 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">School Schedule Manager</CardTitle>
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-[90%] sm:max-w-md mx-auto shadow-lg">
+        <CardHeader className="space-y-2 pb-6">
+          <CardTitle className="text-xl sm:text-2xl text-center font-semibold">School Schedule Manager</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="login">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="login" className="text-sm sm:text-base py-2">Login</TabsTrigger>
+              <TabsTrigger value="register" className="text-sm sm:text-base py-2">Register</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
@@ -48,9 +48,9 @@ export default function AuthPage() {
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Username</FormLabel>
+                        <FormLabel className="text-base">Username</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} className="h-11 text-base" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -61,16 +61,16 @@ export default function AuthPage() {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Password</FormLabel>
+                        <FormLabel className="text-base">Password</FormLabel>
                         <FormControl>
-                          <Input type="password" {...field} />
+                          <Input type="password" {...field} className="h-11 text-base" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
-                    {loginMutation.isPending ? <Loader2 className="animate-spin" /> : "Login"}
+                  <Button type="submit" className="w-full h-11 text-base mt-6" disabled={loginMutation.isPending}>
+                    {loginMutation.isPending ? <Loader2 className="animate-spin h-5 w-5" /> : "Login"}
                   </Button>
                 </form>
               </Form>
@@ -84,9 +84,9 @@ export default function AuthPage() {
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Username</FormLabel>
+                        <FormLabel className="text-base">Username</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} className="h-11 text-base" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -97,16 +97,16 @@ export default function AuthPage() {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Password</FormLabel>
+                        <FormLabel className="text-base">Password</FormLabel>
                         <FormControl>
-                          <Input type="password" {...field} />
+                          <Input type="password" {...field} className="h-11 text-base" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
-                    {registerMutation.isPending ? <Loader2 className="animate-spin" /> : "Register"}
+                  <Button type="submit" className="w-full h-11 text-base mt-6" disabled={registerMutation.isPending}>
+                    {registerMutation.isPending ? <Loader2 className="animate-spin h-5 w-5" /> : "Register"}
                   </Button>
                 </form>
               </Form>
