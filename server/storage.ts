@@ -23,6 +23,7 @@ export class MemStorage implements IStorage {
     this.absences = new Map();
     this.teacherAttendances = new Map();
     this.substituteUsage = new Map();
+    this.smsHistory = new Map();
     this.currentId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
