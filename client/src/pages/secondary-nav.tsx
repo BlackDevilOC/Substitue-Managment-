@@ -5,7 +5,9 @@ import {
   User,
   Settings,
   Calendar,
-  Phone
+  Phone,
+  UserMinus,
+  ClipboardList
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -16,6 +18,18 @@ export default function SecondaryNavPage() {
       icon: <User className="h-5 w-5" />,
       href: "/profile",
       description: "Manage your account settings"
+    },
+    {
+      title: "Teacher Attendance",
+      icon: <UserMinus className="h-5 w-5" />,
+      href: "/absences",
+      description: "Mark teachers as present or absent"
+    },
+    {
+      title: "Class Assignments",
+      icon: <ClipboardList className="h-5 w-5" />,
+      href: "/manage-absences",
+      description: "Assign teachers to classes"
     },
     {
       title: "Schedule",
