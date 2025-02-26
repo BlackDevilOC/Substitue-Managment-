@@ -2,7 +2,7 @@ import React from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileDown, Wand2 } from "lucide-react";
+import { FileDown, Wand2, RotateCcw } from "lucide-react";
 import { Link } from "wouter";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +30,13 @@ interface Assignment {
   }>;
 }
 
+interface TeacherWorkload {
+  teacherId: number;
+  name: string;
+  classCount: number;
+  lastUpdated: string;
+}
+
 export default function ManageAbsencesPage() {
   const { toast } = useToast();
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -50,6 +57,29 @@ export default function ManageAbsencesPage() {
     queryKey: ["/api/substitute-assignments"],
   });
 
+  const resetMutation = useMutation({
+    mutationFn: async () => {
+      // Clear assignments
+      localStorage.removeItem('assignments');
+      localStorage.removeItem('teacherWorkloads');
+      return await fetch("/api/reset-assignments", { method: "POST" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/substitute-assignments"] });
+      toast({
+        title: "Reset Complete",
+        description: "All assignments have been cleared.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const autoAssignMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/auto-assign-substitutes", {
@@ -63,6 +93,7 @@ export default function ManageAbsencesPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/substitute-assignments"] });
+      updateTeacherWorkloads();
       toast({
         title: "Success",
         description: `${data.assignmentsCount} substitutes have been assigned.`,
@@ -77,6 +108,34 @@ export default function ManageAbsencesPage() {
     },
   });
 
+  // Track teacher workloads
+  const updateTeacherWorkloads = React.useCallback(() => {
+    const workloads = new Map<number, TeacherWorkload>();
+
+    // Count classes for each teacher on the current day
+    schedule.forEach((s: any) => {
+      const teacherId = s.teacherId;
+      if (!workloads.has(teacherId)) {
+        const teacher = teachers.find((t: any) => t.id === teacherId);
+        workloads.set(teacherId, {
+          teacherId,
+          name: teacher?.name || 'Unknown Teacher',
+          classCount: 1,
+          lastUpdated: today
+        });
+      } else {
+        const current = workloads.get(teacherId)!;
+        workloads.set(teacherId, {
+          ...current,
+          classCount: current.classCount + 1
+        });
+      }
+    });
+
+    // Store workloads in localStorage
+    localStorage.setItem('teacherWorkloads', JSON.stringify(Array.from(workloads.values())));
+  }, [schedule, teachers, today]);
+
   // Save to local storage
   React.useEffect(() => {
     if (assignments.length > 0) {
@@ -84,13 +143,16 @@ export default function ManageAbsencesPage() {
         date: today,
         data: assignments
       }));
+      updateTeacherWorkloads();
     }
-  }, [assignments, today]);
+  }, [assignments, today, updateTeacherWorkloads]);
 
   const exportReport = () => {
     // Get both current and stored assignments
     const storedData = localStorage.getItem('assignments');
     const storedAssignments = storedData ? JSON.parse(storedData) : { data: [] };
+    const workloads = localStorage.getItem('teacherWorkloads');
+    const teacherWorkloads = workloads ? JSON.parse(workloads) : [];
 
     const report = {
       currentDate: new Date().toLocaleDateString(),
@@ -115,7 +177,10 @@ export default function ManageAbsencesPage() {
             period: s.period
           }))
         }))
-      }
+      },
+      teacherWorkloads: teacherWorkloads.sort((a: TeacherWorkload, b: TeacherWorkload) => 
+        b.classCount - a.classCount
+      )
     };
 
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
@@ -189,6 +254,14 @@ export default function ManageAbsencesPage() {
           <Button onClick={exportReport} variant="outline">
             <FileDown className="h-4 w-4 mr-2" />
             Export Report
+          </Button>
+          <Button 
+            onClick={() => resetMutation.mutate()} 
+            variant="destructive"
+            disabled={resetMutation.isPending}
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Reset
           </Button>
         </div>
       </div>

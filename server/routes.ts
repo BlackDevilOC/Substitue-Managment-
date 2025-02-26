@@ -192,6 +192,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/reset-assignments", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      // Clear all substitute assignments for today's absences
+      const today = format(new Date(), "yyyy-MM-dd");
+      const absences = await storage.getAbsences();
+
+      for (const absence of absences) {
+        if (absence.date === today && absence.substituteId) {
+          await storage.assignSubstitute(absence.id, null);
+        }
+      }
+
+      res.json({ message: "Assignments reset successfully" });
+    } catch (error) {
+      console.error('Reset assignments error:', error);
+      res.status(500).json({ message: "Failed to reset assignments" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
