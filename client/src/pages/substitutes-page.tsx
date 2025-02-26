@@ -91,7 +91,6 @@ export default function SubstitutesPage() {
           <div className="space-y-4">
             {teachers?.map((teacher: any) => {
               const status = teacherStatuses.find(s => s.teacherId === teacher.id);
-              const assignment = assignments.find((a: any) => a.substitute?.id === teacher.id || a.absence.teacherId === teacher.id);
 
               return (
                 <div key={teacher.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -101,12 +100,6 @@ export default function SubstitutesPage() {
                       {status?.status === 'assigned' && (
                         <div className="text-sm text-muted-foreground">
                           Covering for: {status.assignedTo} in Class {status.className}
-                          {assignment?.absence?.period && (
-                            <span className="px-2 py-1 rounded-md bg-muted text-muted-foreground text-sm font-medium">
-                              Period {assignment.absence.period}
-                              {assignment.periodTiming && ` (${assignment.periodTiming.startTime}-${assignment.periodTiming.endTime})`}
-                            </span>
-                          )}
                         </div>
                       )}
                       {status?.status === 'absent' && (

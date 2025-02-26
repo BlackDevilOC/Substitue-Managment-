@@ -10,8 +10,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { changePasswordSchema, type ChangePassword } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
-import Link from 'next/link'; // Import Link component
-
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -61,7 +59,7 @@ export default function ProfilePage() {
   const exportReport = async () => {
     const res = await fetch('/api/absences/report');
     const report = await res.json();
-
+    
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -169,22 +167,6 @@ export default function ProfilePage() {
             </form>
           </CardContent>
         </Card>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4"> {/* Added a new section for quick links */}
-        <Link href="/secondary-nav" className="w-full">
-          <Card className="hover:bg-muted cursor-pointer">
-            <CardHeader>
-              <CardTitle className="text-lg">Secondary Navigation</CardTitle>
-            </CardHeader>
-          </Card>
-        </Link>
-        <Link href="/period-timings" className="w-full">
-          <Card className="hover:bg-muted cursor-pointer">
-            <CardHeader>
-              <CardTitle className="text-lg">Period Timings</CardTitle>
-            </CardHeader>
-          </Card>
-        </Link>
       </div>
     </div>
   );
