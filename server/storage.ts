@@ -141,10 +141,29 @@ export class MemStorage implements IStorage {
       const allTeachers = await this.getTeachers();
       const substitutes = allTeachers.filter(t => 
         t.isSubstitute && 
-        !absentTeachers.some(a => a.teacherId === t.id)
+        !absentTeachers.some(a => a.teacherId === t.id) &&
+        !this.isTeacherOverloaded(t.id, date)
       );
 
-      if (substitutes.length === 0) continue;
+      if (substitutes.length === 0) {
+        // Try using regular teachers as backup
+        const regularTeachers = allTeachers.filter(t => 
+          !t.isSubstitute && 
+          !absentTeachers.some(a => a.teacherId === t.id) &&
+          !this.isTeacherOverloaded(t.id, date)
+        );
+        
+        if (regularTeachers.length > 0) {
+          // Use regular teacher with least workload
+          const substitute = regularTeachers.sort((a, b) => 
+            (this.substituteUsage.get(a.id) || 0) - (this.substituteUsage.get(b.id) || 0)
+          )[0];
+          await this.assignSubstitute(absence.id, substitute.id);
+          this.substituteUsage.set(substitute.id, (this.substituteUsage.get(substitute.id) || 0) + 1);
+          assignments.set(absence.id, substitute.id);
+        }
+        continue;
+      }
 
       // Sort substitutes by usage count
       const sortedSubstitutes = substitutes.sort((a, b) => 
@@ -188,3 +207,9 @@ export class MemStorage implements IStorage {
 }
 
 export const storage = new MemStorage();
+  private isTeacherOverloaded(teacherId: number, date: string): boolean {
+    const MAX_DAILY_SUBSTITUTIONS = 3;
+    const assignments = Array.from(this.absences.values())
+      .filter(a => a.date === date && a.substituteId === teacherId);
+    return assignments.length >= MAX_DAILY_SUBSTITUTIONS;
+  }
