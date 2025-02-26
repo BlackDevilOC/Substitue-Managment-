@@ -51,9 +51,15 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
       const row = records[i];
       if (!row[0] || !row[1]) continue;
 
-      const day = row[0].toLowerCase().trim();
-      const period = parseInt(row[1].trim());
+      // Normalize day name
+      const rawDay = row[0].toLowerCase().trim();
+      const day = normalizeDay(rawDay);
+      if (!day) {
+        console.warn(`Skipping invalid day at line ${i + 1}: ${rawDay}`);
+        continue;
+      }
 
+      const period = parseInt(row[1].trim());
       if (isNaN(period)) {
         console.warn(`Skipping invalid period number at line ${i + 1}`);
         continue;
@@ -63,7 +69,7 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
       for (let j = 2; j < Math.min(row.length, validClasses.length + 2); j++) {
         const teacherName = row[j]?.trim();
         if (teacherName && teacherName.toLowerCase() !== 'empty') {
-          let teacher = await findOrCreateTeacher(teacherName);
+          let teacher = await findOrCreateTeacher(normalizeTeacherName(teacherName));
 
           schedules.push({
             id: 0, // Will be set by storage
@@ -102,7 +108,7 @@ export async function processSubstituteCSV(fileContent: string): Promise<Teacher
       const phoneNumber = row[1]?.trim() || null;
 
       if (name) {
-        const teacher = await findOrCreateTeacher(name, true, phoneNumber);
+        const teacher = await findOrCreateTeacher(normalizeTeacherName(name), true, phoneNumber);
         teachers.push(teacher);
       }
     }
@@ -114,6 +120,29 @@ export async function processSubstituteCSV(fileContent: string): Promise<Teacher
   }
 }
 
+function normalizeDay(day: string): string | null {
+  const days = {
+    'monday': 'monday',
+    'tuesday': 'tuesday',
+    'wednesday': 'wednesday',
+    'thursday': 'thursday',
+    'thurday': 'thursday', // Handle common typo
+    'friday': 'friday',
+    'saturday': 'saturday'
+  };
+  return days[day.toLowerCase()] || null;
+}
+
+function normalizeTeacherName(name: string): string {
+  return name
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 async function findOrCreateTeacher(
   name: string,
   isSubstitute: boolean = false,
@@ -122,7 +151,7 @@ async function findOrCreateTeacher(
   try {
     const teachers = await storage.getTeachers();
     const existingTeacher = teachers.find(
-      t => t.name.toLowerCase() === name.toLowerCase()
+      t => normalizeTeacherName(t.name) === name
     );
 
     if (existingTeacher) {
@@ -130,7 +159,7 @@ async function findOrCreateTeacher(
     }
 
     return await storage.createTeacher({
-      name: name.trim(),
+      name,
       isSubstitute,
       phoneNumber: phoneNumber || null
     });
