@@ -7,6 +7,7 @@ import { processTimetableCSV, processSubstituteCSV } from "./csv-handler";
 import multer from "multer";
 import { scrypt, timingSafeEqual, randomBytes } from "crypto";
 import { promisify } from "util";
+import { format } from "date-fns";
 
 const scryptAsync = promisify(scrypt);
 const upload = multer({ 
@@ -160,6 +161,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const { substituteId } = req.body;
     await storage.assignSubstitute(parseInt(req.params.id), substituteId);
     res.sendStatus(200);
+  });
+
+  app.post("/api/auto-assign-substitutes", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const date = format(new Date(), "yyyy-MM-dd");
+    try {
+      const assignments = await storage.autoAssignSubstitutes(date);
+      res.json({
+        message: "Substitutes assigned successfully",
+        assignmentsCount: assignments.size
+      });
+    } catch (error) {
+      console.error('Auto-assign substitutes error:', error);
+      res.status(500).json({ message: "Failed to assign substitutes" });
+    }
+  });
+
+  app.get("/api/substitute-assignments", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const date = format(new Date(), "yyyy-MM-dd");
+    try {
+      const assignments = await storage.getSubstituteAssignments(date);
+      res.json(assignments);
+    } catch (error) {
+      console.error('Get substitute assignments error:', error);
+      res.status(500).json({ message: "Failed to get substitute assignments" });
+    }
   });
 
   const httpServer = createServer(app);

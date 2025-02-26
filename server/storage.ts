@@ -10,7 +10,8 @@ export class MemStorage implements IStorage {
   private teachers: Map<number, Teacher>;
   private schedules: Map<number, Schedule>;
   private absences: Map<number, Absence>;
-  private teacherAttendances: Map<number, TeacherAttendance>; // Added teacher attendance storage
+  private teacherAttendances: Map<number, TeacherAttendance>;
+  private substituteUsage: Map<number, number>; // Track how many times each substitute is assigned
   sessionStore: session.Store;
   currentId: number;
 
@@ -19,7 +20,8 @@ export class MemStorage implements IStorage {
     this.teachers = new Map();
     this.schedules = new Map();
     this.absences = new Map();
-    this.teacherAttendances = new Map(); // Initialize teacher attendance map
+    this.teacherAttendances = new Map();
+    this.substituteUsage = new Map();
     this.currentId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
@@ -120,6 +122,68 @@ export class MemStorage implements IStorage {
     const start = new Date(startDate);
     const end = new Date(endDate);
     return Array.from(this.teacherAttendances.values()).filter(a => a.date >= start && a.date <= end);
+  }
+
+  async autoAssignSubstitutes(date: string): Promise<Map<number, number>> {
+    const assignments = new Map<number, number>(); // absenceId -> substituteId
+    const absentTeachers = Array.from(this.absences.values())
+      .filter(a => a.date === date && !a.substituteId);
+
+    for (const absence of absentTeachers) {
+      const absentTeacher = await this.getTeacher(absence.teacherId);
+      if (!absentTeacher) continue;
+
+      // Get all schedules for the absent teacher on this day
+      const daySchedules = Array.from(this.schedules.values())
+        .filter(s => s.teacherId === absence.teacherId);
+
+      // Find available substitutes
+      const allTeachers = await this.getTeachers();
+      const substitutes = allTeachers.filter(t => 
+        t.isSubstitute && 
+        !absentTeachers.some(a => a.teacherId === t.id)
+      );
+
+      if (substitutes.length === 0) continue;
+
+      // Sort substitutes by usage count
+      const sortedSubstitutes = substitutes.sort((a, b) => 
+        (this.substituteUsage.get(a.id) || 0) - (this.substituteUsage.get(b.id) || 0)
+      );
+
+      // Assign the substitute with the least workload
+      const substitute = sortedSubstitutes[0];
+      await this.assignSubstitute(absence.id, substitute.id);
+      this.substituteUsage.set(substitute.id, (this.substituteUsage.get(substitute.id) || 0) + 1);
+      assignments.set(absence.id, substitute.id);
+    }
+
+    return assignments;
+  }
+
+  async getSubstituteAssignments(date: string): Promise<{ 
+    absence: Absence;
+    teacher: Teacher;
+    substitute?: Teacher;
+    schedules: Schedule[];
+  }[]> {
+    const absences = Array.from(this.absences.values())
+      .filter(a => a.date === date);
+
+    const result = [];
+
+    for (const absence of absences) {
+      const teacher = await this.getTeacher(absence.teacherId);
+      const substitute = absence.substituteId ? await this.getTeacher(absence.substituteId) : undefined;
+      const schedules = Array.from(this.schedules.values())
+        .filter(s => s.teacherId === absence.teacherId);
+
+      if (teacher) {
+        result.push({ absence, teacher, substitute, schedules });
+      }
+    }
+
+    return result;
   }
 }
 
