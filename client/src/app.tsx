@@ -7,7 +7,8 @@ function App() {
   return (
     <Router>
       <div>
-        <Route path="/absences" component={ManageAbsencesPage} />
+        <Route path="/" component={ManageAbsencesPage} />
+        <Route path="/sms-history" component={SmsHistoryPage} />
         <Route path="/sms-history" component={SmsHistoryPage} /> {/* Added route for SMS history */}
       </div>
     </Router>
