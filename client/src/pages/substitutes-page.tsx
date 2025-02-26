@@ -1,43 +1,44 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Phone, UserPlus, AlertCircle } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTeacherSchema } from "@shared/schema";
-import { queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { useForm } from "react-hook-form";
+import { toast } from "@/components/ui/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function SubstitutesPage() {
-  const { toast } = useToast();
-  const form = useForm({
-    resolver: zodResolver(insertTeacherSchema),
-    defaultValues: {
-      name: "",
-      phoneNumber: "",
-      isSubstitute: true,
-    },
-  });
+  const queryClient = useQueryClient();
+  const form = useForm();
 
-  const { data: substitutes, isLoading: loadingTeachers } = useQuery({
+  const { data: teachers, isLoading: loadingTeachers } = useQuery({
     queryKey: ["/api/teachers"],
+    queryFn: async () => {
+      const res = await fetch("/api/teachers");
+      if (!res.ok) throw new Error("Failed to fetch teachers");
+      return res.json();
+    },
   });
 
   const { data: absences, isLoading: loadingAbsences } = useQuery({
     queryKey: ["/api/absences"],
+    queryFn: async () => {
+      const res = await fetch("/api/absences");
+      if (!res.ok) throw new Error("Failed to fetch absences");
+      return res.json();
+    },
   });
 
-  const addSubstituteMutation = useMutation({
+  const addTeacherMutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await fetch("/api/teachers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to add substitute");
+      if (!res.ok) throw new Error("Failed to add teacher");
       return res.json();
     },
     onSuccess: () => {
@@ -45,7 +46,7 @@ export default function SubstitutesPage() {
       form.reset();
       toast({
         title: "Success",
-        description: "Substitute teacher added successfully",
+        description: "Teacher added successfully",
       });
     },
     onError: (error: Error) => {
@@ -58,35 +59,34 @@ export default function SubstitutesPage() {
   });
 
   const onSubmit = (data: any) => {
-    addSubstituteMutation.mutate(data);
+    addTeacherMutation.mutate(data);
   };
 
   const isLoading = loadingTeachers || loadingAbsences;
   const today = format(new Date(), "yyyy-MM-dd");
 
-  // Get substitute teachers and check their availability
-  const substituteTeachers = substitutes?.filter(t => t.isSubstitute) || [];
-  const substituteStatuses = substituteTeachers.map(substitute => {
+  // Get all teachers and check their availability
+  const teacherStatuses = teachers?.map(teacher => {
     const isAbsentToday = absences?.some(
       absence => 
-        absence.teacherId === substitute.id && 
+        absence.teacherId === teacher.id && 
         format(new Date(absence.date), "yyyy-MM-dd") === today
     );
     const isAssignedToday = absences?.some(
       absence => 
-        absence.substituteId === substitute.id && 
+        absence.substituteId === teacher.id && 
         format(new Date(absence.date), "yyyy-MM-dd") === today
     );
 
     return {
-      ...substitute,
+      ...teacher,
       status: isAbsentToday ? "Absent" : isAssignedToday ? "Assigned" : "Available"
     };
-  });
+  }) || [];
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <h1 className="text-2xl font-bold">Substitute Teachers</h1>
+      <h1 className="text-2xl font-bold">Available Teachers</h1>
 
       <Card>
         <CardContent className="p-4">
@@ -111,56 +111,42 @@ export default function SubstitutesPage() {
               )}
             </div>
 
-            <Button 
-              type="submit" 
-              disabled={addSubstituteMutation.isPending}
-              className="w-full"
-            >
-              {addSubstituteMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <UserPlus className="h-4 w-4 mr-2" />
-              )}
-              Add Substitute
+            <Button type="submit" disabled={isLoading}>
+              Add Teacher
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Available Substitutes</h2>
-        {isLoading ? (
-          <div className="flex justify-center p-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {substituteStatuses.map(substitute => (
-              <Card key={substitute.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">{substitute.name}</h3>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Phone className="h-4 w-4 mr-2" />
-                        {substitute.phoneNumber || "No phone number"}
-                      </div>
-                      <div className={`flex items-center mt-2 text-sm ${
-                        substitute.status === "Available" ? "text-green-600" :
-                        substitute.status === "Assigned" ? "text-yellow-600" :
-                        "text-red-600"
-                      }`}>
-                        <AlertCircle className="h-4 w-4 mr-2" />
-                        {substitute.status}
-                      </div>
-                    </div>
+      <Card>
+        <CardContent className="p-4">
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Teacher Status</h2>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {teacherStatuses.map(teacher => (
+                <div
+                  key={teacher.id}
+                  className={`p-4 rounded-lg border ${
+                    teacher.status === "Available" ? "bg-green-50 border-green-200" :
+                    teacher.status === "Assigned" ? "bg-yellow-50 border-yellow-200" :
+                    "bg-red-50 border-red-200"
+                  }`}
+                >
+                  <div className="font-medium">{teacher.name}</div>
+                  <div className="text-sm mt-1">
+                    Status: <span className="font-medium">{teacher.status}</span>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                  {teacher.phoneNumber && (
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Phone: {teacher.phoneNumber}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        )}
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
