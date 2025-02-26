@@ -176,6 +176,12 @@ export default function SubstitutesPage() {
                   <div className="font-medium">{teacher?.name}</div>
                   <div className="text-sm text-muted-foreground mt-1">
                     Covered by: {substitute?.name}
+                    <span className="ml-2 px-2 py-1 bg-success/20 text-success rounded-full text-xs">
+                      Assigned
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Class: {assignment.absence.className} - Period: {assignment.absence.period}
                   </div>
                 </div>
               );
