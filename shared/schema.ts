@@ -95,3 +95,13 @@ export const smsHistory = pgTable("sms_history", {
 
 export type TeacherAttendance = typeof teacherAttendance.$inferSelect;
 export type SmsHistory = typeof smsHistory.$inferSelect;
+// Add period timing schema
+export const periodTimings = pgTable("period_timings", {
+  id: serial("id").primaryKey(),
+  period: integer("period").notNull(),
+  startTime: text("start_time").notNull(),
+  endTime: text("end_time").notNull(),
+});
+
+export const insertPeriodTimingSchema = createInsertSchema(periodTimings);
+export type PeriodTiming = typeof periodTimings.$inferSelect;
