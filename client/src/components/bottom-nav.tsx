@@ -1,4 +1,4 @@
-import { Home, Calendar, UserMinus, UserCheck, User, AlertTriangle } from "lucide-react";
+import { Home, Calendar, UserMinus, UserCheck, MoreHorizontal } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 export default function BottomNav() {
@@ -7,9 +7,9 @@ export default function BottomNav() {
   const items = [
     { icon: Home, label: "Home", href: "/" },
     { icon: Calendar, label: "Schedule", href: "/schedule" },
-    { icon: AlertTriangle, label: "Manage", href: "/manage-absences" },
+    { icon: UserMinus, label: "Absences", href: "/manage-absences" },
     { icon: UserCheck, label: "Substitutes", href: "/substitutes" },
-    { icon: User, label: "Profile", href: "/profile" },
+    { icon: MoreHorizontal, label: "More", href: "/more" },
   ];
 
   return (
