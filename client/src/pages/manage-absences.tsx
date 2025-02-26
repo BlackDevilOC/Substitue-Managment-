@@ -196,7 +196,7 @@ export default function ManageAbsencesPage() {
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Classes Needing Substitutes</CardTitle>
+            <CardTitle className="text-primary">Classes Needing Substitutes</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {unassignedClasses.map((classInfo) => (
@@ -204,16 +204,21 @@ export default function ManageAbsencesPage() {
                 key={`${classInfo.period}-${classInfo.className}`}
                 href={`/assign-substitute/${classInfo.id}`}
               >
-                <div className="p-3 border rounded-lg cursor-pointer hover:bg-accent/5 transition-colors">
-                  <div className="font-medium">{classInfo.className}</div>
-                  <div className="text-sm text-muted-foreground">
-                    Period {classInfo.period} - {classInfo.teacherName}
+                <div className="p-4 border rounded-lg cursor-pointer hover:bg-accent/5 transition-colors bg-destructive/5">
+                  <div className="font-semibold text-lg text-primary">{classInfo.className}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="px-2 py-1 rounded-md bg-muted text-muted-foreground text-sm font-medium">
+                      Period {classInfo.period}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      Teacher: {classInfo.teacherName}
+                    </span>
                   </div>
                 </div>
               </Link>
             ))}
             {unassignedClasses.length === 0 && (
-              <div className="text-center text-muted-foreground py-4">
+              <div className="text-center text-muted-foreground py-8 bg-muted/10 rounded-lg">
                 No classes need substitutes
               </div>
             )}
@@ -222,25 +227,31 @@ export default function ManageAbsencesPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Assigned Substitutes</CardTitle>
+            <CardTitle className="text-primary">Assigned Substitutes</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {assignedClasses.map((classInfo) => (
               <div 
                 key={`${classInfo.period}-${classInfo.className}`}
-                className="p-3 border rounded-lg"
+                className="p-4 border rounded-lg bg-success/5"
               >
-                <div className="font-medium">{classInfo.className}</div>
-                <div className="text-sm text-muted-foreground">
-                  Period {classInfo.period} - {classInfo.teacherName}
+                <div className="font-semibold text-lg text-primary">{classInfo.className}</div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="px-2 py-1 rounded-md bg-muted text-muted-foreground text-sm font-medium">
+                    Period {classInfo.period}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    Teacher: {classInfo.teacherName}
+                  </span>
                 </div>
-                <div className="text-sm font-medium text-primary mt-1">
+                <div className="text-sm font-medium text-success mt-2 flex items-center">
+                  <span className="mr-2">✓</span>
                   Substitute: {classInfo.substituteName}
                 </div>
               </div>
             ))}
             {assignedClasses.length === 0 && (
-              <div className="text-center text-muted-foreground py-4">
+              <div className="text-center text-muted-foreground py-8 bg-muted/10 rounded-lg">
                 No substitutes assigned yet
               </div>
             )}
