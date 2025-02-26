@@ -6,7 +6,6 @@ export default function BottomNav() {
 
   const items = [
     { icon: Home, label: "Home", href: "/" },
-    { icon: Calendar, label: "Schedule", href: "/schedule" },
     { icon: UserMinus, label: "Absences", href: "/manage-absences" },
     { icon: UserCheck, label: "Substitutes", href: "/substitutes" },
     { icon: MoreHorizontal, label: "More", href: "/more" },
@@ -14,7 +13,7 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-background border-t h-16">
-      <div className="grid grid-cols-5 h-full max-w-md mx-auto">
+      <div className="grid grid-cols-4 h-full max-w-md mx-auto">
         {items.map(({ icon: Icon, label, href }) => (
           <Link
             key={href}

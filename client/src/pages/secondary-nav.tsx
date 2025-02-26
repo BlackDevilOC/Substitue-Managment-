@@ -4,7 +4,7 @@ import {
   MessageSquare, 
   User,
   Settings,
-  History,
+  Calendar,
   Phone
 } from "lucide-react";
 import { Link } from "wouter";
@@ -18,6 +18,12 @@ export default function SecondaryNavPage() {
       description: "Manage your account settings"
     },
     {
+      title: "Schedule",
+      icon: <Calendar className="h-5 w-5" />,
+      href: "/schedule",
+      description: "View and manage daily schedules"
+    },
+    {
       title: "SMS History",
       icon: <MessageSquare className="h-5 w-5" />,
       href: "/sms-history",
@@ -28,12 +34,6 @@ export default function SecondaryNavPage() {
       icon: <Settings className="h-5 w-5" />,
       href: "/settings",
       description: "Configure system preferences"
-    },
-    {
-      title: "Schedule History",
-      icon: <History className="h-5 w-5" />,
-      href: "/schedule-history",
-      description: "View past schedules"
     },
     {
       title: "Emergency Contacts",
