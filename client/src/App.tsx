@@ -14,6 +14,7 @@ import ManageAbsencesPage from "@/pages/manage-absences";
 import SecondaryNavPage from "@/pages/secondary-nav";
 import SMSHistoryPage from "@/pages/sms-history";
 import SettingsPage from "@/pages/settings";
+import PeriodsPage from "@/pages/periods";
 import { ProtectedRoute } from "./lib/protected-route";
 import BottomNav from "./components/bottom-nav";
 
@@ -30,6 +31,7 @@ function Router() {
       <ProtectedRoute path="/more" component={SecondaryNavPage} />
       <ProtectedRoute path="/sms-history" component={SMSHistoryPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
+      <ProtectedRoute path="/periods" component={PeriodsPage} />
       <Route component={NotFound} />
     </Switch>
   );

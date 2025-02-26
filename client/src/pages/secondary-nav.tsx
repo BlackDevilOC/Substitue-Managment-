@@ -7,7 +7,8 @@ import {
   Calendar,
   Phone,
   UserMinus,
-  ClipboardList
+  ClipboardList,
+  Clock
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -20,10 +21,10 @@ export default function SecondaryNavPage() {
       description: "Manage your account settings"
     },
     {
-      title: "Teacher Attendance",
+      title: "Attendee Tracking",
       icon: <UserMinus className="h-5 w-5" />,
       href: "/absences",
-      description: "Mark teachers as present or absent"
+      description: "Mark attendees as present or absent"
     },
     {
       title: "Class Assignments",
@@ -36,6 +37,12 @@ export default function SecondaryNavPage() {
       icon: <Calendar className="h-5 w-5" />,
       href: "/schedule",
       description: "View and manage daily schedules"
+    },
+    {
+      title: "Period Times",
+      icon: <Clock className="h-5 w-5" />,
+      href: "/periods",
+      description: "Configure period start and end times"
     },
     {
       title: "SMS History",
