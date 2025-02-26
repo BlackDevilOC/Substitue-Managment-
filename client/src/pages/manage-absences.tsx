@@ -1,5 +1,5 @@
 import React from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileDown, Wand2 } from "lucide-react";
@@ -7,6 +7,28 @@ import { Link } from "wouter";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+
+interface Assignment {
+  absence: {
+    id: number;
+    teacherId: number;
+    date: string;
+    substituteId?: number;
+  };
+  teacher: {
+    id: number;
+    name: string;
+  };
+  substitute?: {
+    id: number;
+    name: string;
+  };
+  schedules: Array<{
+    id: number;
+    className: string;
+    period: number;
+  }>;
+}
 
 export default function ManageAbsencesPage() {
   const { toast } = useToast();
@@ -24,7 +46,7 @@ export default function ManageAbsencesPage() {
     queryKey: ["/api/schedule", today],
   });
 
-  const { data: assignments = [] } = useQuery({
+  const { data: assignments = [] } = useQuery<Assignment[]>({
     queryKey: ["/api/substitute-assignments"],
   });
 
@@ -55,17 +77,45 @@ export default function ManageAbsencesPage() {
     },
   });
 
+  // Save to local storage
+  React.useEffect(() => {
+    if (assignments.length > 0) {
+      localStorage.setItem('assignments', JSON.stringify({
+        date: today,
+        data: assignments
+      }));
+    }
+  }, [assignments, today]);
+
   const exportReport = () => {
+    // Get both current and stored assignments
+    const storedData = localStorage.getItem('assignments');
+    const storedAssignments = storedData ? JSON.parse(storedData) : { data: [] };
+
     const report = {
-      date: new Date().toLocaleDateString(),
-      assignments: assignments.map((assignment: any) => ({
-        teacher: assignment.teacher.name,
-        substitute: assignment.substitute?.name || 'Unassigned',
-        classes: assignment.schedules.map((s: any) => ({
-          className: s.className,
-          period: s.period
+      currentDate: new Date().toLocaleDateString(),
+      today: {
+        date: today,
+        assignments: assignments.map((assignment) => ({
+          teacher: assignment.teacher.name,
+          substitute: assignment.substitute?.name || 'Unassigned',
+          classes: assignment.schedules.map(s => ({
+            className: s.className,
+            period: s.period
+          }))
         }))
-      }))
+      },
+      history: {
+        date: storedAssignments.date,
+        assignments: storedAssignments.data.map((assignment: Assignment) => ({
+          teacher: assignment.teacher.name,
+          substitute: assignment.substitute?.name || 'Unassigned',
+          classes: assignment.schedules.map(s => ({
+            className: s.className,
+            period: s.period
+          }))
+        }))
+      }
     };
 
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
@@ -77,40 +127,50 @@ export default function ManageAbsencesPage() {
     URL.revokeObjectURL(url);
   };
 
-  // Filter unique schedules to avoid duplicates
+  // Process assignments to avoid duplicates
   const unassignedClasses = React.useMemo(() => {
-    if (!Array.isArray(assignments)) return [];
+    const classMap = new Map();
 
-    return assignments
-      .filter((assignment: any) => !assignment.substitute)
-      .reduce((acc: any[], { teacher, schedules }: any) => {
-        const classEntries = schedules.map((schedule: any) => ({
-          id: schedule.id,
-          className: schedule.className,
-          period: schedule.period,
-          teacherName: teacher.name
-        }));
-        return [...acc, ...classEntries];
-      }, [])
-      .sort((a: any, b: any) => a.period - b.period);
+    assignments.forEach(assignment => {
+      if (!assignment.substitute) {
+        assignment.schedules.forEach(schedule => {
+          const key = `${schedule.period}-${schedule.className}`;
+          if (!classMap.has(key)) {
+            classMap.set(key, {
+              id: schedule.id,
+              className: schedule.className,
+              period: schedule.period,
+              teacherName: assignment.teacher.name
+            });
+          }
+        });
+      }
+    });
+
+    return Array.from(classMap.values()).sort((a, b) => a.period - b.period);
   }, [assignments]);
 
   const assignedClasses = React.useMemo(() => {
-    if (!Array.isArray(assignments)) return [];
+    const classMap = new Map();
 
-    return assignments
-      .filter((assignment: any) => assignment.substitute)
-      .reduce((acc: any[], { teacher, substitute, schedules }: any) => {
-        const classEntries = schedules.map((schedule: any) => ({
-          id: schedule.id,
-          className: schedule.className,
-          period: schedule.period,
-          teacherName: teacher.name,
-          substituteName: substitute?.name
-        }));
-        return [...acc, ...classEntries];
-      }, [])
-      .sort((a: any, b: any) => a.period - b.period);
+    assignments.forEach(assignment => {
+      if (assignment.substitute) {
+        assignment.schedules.forEach(schedule => {
+          const key = `${schedule.period}-${schedule.className}`;
+          if (!classMap.has(key)) {
+            classMap.set(key, {
+              id: schedule.id,
+              className: schedule.className,
+              period: schedule.period,
+              teacherName: assignment.teacher.name,
+              substituteName: assignment.substitute?.name
+            });
+          }
+        });
+      }
+    });
+
+    return Array.from(classMap.values()).sort((a, b) => a.period - b.period);
   }, [assignments]);
 
   return (
@@ -141,7 +201,7 @@ export default function ManageAbsencesPage() {
           <CardContent className="space-y-4">
             {unassignedClasses.map((classInfo) => (
               <Link 
-                key={classInfo.id}
+                key={`${classInfo.period}-${classInfo.className}`}
                 href={`/assign-substitute/${classInfo.id}`}
               >
                 <div className="p-3 border rounded-lg cursor-pointer hover:bg-accent/5 transition-colors">
@@ -167,7 +227,7 @@ export default function ManageAbsencesPage() {
           <CardContent className="space-y-4">
             {assignedClasses.map((classInfo) => (
               <div 
-                key={classInfo.id}
+                key={`${classInfo.period}-${classInfo.className}`}
                 className="p-3 border rounded-lg"
               >
                 <div className="font-medium">{classInfo.className}</div>
