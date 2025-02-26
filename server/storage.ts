@@ -12,6 +12,7 @@ export class MemStorage implements IStorage {
   private absences: Map<number, Absence>;
   private teacherAttendances: Map<number, TeacherAttendance>;
   private substituteUsage: Map<number, number>; // Track how many times each substitute is assigned
+  private dayOverride: string | null;
   sessionStore: session.Store;
   currentId: number;
 
@@ -85,7 +86,16 @@ export class MemStorage implements IStorage {
   }
 
   async getSchedulesByDay(day: string): Promise<Schedule[]> {
-    return Array.from(this.schedules.values()).filter(s => s.day === day);
+    const effectiveDay = this.dayOverride || day;
+    return Array.from(this.schedules.values()).filter(s => s.day === effectiveDay.toLowerCase());
+  }
+
+  async setDayOverride(day: string | null): Promise<void> {
+    this.dayOverride = day?.toLowerCase() || null;
+  }
+
+  async getCurrentDay(): Promise<string> {
+    return this.dayOverride || new Date().toLocaleDateString('en-US', { weekday: 'wednesday' }).toLowerCase();
   }
 
   // Clear all schedules - useful for re-uploading timetable

@@ -122,6 +122,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(schedule);
   });
 
+  app.post("/api/override-day", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const { day } = req.body;
+    await storage.setDayOverride(day);
+    res.json({ message: "Day override set successfully" });
+  });
+
+  app.get("/api/current-day", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const currentDay = await storage.getCurrentDay();
+    res.json({ currentDay });
+  });
+
   app.post("/api/schedule", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     const parsed = insertScheduleSchema.safeParse(req.body);
