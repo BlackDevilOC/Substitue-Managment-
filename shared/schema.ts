@@ -85,4 +85,13 @@ export type Absence = typeof absences.$inferSelect;
 export type ChangePassword = z.infer<typeof changePasswordSchema>;
 export type HistoricalTimetable = typeof historicalTimetables.$inferSelect;
 export type HistoricalTeacher = typeof historicalTeachers.$inferSelect;
+export const smsHistory = pgTable("sms_history", {
+  id: serial("id").primaryKey(),
+  teacherId: integer("teacher_id").notNull(),
+  message: text("message").notNull(),
+  sentAt: timestamp("sent_at").notNull().defaultNow(),
+  status: text("status").notNull(), // 'sent', 'failed', 'pending'
+});
+
 export type TeacherAttendance = typeof teacherAttendance.$inferSelect;
+export type SmsHistory = typeof smsHistory.$inferSelect;

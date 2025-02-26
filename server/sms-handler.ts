@@ -1,5 +1,6 @@
 
 import { Teacher, Schedule } from '@shared/schema';
+import { storage } from './storage';
 
 export async function sendSubstituteNotification(
   substitute: Teacher,
@@ -24,6 +25,13 @@ Covering for: ${a.originalTeacher}
 
 Please confirm your availability.
 `;
+
+  // Store SMS in history
+  await storage.createSmsHistory({
+    teacherId: substitute.id,
+    message: message,
+    status: 'sent' // We'll update this when we implement actual SMS sending
+  });
 
   // For now, just log the message. You can integrate an SMS service here
   console.log('SMS notification:', message);

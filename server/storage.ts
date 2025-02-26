@@ -217,6 +217,23 @@ export class MemStorage implements IStorage {
     return schedules?.period || 0;
   }
 
+  private smsHistory: Map<number, SmsHistory>;
+
+  async createSmsHistory(sms: Omit<SmsHistory, "id" | "sentAt">): Promise<SmsHistory> {
+    const id = this.currentId++;
+    const newSms = { 
+      ...sms, 
+      id, 
+      sentAt: new Date() 
+    };
+    this.smsHistory.set(id, newSms);
+    return newSms;
+  }
+
+  async getSmsHistory(): Promise<SmsHistory[]> {
+    return Array.from(this.smsHistory.values());
+  }
+
   private getTeacherClass(teacherId: number, date: string): string {
     const schedules = Array.from(this.schedules.values())
       .find(s => s.teacherId === teacherId && s.day.toLowerCase() === new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase());

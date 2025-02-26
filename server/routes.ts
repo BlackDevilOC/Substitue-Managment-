@@ -192,6 +192,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/sms-history", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    const history = await storage.getSmsHistory();
+    const enrichedHistory = await Promise.all(
+      history.map(async (sms) => {
+        const teacher = await storage.getTeacher(sms.teacherId);
+        return {
+          ...sms,
+          teacherName: teacher?.name || 'Unknown'
+        };
+      })
+    );
+    res.json(enrichedHistory);
+  });
+
   app.get("/api/substitute-assignments", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
