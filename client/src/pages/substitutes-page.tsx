@@ -31,9 +31,9 @@ export default function SubstitutesPage() {
   });
 
   const { data: assignments, isLoading: loadingAssignments } = useQuery({
-    queryKey: ["/api/substitute-assignments"],
+    queryKey: ["/api/assignments"],
     queryFn: async () => {
-      const res = await fetch("/api/substitute-assignments");
+      const res = await fetch("/api/assignments");
       if (!res.ok) throw new Error("Failed to fetch assignments");
       return res.json();
     },

@@ -1,67 +1,173 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, MessageSquare, UserCheck } from "lucide-react";
-import { Link } from "wouter";
-
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, User, Lock, FileDown } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { changePasswordSchema, type ChangePassword } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const form = useForm<ChangePassword>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
 
-  const navItems = [
-    {
-      title: "SMS History",
-      icon: <MessageSquare className="h-5 w-5" />,
-      href: "/sms-history",
-      description: "View message history"
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: ChangePassword) => {
+      const res = await fetch("/api/user/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to change password");
+      }
+      return res.json();
     },
-    {
-      title: "Substitute Teachers",
-      icon: <UserCheck className="h-5 w-5" />,
-      href: "/substitutes",
-      description: "Manage substitute teachers"
+    onSuccess: () => {
+      form.reset();
+      toast({
+        title: "Success",
+        description: "Password changed successfully",
+      });
     },
-    {
-      title: "Notifications",
-      icon: <Bell className="h-5 w-5" />,
-      href: "/notifications",
-      description: "View system notifications"
-    }
-  ];
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: ChangePassword) => {
+    changePasswordMutation.mutate(data);
+  };
+
+  const exportReport = async () => {
+    const res = await fetch('/api/absences/report');
+    const report = await res.json();
+    
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `absence-report-${new Date().toLocaleDateString()}.json`;
+    a.click();
+  };
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-lg">Welcome, {user?.username}</p>
-        </CardContent>
-      </Card>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Profile Settings</h1>
+        <Button onClick={exportReport} variant="outline">
+          <FileDown className="h-4 w-4 mr-2" />
+          Export Report
+        </Button>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {navItems.map((item) => (
-              <Link key={item.href} href={item.href}>
-                <Card className="h-full hover:bg-accent/5 transition-colors cursor-pointer">
-                  <CardHeader className="flex flex-row items-center gap-2">
-                    {item.icon}
-                    <CardTitle className="text-base">{item.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">{item.description}</p>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              User Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label>Username</Label>
+                <div className="text-lg font-medium">{user?.username}</div>
+              </div>
+              <div>
+                <Label>Role</Label>
+                <div className="text-lg font-medium">
+                  {user?.isAdmin ? "Administrator" : "User"}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              Change Password
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="currentPassword">Current Password</Label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  {...form.register("currentPassword")}
+                />
+                {form.formState.errors.currentPassword && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.currentPassword.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  {...form.register("newPassword")}
+                />
+                {form.formState.errors.newPassword && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.newPassword.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  {...form.register("confirmPassword")}
+                />
+                {form.formState.errors.confirmPassword && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.confirmPassword.message}
+                  </p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={changePasswordMutation.isPending}
+              >
+                {changePasswordMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  "Change Password"
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
