@@ -1,4 +1,4 @@
-import { Home, UserMinus, ClipboardList, MoreHorizontal, User } from "lucide-react";
+import { Home, UserMinus, ClipboardList, MoreHorizontal } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 export default function BottomNav() {
@@ -8,7 +8,6 @@ export default function BottomNav() {
     { icon: Home, label: "Home", href: "/" },
     { icon: UserMinus, label: "Attendee", href: "/absences" },
     { icon: ClipboardList, label: "Class", href: "/manage-absences" },
-    { icon: User, label: "Teacher Status", href: "/teacher-status" }, //Added Teacher Status
     { icon: MoreHorizontal, label: "More", href: "/more" },
   ];
 
