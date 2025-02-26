@@ -173,18 +173,9 @@ export default function SubstitutesPage() {
               const substitute = teachers?.find(t => t.id === assignment.substituteId);
               return (
                 <div key={assignment.absence.id} className="p-4 border rounded-lg bg-success/5">
-                  <div className="font-medium text-lg text-primary">{teacher?.name}</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="px-2 py-1 rounded-md bg-muted text-muted-foreground text-sm font-medium">
-                      Period {assignment.absence.period}
-                    </span>
-                    <span className="text-sm font-medium text-success flex items-center">
-                      <span className="mr-2">✓</span>
-                      Covered by: {substitute?.name}
-                    </span>
-                  </div>
+                  <div className="font-medium">{teacher?.name}</div>
                   <div className="text-sm text-muted-foreground mt-1">
-                    Class: {assignment.absence.className}
+                    Covered by: {substitute?.name}
                   </div>
                 </div>
               );
