@@ -64,9 +64,10 @@ export default function SubstitutesPage() {
         if (isAbsent) {
           status.status = 'absent';
         } else if (assignment) {
+          const absentTeacher = teachers.find((t: any) => t.id === assignment.absence?.teacherId);
           status.status = 'assigned';
-          status.assignedTo = assignment.absence.teacherName;
-          status.className = assignment.absence.className;
+          status.assignedTo = absentTeacher?.name || 'Unknown Teacher';
+          status.className = assignment.className;
         }
 
         return status;
@@ -97,12 +98,9 @@ export default function SubstitutesPage() {
                     <div className="font-medium">{teacher.name}</div>
                     <div className="text-sm text-muted-foreground mt-1">
                       {status?.status === 'assigned' && (
-                        <>
-                          Covering for: {status.assignedTo}
-                          <span className="ml-2 px-2 py-1 bg-success/20 text-success rounded-full text-xs">
-                            Assigned to {status.className}
-                          </span>
-                        </>
+                        <div className="text-sm text-muted-foreground">
+                          Covering for: {status.assignedTo} in Class {status.className}
+                        </div>
                       )}
                       {status?.status === 'absent' && (
                         <span className="px-2 py-1 bg-destructive/20 text-destructive rounded-full text-xs">
