@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,15 @@ export default function SubstitutesPage() {
     queryFn: async () => {
       const res = await fetch("/api/absences");
       if (!res.ok) throw new Error("Failed to fetch absences");
+      return res.json();
+    },
+  });
+
+  const { data: assignments, isLoading: loadingAssignments } = useQuery({
+    queryKey: ["/api/assignments"],
+    queryFn: async () => {
+      const res = await fetch("/api/assignments");
+      if (!res.ok) throw new Error("Failed to fetch assignments");
       return res.json();
     },
   });
@@ -61,7 +70,7 @@ export default function SubstitutesPage() {
     addTeacherMutation.mutate(data);
   };
 
-  const isLoading = loadingTeachers || loadingAbsences;
+  const isLoading = loadingTeachers || loadingAbsences || loadingAssignments;
   const today = format(new Date(), "yyyy-MM-dd");
 
   const teacherStatuses = teachers?.map((teacher) => {
@@ -87,7 +96,7 @@ export default function SubstitutesPage() {
   }) || [];
 
   return (
-    <div className="secondary-page container mx-auto p-4 space-y-6"> {/* Added secondary-page class and adjusted container */}
+    <div className="secondary-page container mx-auto p-4 space-y-6">
       <h1 className="text-2xl font-bold">Available Teachers</h1>
 
       <Card>
@@ -149,6 +158,33 @@ export default function SubstitutesPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Current Assignments</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {assignments?.map((assignment) => {
+              const teacher = teachers?.find(t => t.id === assignment.absence.teacherId);
+              const substitute = teachers?.find(t => t.id === assignment.substituteId);
+              return (
+                <div key={assignment.absence.id} className="p-4 border rounded-lg bg-success/5">
+                  <div className="font-medium">{teacher?.name}</div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Covered by: {substitute?.name}
+                  </div>
+                </div>
+              );
+            })}
+            {(!assignments || assignments.length === 0) && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No current assignments
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
