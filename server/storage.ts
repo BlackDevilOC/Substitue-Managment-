@@ -28,6 +28,13 @@ export class MemStorage implements IStorage {
     });
   }
 
+  private isTeacherOverloaded(teacherId: number, date: string): boolean {
+    const MAX_DAILY_SUBSTITUTIONS = 3;
+    const assignments = Array.from(this.absences.values())
+      .filter(a => a.date === date && a.substituteId === teacherId);
+    return assignments.length >= MAX_DAILY_SUBSTITUTIONS;
+  }
+
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     return this.users.get(id);
@@ -133,47 +140,17 @@ export class MemStorage implements IStorage {
       const absentTeacher = await this.getTeacher(absence.teacherId);
       if (!absentTeacher) continue;
 
-      // Get all schedules for the absent teacher on this day
-      const daySchedules = Array.from(this.schedules.values())
-        .filter(s => s.teacherId === absence.teacherId);
-
-      // Find available substitutes
-      const allTeachers = await this.getTeachers();
-      const substitutes = allTeachers.filter(t => 
+      const substitutes = await this.getTeachers();
+      const availableSubstitutes = substitutes.filter(t => 
         t.isSubstitute && 
         !absentTeachers.some(a => a.teacherId === t.id) &&
         !this.isTeacherOverloaded(t.id, date)
       );
 
-      if (substitutes.length === 0) {
-        // Try using regular teachers as backup
-        const regularTeachers = allTeachers.filter(t => 
-          !t.isSubstitute && 
-          !absentTeachers.some(a => a.teacherId === t.id) &&
-          !this.isTeacherOverloaded(t.id, date)
-        );
-        
-        if (regularTeachers.length > 0) {
-          // Use regular teacher with least workload
-          const substitute = regularTeachers.sort((a, b) => 
-            (this.substituteUsage.get(a.id) || 0) - (this.substituteUsage.get(b.id) || 0)
-          )[0];
-          await this.assignSubstitute(absence.id, substitute.id);
-          this.substituteUsage.set(substitute.id, (this.substituteUsage.get(substitute.id) || 0) + 1);
-          assignments.set(absence.id, substitute.id);
-        }
-        continue;
-      }
+      if (availableSubstitutes.length === 0) continue;
 
-      // Sort substitutes by usage count
-      const sortedSubstitutes = substitutes.sort((a, b) => 
-        (this.substituteUsage.get(a.id) || 0) - (this.substituteUsage.get(b.id) || 0)
-      );
-
-      // Assign the substitute with the least workload
-      const substitute = sortedSubstitutes[0];
+      const substitute = availableSubstitutes[0];
       await this.assignSubstitute(absence.id, substitute.id);
-      this.substituteUsage.set(substitute.id, (this.substituteUsage.get(substitute.id) || 0) + 1);
       assignments.set(absence.id, substitute.id);
     }
 
@@ -207,9 +184,3 @@ export class MemStorage implements IStorage {
 }
 
 export const storage = new MemStorage();
-  private isTeacherOverloaded(teacherId: number, date: string): boolean {
-    const MAX_DAILY_SUBSTITUTIONS = 3;
-    const assignments = Array.from(this.absences.values())
-      .filter(a => a.date === date && a.substituteId === teacherId);
-    return assignments.length >= MAX_DAILY_SUBSTITUTIONS;
-  }
