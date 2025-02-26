@@ -17,6 +17,8 @@ import SettingsPage from "@/pages/settings";
 import PeriodsPage from "@/pages/periods";
 import { ProtectedRoute } from "./lib/protected-route";
 import BottomNav from "./components/bottom-nav";
+// Added import for the new component
+import NotificationsPage from "@/pages/notifications";
 
 function Router() {
   return (
@@ -32,6 +34,7 @@ function Router() {
       <ProtectedRoute path="/sms-history" component={SMSHistoryPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/periods" component={PeriodsPage} />
+      <Route path="/notifications" component={NotificationsPage} /> {/* Added Notifications route */}
       <Route component={NotFound} />
     </Switch>
   );
