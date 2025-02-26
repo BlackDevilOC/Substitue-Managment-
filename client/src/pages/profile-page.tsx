@@ -1,16 +1,15 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, User, Lock, FileDown, MessageSquare } from "lucide-react";
+import { Loader2, User, Lock, FileDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { changePasswordSchema, type ChangePassword } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
-import { Link } from "wouter";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -60,7 +59,7 @@ export default function ProfilePage() {
   const exportReport = async () => {
     const res = await fetch('/api/absences/report');
     const report = await res.json();
-
+    
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -166,31 +165,6 @@ export default function ProfilePage() {
                 )}
               </Button>
             </form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Quick Links
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Link href="/sms-history" className="block hover:text-primary">
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  SMS History
-                </div>
-              </Link>
-              <Link href="/manage-absences" className="block hover:text-primary">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Manage Absences
-                </div>
-              </Link>
-            </div>
           </CardContent>
         </Card>
       </div>
