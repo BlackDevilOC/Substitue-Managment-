@@ -1,14 +1,14 @@
 import React from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileDown, Wand2 } from "lucide-react";
 import { Link } from "wouter";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 export default function ManageAbsencesPage() {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -21,7 +21,7 @@ export default function ManageAbsencesPage() {
   });
 
   const { data: schedule = [] } = useQuery({
-    queryKey: ["/api/schedule"],
+    queryKey: ["/api/schedule", today],
   });
 
   const { data: assignments = [] } = useQuery({
@@ -58,10 +58,10 @@ export default function ManageAbsencesPage() {
   const exportReport = () => {
     const report = {
       date: new Date().toLocaleDateString(),
-      assignments: assignments.map(({ teacher, substitute, schedules }) => ({
-        teacher: teacher.name,
-        substitute: substitute?.name || 'Unassigned',
-        classes: schedules.map(s => ({
+      assignments: assignments.map((assignment: any) => ({
+        teacher: assignment.teacher.name,
+        substitute: assignment.substitute?.name || 'Unassigned',
+        classes: assignment.schedules.map((s: any) => ({
           className: s.className,
           period: s.period
         }))
@@ -74,29 +74,34 @@ export default function ManageAbsencesPage() {
     a.href = url;
     a.download = `absence-report-${format(new Date(), 'yyyy-MM-dd')}.json`;
     a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Filter unique schedules to avoid duplicates
   const unassignedClasses = React.useMemo(() => {
+    if (!Array.isArray(assignments)) return [];
+
     return assignments
-      .filter(({ substitute }) => !substitute)
-      .reduce((acc, { teacher, schedules }) => {
-        const classEntries = schedules.map(schedule => ({
+      .filter((assignment: any) => !assignment.substitute)
+      .reduce((acc: any[], { teacher, schedules }: any) => {
+        const classEntries = schedules.map((schedule: any) => ({
           id: schedule.id,
           className: schedule.className,
           period: schedule.period,
           teacherName: teacher.name
         }));
         return [...acc, ...classEntries];
-      }, [] as Array<{ id: string; className: string; period: number; teacherName: string }>)
-      .sort((a, b) => a.period - b.period);
+      }, [])
+      .sort((a: any, b: any) => a.period - b.period);
   }, [assignments]);
 
   const assignedClasses = React.useMemo(() => {
+    if (!Array.isArray(assignments)) return [];
+
     return assignments
-      .filter(({ substitute }) => substitute)
-      .reduce((acc, { teacher, substitute, schedules }) => {
-        const classEntries = schedules.map(schedule => ({
+      .filter((assignment: any) => assignment.substitute)
+      .reduce((acc: any[], { teacher, substitute, schedules }: any) => {
+        const classEntries = schedules.map((schedule: any) => ({
           id: schedule.id,
           className: schedule.className,
           period: schedule.period,
@@ -104,8 +109,8 @@ export default function ManageAbsencesPage() {
           substituteName: substitute?.name
         }));
         return [...acc, ...classEntries];
-      }, [] as Array<{ id: string; className: string; period: number; teacherName: string; substituteName?: string }>)
-      .sort((a, b) => a.period - b.period);
+      }, [])
+      .sort((a: any, b: any) => a.period - b.period);
   }, [assignments]);
 
   return (
