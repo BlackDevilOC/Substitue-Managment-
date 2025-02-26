@@ -142,7 +142,9 @@ export class MemStorage implements IStorage {
   }
 
   async autoAssignSubstitutes(date: string): Promise<Map<number, number>> {
-    const assignments = new Map<number, number>(); // absenceId -> substituteId
+    const assignments = new Map<number, number>();
+    const workloadMap = new Map<number, number>();
+
     const absentTeachers = Array.from(this.absences.values())
       .filter(a => a.date === date && !a.substituteId);
 
@@ -157,14 +159,68 @@ export class MemStorage implements IStorage {
         !this.isTeacherOverloaded(t.id, date)
       );
 
-      if (availableSubstitutes.length === 0) continue;
+      if (availableSubstitutes.length === 0) {
+        // Try regular teachers if no substitutes available
+        const regularTeachers = substitutes.filter(t => 
+          !t.isSubstitute && 
+          !absentTeachers.some(a => a.teacherId === t.id) &&
+          !this.isTeacherOverloaded(t.id, date)
+        );
 
-      const substitute = availableSubstitutes[0];
+        if (regularTeachers.length > 0) {
+          // Sort by workload
+          const substitute = regularTeachers.sort((a, b) => 
+            (workloadMap.get(a.id) || 0) - (workloadMap.get(b.id) || 0)
+          )[0];
+
+          await this.assignSubstitute(absence.id, substitute.id);
+          workloadMap.set(substitute.id, (workloadMap.get(substitute.id) || 0) + 1);
+          assignments.set(absence.id, substitute.id);
+
+          // Send notification
+          const { sendSubstituteNotification } = await import('./sms-handler');
+          await sendSubstituteNotification(substitute, [{
+            day: date,
+            period: this.getTeacherPeriod(absence.teacherId, date),
+            className: this.getTeacherClass(absence.teacherId, date),
+            originalTeacher: absentTeacher.name
+          }]);
+        }
+        continue;
+      }
+
+      // Sort substitutes by workload
+      const substitute = availableSubstitutes.sort((a, b) => 
+        (workloadMap.get(a.id) || 0) - (workloadMap.get(b.id) || 0)
+      )[0];
+
       await this.assignSubstitute(absence.id, substitute.id);
+      workloadMap.set(substitute.id, (workloadMap.get(substitute.id) || 0) + 1);
       assignments.set(absence.id, substitute.id);
+
+      // Send notification
+      const { sendSubstituteNotification } = await import('./sms-handler');
+      await sendSubstituteNotification(substitute, [{
+        day: date,
+        period: this.getTeacherPeriod(absence.teacherId, date),
+        className: this.getTeacherClass(absence.teacherId, date),
+        originalTeacher: absentTeacher.name
+      }]);
     }
 
     return assignments;
+  }
+
+  private getTeacherPeriod(teacherId: number, date: string): number {
+    const schedules = Array.from(this.schedules.values())
+      .find(s => s.teacherId === teacherId && s.day.toLowerCase() === new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase());
+    return schedules?.period || 0;
+  }
+
+  private getTeacherClass(teacherId: number, date: string): string {
+    const schedules = Array.from(this.schedules.values())
+      .find(s => s.teacherId === teacherId && s.day.toLowerCase() === new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase());
+    return schedules?.className || '';
   }
 
   async getSubstituteAssignments(date: string): Promise<{ 
