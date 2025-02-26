@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
-import { toast } from "@/hooks/use-toast"; // Corrected import path
+import { toast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function SubstitutesPage() {
@@ -64,27 +64,30 @@ export default function SubstitutesPage() {
   const isLoading = loadingTeachers || loadingAbsences;
   const today = format(new Date(), "yyyy-MM-dd");
 
-  // Get all teachers and check their availability
-  const teacherStatuses = teachers?.map(teacher => {
+  const teacherStatuses = teachers?.map((teacher) => {
     const isAbsentToday = absences?.some(
-      absence => 
-        absence.teacherId === teacher.id && 
+      (absence) =>
+        absence.teacherId === teacher.id &&
         format(new Date(absence.date), "yyyy-MM-dd") === today
     );
     const isAssignedToday = absences?.some(
-      absence => 
-        absence.substituteId === teacher.id && 
+      (absence) =>
+        absence.substituteId === teacher.id &&
         format(new Date(absence.date), "yyyy-MM-dd") === today
     );
 
     return {
       ...teacher,
-      status: isAbsentToday ? "Absent" : isAssignedToday ? "Assigned" : "Available"
+      status: isAbsentToday
+        ? "Absent"
+        : isAssignedToday
+        ? "Assigned"
+        : "Available",
     };
   }) || [];
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="secondary-page container mx-auto p-4 space-y-6"> {/* Added secondary-page class and adjusted container */}
       <h1 className="text-2xl font-bold">Available Teachers</h1>
 
       <Card>
@@ -122,18 +125,21 @@ export default function SubstitutesPage() {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Teacher Status</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {teacherStatuses.map(teacher => (
+              {teacherStatuses.map((teacher) => (
                 <div
                   key={teacher.id}
                   className={`p-4 rounded-lg border ${
-                    teacher.status === "Available" ? "bg-green-50 border-green-200" :
-                    teacher.status === "Assigned" ? "bg-yellow-50 border-yellow-200" :
-                    "bg-red-50 border-red-200"
+                    teacher.status === "Available"
+                      ? "bg-green-50 border-green-200"
+                      : teacher.status === "Assigned"
+                      ? "bg-yellow-50 border-yellow-200"
+                      : "bg-red-50 border-red-200"
                   }`}
                 >
                   <div className="font-medium">{teacher.name}</div>
                   <div className="text-sm mt-1">
-                    Status: <span className="font-medium">{teacher.status}</span>
+                    Status:{" "}
+                    <span className="font-medium">{teacher.status}</span>
                   </div>
                   {teacher.phoneNumber && (
                     <div className="text-sm text-muted-foreground mt-1">
