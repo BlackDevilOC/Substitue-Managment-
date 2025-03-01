@@ -190,14 +190,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auto-assign-substitutes", async (req, res) => {
     const date = format(new Date(), "yyyy-MM-dd");
     try {
+      // First load fresh data from CSV files to ensure we have the latest information
+      const { SubstituteManager } = await import('./substitute-manager.js');
+      const manager = new SubstituteManager();
+      await manager.loadData();
+      
+      // Now run the auto-assignment algorithm
       const assignments = await storage.autoAssignSubstitutes(date);
+      
+      // Get details of assignments for the response
+      const substituteAssignments = await storage.getSubstituteAssignments(date);
+      
       res.json({
         message: "Substitutes assigned successfully",
-        assignmentsCount: assignments.size
+        assignmentsCount: assignments.size,
+        assignments: substituteAssignments
       });
     } catch (error) {
       console.error('Auto-assign substitutes error:', error);
-      res.status(500).json({ message: "Failed to assign substitutes" });
+      res.status(500).json({ 
+        message: "Failed to assign substitutes", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
     }
   });
 
@@ -237,6 +251,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.assignSubstitute(absence.id, null);
         }
       }
+      
+      // Also clear assignments in the substitute manager
+      const { SubstituteManager } = await import('./substitute-manager.js');
+      const manager = new SubstituteManager();
+      manager.clearAssignments();
 
       res.json({ message: "Assignments reset successfully" });
     } catch (error) {

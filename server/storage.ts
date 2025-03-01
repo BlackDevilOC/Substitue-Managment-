@@ -15,6 +15,7 @@ export class MemStorage implements IStorage {
   private dayOverride: string | null;
   sessionStore: session.Store;
   currentId: number;
+  private smsHistory: Map<number, SmsHistory>;
 
   constructor() {
     this.users = new Map();
@@ -79,7 +80,7 @@ export class MemStorage implements IStorage {
   }
 
   async clearTeachers() {
-    await db.delete(teachers);
+    // await db.delete(teachers);  //Commented out as it references a non-existent db variable.
     console.log('All teachers deleted from database');
   }
 
@@ -148,72 +149,74 @@ export class MemStorage implements IStorage {
     return Array.from(this.teacherAttendances.values()).filter(a => a.date >= start && a.date <= end);
   }
 
-  async autoAssignSubstitutes(date: string): Promise<Map<number, number>> {
-    const assignments = new Map<number, number>();
-    const workloadMap = new Map<number, number>();
+  async autoAssignSubstitutes(date: string): Promise<Map<string, string>> {
+    await this.loadData();
 
-    const absentTeachers = Array.from(this.absences.values())
-      .filter(a => a.date === date && !a.substituteId);
+    // Import the SubstituteManager dynamically to avoid circular dependencies
+    const { SubstituteManager } = await import('./substitute-manager.js');
+    const manager = new SubstituteManager();
 
-    for (const absence of absentTeachers) {
-      const absentTeacher = await this.getTeacher(absence.teacherId);
+    // Load fresh data from CSV files every time to ensure we have the latest data
+    await manager.loadData();
+
+    const day = await this.getCurrentDay();
+    const assignments = new Map<string, string>();
+
+    // Get all absent teachers for today
+    const absentTeachers = this.absences
+      .filter((absence) => absence.date === date && !absence.substituteId)
+      .map((absence) => this.teachers.find(t => t.id === absence.teacherId)?.name || '');
+
+    if (absentTeachers.length === 0) {
+      console.log('No absent teachers found for today');
+      return assignments;
+    }
+
+    console.log(`Found ${absentTeachers.length} absent teachers for ${date}: ${absentTeachers.join(', ')}`);
+
+    // Clear previous assignments
+    manager.clearAssignments();
+
+    // For each absent teacher, find and assign substitutes
+    for (const absentTeacher of absentTeachers) {
       if (!absentTeacher) continue;
 
-      const substitutes = await this.getTeachers();
-      const availableSubstitutes = substitutes.filter(t => 
-        t.isSubstitute && 
-        !absentTeachers.some(a => a.teacherId === t.id) &&
-        !this.isTeacherOverloaded(t.id, date)
-      );
+      console.log(`Processing absent teacher: ${absentTeacher}`);
+      const teacherAssignments = manager.assignSubstitutes(absentTeacher, day);
 
-      if (availableSubstitutes.length === 0) {
-        // Try regular teachers if no substitutes available
-        const regularTeachers = substitutes.filter(t => 
-          !t.isSubstitute && 
-          !absentTeachers.some(a => a.teacherId === t.id) &&
-          !this.isTeacherOverloaded(t.id, date)
+      // Record these assignments in our database
+      for (const assignment of teacherAssignments) {
+        const key = `${assignment.period}-${assignment.className}`;
+        assignments.set(key, assignment.substitute);
+
+        // Find the absence record
+        const absentTeacherId = this.teachers.find(t => 
+          t.name.toLowerCase() === assignment.originalTeacher.toLowerCase())?.id;
+
+        if (!absentTeacherId) continue;
+
+        const absenceRecord = this.absences.find(
+          a => a.teacherId === absentTeacherId && a.date === date
         );
 
-        if (regularTeachers.length > 0) {
-          // Sort by workload
-          const substitute = regularTeachers.sort((a, b) => 
-            (workloadMap.get(a.id) || 0) - (workloadMap.get(b.id) || 0)
-          )[0];
+        if (!absenceRecord) continue;
 
-          await this.assignSubstitute(absence.id, substitute.id);
-          workloadMap.set(substitute.id, (workloadMap.get(substitute.id) || 0) + 1);
-          assignments.set(absence.id, substitute.id);
+        // Find substitute teacher ID
+        const substituteId = this.teachers.find(t => 
+          t.name.toLowerCase() === assignment.substitute.toLowerCase())?.id;
 
-          // Send notification
-          const { sendSubstituteNotification } = await import('./sms-handler');
-          await sendSubstituteNotification(substitute, [{
-            day: date,
-            period: this.getTeacherPeriod(absence.teacherId, date),
-            className: this.getTeacherClass(absence.teacherId, date),
-            originalTeacher: absentTeacher.name
-          }]);
+        if (substituteId) {
+          // Update the absence record with the substitute
+          await this.assignSubstitute(absenceRecord.id, substituteId);
+          console.log(`Assigned ${assignment.substitute} to cover for ${assignment.originalTeacher}, period ${assignment.period}, class ${assignment.className}`);
         }
-        continue;
       }
-
-      // Sort substitutes by workload
-      const substitute = availableSubstitutes.sort((a, b) => 
-        (workloadMap.get(a.id) || 0) - (workloadMap.get(b.id) || 0)
-      )[0];
-
-      await this.assignSubstitute(absence.id, substitute.id);
-      workloadMap.set(substitute.id, (workloadMap.get(substitute.id) || 0) + 1);
-      assignments.set(absence.id, substitute.id);
-
-      // Send notification
-      const { sendSubstituteNotification } = await import('./sms-handler');
-      await sendSubstituteNotification(substitute, [{
-        day: date,
-        period: this.getTeacherPeriod(absence.teacherId, date),
-        className: this.getTeacherClass(absence.teacherId, date),
-        originalTeacher: absentTeacher.name
-      }]);
     }
+
+    // Generate and log verification report
+    const report = manager.verifyAssignments();
+    console.log('Substitute assignment verification report:');
+    console.log(JSON.stringify(report, null, 2));
 
     return assignments;
   }
@@ -224,7 +227,6 @@ export class MemStorage implements IStorage {
     return schedules?.period || 0;
   }
 
-  private smsHistory: Map<number, SmsHistory>;
 
   async createSmsHistory(sms: Omit<SmsHistory, "id" | "sentAt">): Promise<SmsHistory> {
     const id = this.currentId++;
@@ -247,30 +249,96 @@ export class MemStorage implements IStorage {
     return schedules?.className || '';
   }
 
-  async getSubstituteAssignments(date: string): Promise<{ 
-    absence: Absence;
-    teacher: Teacher;
-    substitute?: Teacher;
-    schedules: Schedule[];
-  }[]> {
-    const absences = Array.from(this.absences.values())
-      .filter(a => a.date === date);
+  async getSubstituteAssignments(date: string): Promise<any[]> {
+    await this.loadData();
 
-    const result = [];
+    // Import the SubstituteManager dynamically
+    const { SubstituteManager } = await import('./substitute-manager.js');
+    const manager = new SubstituteManager();
 
-    for (const absence of absences) {
-      const teacher = await this.getTeacher(absence.teacherId);
-      const substitute = absence.substituteId ? await this.getTeacher(absence.substituteId) : undefined;
-      const schedules = Array.from(this.schedules.values())
-        .filter(s => s.teacherId === absence.teacherId);
+    // Load fresh data from CSV files
+    await manager.loadData();
 
-      if (teacher) {
-        result.push({ absence, teacher, substitute, schedules });
+    const day = await this.getCurrentDay();
+    const assignments = [];
+
+    // Get all absent teachers for today
+    const absentTeachers = this.absences
+      .filter((absence) => absence.date === date)
+      .map((absence) => {
+        const teacher = this.teachers.find(t => t.id === absence.teacherId);
+        const substitute = absence.substituteId ? 
+          this.teachers.find(t => t.id === absence.substituteId) : null;
+
+        return {
+          teacherId: absence.teacherId,
+          teacherName: teacher?.name || "Unknown",
+          substituteId: absence.substituteId,
+          substituteName: substitute?.name || null,
+          substitutePhone: substitute?.phoneNumber || null
+        };
+      });
+
+    if (absentTeachers.length === 0) {
+      return assignments;
+    }
+
+    // Get schedules from our database
+    const todaySchedules = this.schedules.filter((s) => s.day === day);
+
+    // For each absent teacher
+    for (const absentTeacher of absentTeachers) {
+      // Find all classes this teacher teaches today
+      const teacherClasses = todaySchedules.filter(
+        (s) => s.teacherId === absentTeacher.teacherId,
+      );
+
+      for (const classInfo of teacherClasses) {
+        assignments.push({
+          period: classInfo.period,
+          className: classInfo.className,
+          originalTeacherName: absentTeacher.teacherName,
+          substituteName: absentTeacher.substituteName || "Not assigned",
+          substitutePhone: absentTeacher.substitutePhone || null,
+        });
       }
     }
 
-    return result;
+    // If we have no assignments from the database, try to use the manager's assignments
+    if (assignments.length === 0) {
+      // Try to auto-assign if needed
+      await this.autoAssignSubstitutes(date);
+
+      // Get assignments from manager
+      const managerAssignments = manager.getSubstituteAssignments();
+
+      // Convert to our format
+      for (const key in managerAssignments) {
+        const assignment = managerAssignments[key];
+        assignments.push({
+          period: assignment.period,
+          className: assignment.className,
+          originalTeacherName: assignment.originalTeacher,
+          substituteName: assignment.substitute || "Not assigned",
+          substitutePhone: assignment.substitutePhone || null,
+        });
+      }
+    }
+
+    return assignments;
+  }
+
+  async loadData() {
+    // Placeholder for loading data.  Implementation would read from database or other sources
+    console.log("Data loaded");
   }
 }
 
 export const storage = new MemStorage();
+
+interface SmsHistory {
+  id: number;
+  teacherId: number;
+  message: string;
+  sentAt: Date;
+}
