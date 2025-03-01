@@ -26,10 +26,16 @@ interface AbsentTeacherData {
 }
 
 export default function AttendancePage() {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  // Use the current date from the device
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const today = new Date();
+    // Set to beginning of the day to avoid time zone issues
+    return new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  });
   const [localAttendance, setLocalAttendance] = useState<
     Record<number, string>
   >({});
+  const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString());
 
   const { data: teachers, isLoading: teachersLoading } = useQuery<Teacher[]>({
     queryKey: ["/api/teachers"],
@@ -54,6 +60,15 @@ export default function AttendancePage() {
       );
     }
   }, [selectedDate, teachers]);
+
+  // Update current time every minute
+  useEffect(() => {
+    const timeInterval = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString());
+    }, 60000); // Update every minute
+    
+    return () => clearInterval(timeInterval);
+  }, []);
 
   // Auto-load default teachers if no teachers exist
   useEffect(() => {
@@ -181,21 +196,38 @@ export default function AttendancePage() {
 
       // Create a CSV string
       let csvContent = `Teacher Attendance - ${monthName} ${year}\n\n`;
+      csvContent += `Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}\n\n`;
 
-      // Add headers - days of month
+      // Add headers - days of month with weekday name
       csvContent += "Teacher Name,";
       const daysInMonth = new Date(
         selectedDate.getFullYear(),
         selectedDate.getMonth() + 1,
         0,
       ).getDate();
+      
+      // Create a set to track processed teachers to avoid duplicates
+      const processedTeachers = new Set();
+      
       for (let i = 1; i <= daysInMonth; i++) {
-        csvContent += `${i},`;
+        const dayDate = new Date(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth(),
+          i,
+        );
+        const dayName = dayDate.toLocaleDateString('en-US', { weekday: 'short' });
+        csvContent += `${i} (${dayName}),`;
       }
       csvContent += "Total Present,Total Absent\n";
 
-      // Add data for each teacher
+      // Add data for each teacher (avoid duplicates)
       teachers?.forEach((teacher) => {
+        // Skip if we've already processed this teacher
+        if (processedTeachers.has(teacher.id)) {
+          return;
+        }
+        
+        processedTeachers.add(teacher.id);
         csvContent += `${teacher.name},`;
 
         let presentCount = 0;
@@ -323,6 +355,9 @@ export default function AttendancePage() {
           <p className="text-muted-foreground mt-1">
             Mark and track teacher attendance
           </p>
+          <div className="text-sm text-muted-foreground mt-1">
+            Current time: {currentTime} | {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
+          </div>
         </div>
         
         <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
@@ -341,6 +376,7 @@ export default function AttendancePage() {
                 mode="single"
                 selected={selectedDate}
                 onSelect={(date) => date && setSelectedDate(date)}
+                defaultMonth={new Date()} // Set default month to current month
                 initialFocus
               />
             </PopoverContent>
