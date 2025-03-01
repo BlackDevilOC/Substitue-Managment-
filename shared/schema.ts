@@ -2,6 +2,7 @@ import { pgTable, text, serial, integer, boolean, date, timestamp } from "drizzl
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Keep existing tables
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -31,19 +32,27 @@ export const absences = pgTable("absences", {
   substituteId: integer("substitute_id"),
 });
 
-// New tables for historical tracking
+export const uploadedFiles = pgTable("uploaded_files", {
+  id: serial("id").primaryKey(),
+  fileName: text("file_name").notNull(),
+  fileType: text("file_type").notNull(), // 'timetable' or 'substitute'
+  content: text("content").notNull(),
+  uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
+  hash: text("hash").notNull(), // To check for duplicates
+});
+
 export const historicalTimetables = pgTable("historical_timetables", {
   id: serial("id").primaryKey(),
   uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
   fileName: text("file_name").notNull(),
-  content: text("content").notNull(), // Store original CSV content
+  content: text("content").notNull(),
 });
 
 export const historicalTeachers = pgTable("historical_teachers", {
   id: serial("id").primaryKey(),
   uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
   fileName: text("file_name").notNull(),
-  content: text("content").notNull(), // Store original CSV content
+  content: text("content").notNull(),
 });
 
 export const teacherAttendance = pgTable("teacher_attendance", {
@@ -54,12 +63,21 @@ export const teacherAttendance = pgTable("teacher_attendance", {
   notes: text("notes"),
 });
 
+export const smsHistory = pgTable("sms_history", {
+  id: serial("id").primaryKey(),
+  teacherId: integer("teacher_id").notNull(),
+  message: text("message").notNull(),
+  sentAt: timestamp("sent_at").notNull().defaultNow(),
+  status: text("status").notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
 });
 
+// Add the changePasswordSchema that was missing
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
   newPassword: z.string().min(6, "Password must be at least 6 characters"),
@@ -75,6 +93,7 @@ export const insertAbsenceSchema = createInsertSchema(absences);
 export const insertHistoricalTimetableSchema = createInsertSchema(historicalTimetables);
 export const insertHistoricalTeacherSchema = createInsertSchema(historicalTeachers);
 export const insertTeacherAttendanceSchema = createInsertSchema(teacherAttendance);
+export const insertUploadedFileSchema = createInsertSchema(uploadedFiles);
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -82,16 +101,7 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Teacher = typeof teachers.$inferSelect;
 export type Schedule = typeof schedules.$inferSelect;
 export type Absence = typeof absences.$inferSelect;
-export type ChangePassword = z.infer<typeof changePasswordSchema>;
-export type HistoricalTimetable = typeof historicalTimetables.$inferSelect;
-export type HistoricalTeacher = typeof historicalTeachers.$inferSelect;
-export const smsHistory = pgTable("sms_history", {
-  id: serial("id").primaryKey(),
-  teacherId: integer("teacher_id").notNull(),
-  message: text("message").notNull(),
-  sentAt: timestamp("sent_at").notNull().defaultNow(),
-  status: text("status").notNull(), // 'sent', 'failed', 'pending'
-});
-
 export type TeacherAttendance = typeof teacherAttendance.$inferSelect;
 export type SmsHistory = typeof smsHistory.$inferSelect;
+export type UploadedFile = typeof uploadedFiles.$inferSelect;
+export type ChangePassword = z.infer<typeof changePasswordSchema>;
