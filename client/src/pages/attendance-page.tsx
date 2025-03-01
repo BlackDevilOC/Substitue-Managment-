@@ -16,6 +16,7 @@ interface AbsentTeacherData {
   teacherName: string;
   phone?: string;
   date: string;
+  periods?: { period: number; className: string }[];
 }
 
 export default function AttendancePage() {
@@ -177,6 +178,8 @@ export default function AttendancePage() {
         });
         throw error;
       }
+      await updateAbsentTeachersFile(teacherId, status); // Call the new function here
+
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
@@ -189,6 +192,120 @@ export default function AttendancePage() {
       console.error("Error marking attendance:", error);
     },
   });
+
+  // Function to manage absent teachers in JSON file
+  const updateAbsentTeachersFile = async (
+    teacherId: number,
+    status: string,
+  ) => {
+    try {
+      const dateStr = selectedDate.toISOString().split("T")[0];
+
+      // Get existing data from the JSON file
+      let absentTeachers: AbsentTeacherData[] = [];
+
+      try {
+        // Try to load data from the server first
+        const response = await fetch(
+          "/client/src/data/absent_teacher_for_substitute.json",
+        );
+        if (response.ok) {
+          absentTeachers = await response.json();
+        }
+      } catch (error) {
+        console.warn(
+          "Could not fetch from server, falling back to localStorage",
+        );
+        // Fallback to localStorage if server fetch fails
+        const existingData = localStorage.getItem(
+          "absent_teacher_for_substitute",
+        );
+        if (existingData) {
+          absentTeachers = JSON.parse(existingData);
+        }
+      }
+
+      if (status === "absent") {
+        // Add teacher to absent list if not already present
+        const teacher = teachers?.find((t) => t.id === teacherId);
+        if (!teacher) return;
+
+        // Check if teacher is already in the list for this date
+        const existingIndex = absentTeachers.findIndex(
+          (t) => t.teacherId === teacherId && t.date === dateStr,
+        );
+
+        if (existingIndex === -1) {
+          const dayName = selectedDate
+            .toLocaleDateString("en-US", { weekday: "long" })
+            .toLowerCase();
+          const schedule = teacher.schedule as Record<string, number[]>;
+          const periods = schedule[dayName] || [];
+
+          absentTeachers.push({
+            teacherId: teacher.id,
+            teacherName: teacher.name,
+            phone: teacher.phone,
+            date: dateStr,
+            periods: periods.map((period, index) => ({
+              period,
+              className: `Class ${index + 1}`,
+            })),
+          });
+
+          // Add teacher to absent_teachers.json file
+          await updateAbsentTeachersDataFile(teacher.name, true);
+        }
+      } else {
+        // Remove teacher from absent list
+        const teacherToRemove = absentTeachers.find(
+          (t) => t.teacherId === teacherId && t.date === dateStr
+        );
+
+        absentTeachers = absentTeachers.filter(
+          (t) => !(t.teacherId === teacherId && t.date === dateStr),
+        );
+
+        // Remove teacher from absent_teachers.json file if they exist
+        if (teacherToRemove) {
+          await updateAbsentTeachersDataFile(teacherToRemove.teacherName, false);
+        }
+      }
+
+      // Save updated list to localStorage
+      localStorage.setItem(
+        "absent_teacher_for_substitute",
+        JSON.stringify(absentTeachers, null, 2),
+      );
+
+      // Try to update the actual file on the server
+      try {
+        await apiRequest("POST", "/api/update-absent-teachers", {
+          absentTeachers,
+        });
+      } catch (error) {
+        console.warn(
+          "Failed to update server file, changes stored locally",
+          error,
+        );
+      }
+    } catch (error) {
+      console.error("Error updating absent teachers file:", error);
+    }
+  };
+
+  // Function to update the absent_teachers.json file in the data folder
+  const updateAbsentTeachersDataFile = async (teacherName: string, isAbsent: boolean) => {
+    try {
+      // Call the API endpoint to update the absent teachers file
+      await apiRequest("POST", "/api/update-absent-teachers-file", {
+        teacherName,
+        isAbsent
+      });
+    } catch (error) {
+      console.warn("Failed to update absent teachers data file", error);
+    }
+  };
 
   if (teachersLoading) {
     return (

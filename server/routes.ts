@@ -245,13 +245,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { SubstituteManager } = await import('./substitute-manager.js');
       const manager = new SubstituteManager();
       await manager.loadData();
-      
+
       // Now run the auto-assignment algorithm
       const assignments = await storage.autoAssignSubstitutes(date);
-      
+
       // Get details of assignments for the response
       const substituteAssignments = await storage.getSubstituteAssignments(date);
-      
+
       res.json({
         message: "Substitutes assigned successfully",
         assignmentsCount: assignments.size,
@@ -296,18 +296,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Clear all substitute assignments for today's absences
       const today = format(new Date(), "yyyy-MM-dd");
       const absences = await storage.getAbsences();
-      
+
       for (const absence of absences) {
         if (absence.date === today && absence.substituteId) {
           await storage.assignSubstitute(absence.id, null);
         }
       }
-      
+
       // Also clear assignments in the substitute manager
       const { SubstituteManager } = await import('./substitute-manager.js');
       const manager = new SubstituteManager();
       manager.clearAssignments();
-      
+
       res.json({ message: "Assignments reset successfully" });
     } catch (error) {
       console.error('Reset assignments error:', error);
@@ -315,6 +315,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/update-absent-teachers', async (req, res) => {
+    try {
+      const { absentTeachers } = req.body;
+
+      // Update the JSON file
+      fs.writeFileSync(
+        path.join(__dirname, '../client/src/data/absent_teacher_for_substitute.json'),
+        JSON.stringify(absentTeachers, null, 2)
+      );
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating absent teachers:', error);
+      res.status(500).json({ error: 'Failed to update absent teachers' });
+    }
+  });
+
+  // Handle updating absent_teachers.json file in data folder
+  app.post('/api/update-absent-teachers-file', async (req, res) => {
+    try {
+      const { teacherName, isAbsent } = req.body;
+      const filePath = path.join(__dirname, '../data/absent_teachers.json');
+
+      // Create file with empty array if it doesn't exist
+      if (!fs.existsSync(filePath)) {
+        fs.writeFileSync(filePath, JSON.stringify([], null, 2));
+      }
+
+      // Read current absent teachers
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      let absentTeachers = JSON.parse(fileContent);
+
+      if (isAbsent) {
+        // Add teacher if not already in the list
+        if (!absentTeachers.includes(teacherName)) {
+          absentTeachers.push(teacherName);
+        }
+      } else {
+        // Remove teacher from the list
+        absentTeachers = absentTeachers.filter(name => name !== teacherName);
+      }
+
+      // Write updated list back to file
+      fs.writeFileSync(filePath, JSON.stringify(absentTeachers, null, 2));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating absent teachers file:', error);
+      res.status(500).json({ error: 'Failed to update absent teachers file' });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
