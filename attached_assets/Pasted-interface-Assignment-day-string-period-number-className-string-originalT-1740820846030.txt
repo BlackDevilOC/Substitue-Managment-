@@ -1,0 +1,204 @@
+interface Assignment {
+    day: string;
+    period: number;
+    className: string;
+    originalTeacher: string;
+    substitute: string;
+    substitutePhone?: string;
+}
+
+interface VerificationReport {
+    check: string;
+    status: "PASS" | "FAIL";
+    details: string;
+}
+
+class SubstituteManager {
+    private schedule: Map<string, Map<number, string[]>> = new Map();
+    private substitutes: Map<string, string> = new Map();
+    private teacherClasses: Map<string, Assignment[]> = new Map();
+    private substituteAssignments: Map<string, Assignment[]> = new Map();
+    private teacherWorkload: Map<string, number> = new Map();
+    private MAX_SUBSTITUTE_ASSIGNMENTS = 3;
+    private MAX_REGULAR_TEACHER_ASSIGNMENTS = 2;
+    private allAssignments: Assignment[] = [];
+
+    constructor() {}
+
+    async loadData(timetablePath: string, substitutesPath: string): Promise<void> {
+        // Load substitutes
+        const subData = await Deno.readTextFile(substitutesPath);
+        subData.split('\n').forEach(line => {
+            const [name, phone] = line.split(',');
+            if (name) this.substitutes.set(this.normalizeName(name), phone?.trim());
+        });
+
+        // Load timetable
+        const timetableData = await Deno.readTextFile(timetablePath);
+        const rows = timetableData.split('\n').slice(1);
+        const classes = ['10A', '10B', '10C', '9A', '9B', '9C', '8A', '8B', '8C', '7A', '7B', '7C', '6A', '6B', '6C'];
+
+        rows.forEach(row => {
+            const cols = row.split(',');
+            if (cols.length < 2) return;
+
+            const day = this.normalizeDay(cols[0]);
+            const period = parseInt(cols[1]);
+            const teachers = cols.slice(2).map(t => this.normalizeName(t));
+
+            if (!this.schedule.has(day)) this.schedule.set(day, new Map());
+            this.schedule.get(day)!.set(period, teachers);
+
+            teachers.forEach((teacher, idx) => {
+                const className = classes[idx];
+                if (!this.teacherClasses.has(teacher)) this.teacherClasses.set(teacher, []);
+                this.teacherClasses.get(teacher)!.push({ day, period, className, originalTeacher: teacher, substitute: '' });
+            });
+        });
+    }
+
+    assignSubstitutes(absentTeacher: string, day: string): Assignment[] {
+        const assignments: Assignment[] = [];
+        const absentPeriods = this.findAbsentPeriods(absentTeacher, day);
+
+        for (const { period, className } of absentPeriods) {
+            const candidates = this.getAvailableSubstitutes(day, period, absentTeacher);
+            if (candidates.length === 0) continue;
+
+            // Prioritize substitutes with the least assignments and workload
+            const chosen = candidates.sort((a, b) => {
+                const aAssignments = this.substituteAssignments.get(a)?.length || 0;
+                const bAssignments = this.substituteAssignments.get(b)?.length || 0;
+                const aWorkload = this.teacherWorkload.get(a) || 0;
+                const bWorkload = this.teacherWorkload.get(b) || 0;
+                return aAssignments - bAssignments || aWorkload - bWorkload;
+            })[0];
+
+            const assignment: Assignment = {
+                day,
+                period,
+                className,
+                originalTeacher: absentTeacher,
+                substitute: chosen,
+                substitutePhone: this.substitutes.get(chosen),
+            };
+
+            this.recordAssignment(chosen, assignment);
+            assignments.push(assignment);
+        }
+
+        return assignments;
+    }
+
+    private findAbsentPeriods(teacher: string, day: string): { period: number; className: string }[] {
+        return this.teacherClasses.get(this.normalizeName(teacher))?.filter(a => a.day === day) || [];
+    }
+
+    private getAvailableSubstitutes(day: string, period: number, originalTeacher: string): string[] {
+        const busyTeachers = new Set(this.schedule.get(day)?.get(period) || []);
+        const availableSubs = Array.from(this.substitutes.keys()).filter(sub =>
+            !busyTeachers.has(sub) &&
+            (this.substituteAssignments.get(sub)?.length || 0) < this.MAX_SUBSTITUTE_ASSIGNMENTS &&
+            this.isAvailableAllDay(sub, day)
+        );
+
+        const availableRegulars = Array.from(this.teacherClasses.keys()).filter(teacher =>
+            !busyTeachers.has(teacher) &&
+            teacher !== originalTeacher &&
+            !this.substitutes.has(teacher) &&
+            (this.teacherWorkload.get(teacher) || 0) < this.MAX_REGULAR_TEACHER_ASSIGNMENTS
+        );
+
+        return [...availableSubs, ...availableRegulars];
+    }
+
+    private isAvailableAllDay(teacher: string, day: string): boolean {
+        return !Array.from(this.schedule.get(day)?.values() || []).some(teachers => teachers.includes(teacher));
+    }
+
+    private recordAssignment(substitute: string, assignment: Assignment): void {
+        if (!this.substituteAssignments.has(substitute)) this.substituteAssignments.set(substitute, []);
+        this.substituteAssignments.get(substitute)!.push(assignment);
+
+        this.teacherWorkload.set(substitute, (this.teacherWorkload.get(substitute) || 0) + 1);
+        this.allAssignments.push(assignment);
+    }
+
+    verifyAssignments(): VerificationReport[] {
+        const reports: VerificationReport[] = [];
+        reports.push(this.verifySubstituteLimits());
+        reports.push(this.verifyAvailability());
+        reports.push(this.verifyWorkloadDistribution());
+        return reports;
+    }
+
+    private verifySubstituteLimits(): VerificationReport {
+        const violations = Array.from(this.substituteAssignments.entries())
+            .filter(([sub, assignments]) => assignments.length > this.MAX_SUBSTITUTE_ASSIGNMENTS)
+            .map(([sub]) => sub);
+
+        return {
+            check: "Substitute Assignment Limits",
+            status: violations.length === 0 ? "PASS" : "FAIL",
+            details: violations.length > 0 ? `${violations.length} substitutes exceeded max assignments` : "All within limits",
+        };
+    }
+
+    private verifyAvailability(): VerificationReport {
+        const conflicts = this.allAssignments.filter(assignment => {
+            const { day, period, substitute } = assignment;
+            return this.schedule.get(day)?.get(period)?.includes(substitute);
+        });
+
+        return {
+            check: "Availability Validation",
+            status: conflicts.length === 0 ? "PASS" : "FAIL",
+            details: conflicts.length > 0 ? `${conflicts.length} scheduling conflicts found` : "No conflicts",
+        };
+    }
+
+    private verifyWorkloadDistribution(): VerificationReport {
+        const overloaded = Array.from(this.teacherWorkload.entries())
+            .filter(([teacher, count]) =>
+                (this.substitutes.has(teacher) && count > this.MAX_SUBSTITUTE_ASSIGNMENTS) ||
+                (!this.substitutes.has(teacher) && count > this.MAX_REGULAR_TEACHER_ASSIGNMENTS)
+            )
+            .map(([teacher]) => teacher);
+
+        return {
+            check: "Workload Distribution",
+            status: overloaded.length === 0 ? "PASS" : "FAIL",
+            details: overloaded.length > 0 ? `${overloaded.length} teachers overloaded` : "Fair distribution",
+        };
+    }
+
+    generateReport(): any {
+        return {
+            assignments: this.allAssignments,
+            verification: this.verifyAssignments(),
+            statistics: {
+                totalAssignments: this.allAssignments.length,
+                substitutesUsed: this.substituteAssignments.size,
+                regularTeachersUsed: Array.from(this.teacherWorkload.keys()).filter(t => !this.substitutes.has(t)).length,
+            },
+        };
+    }
+
+    private normalizeName(name: string): string {
+        return name.trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    private normalizeDay(day: string): string {
+        return day.trim().toLowerCase().slice(0, 3);
+    }
+}
+
+// Usage Example
+const manager = new SubstituteManager();
+await manager.loadData("timetable_file.csv", "Substitude_file.csv");
+
+const assignments = manager.assignSubstitutes("Sir Mushtaque Ahmed", "Monday");
+console.log(assignments);
+
+const report = manager.generateReport();
+console.log(JSON.stringify(report, null, 2));
