@@ -17,29 +17,8 @@ const upload = multer({
   }
 });
 
-// Middleware to check authorization token
-const checkAuth = (req: any, res: any, next: any) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
-  try {
-    const token = authHeader.split(' ')[1];
-    const user = JSON.parse(token);
-    if (user.username === 'Rehan') {
-      req.user = user;
-      next();
-    } else {
-      res.status(401).json({ error: "Unauthorized" });
-    }
-  } catch (error) {
-    res.status(401).json({ error: "Unauthorized" });
-  }
-};
-
 // Function to process and save teachers
-async function processAndSaveTeachers(timetableContent?: string, substituteContent?: string) {
+async function processAndSaveTeachers() {
   try {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
@@ -54,17 +33,17 @@ async function processAndSaveTeachers(timetableContent?: string, substituteConte
     const substitutePath = path.join(dataFolder, 'Substitude_file.csv');
     const totalTeacherPath = path.join(dataFolder, 'total_teacher.json');
 
-    // Use provided content or read from files
-    const ttContent = timetableContent || fs.existsSync(timetablePath) ? fs.readFileSync(timetablePath, 'utf-8') : '';
-    const subContent = substituteContent || fs.existsSync(substitutePath) ? fs.readFileSync(substitutePath, 'utf-8') : '';
-
-    if (!ttContent && !subContent) {
-      console.error('No data available for teacher extraction');
+    // Check if required files exist
+    if (!fs.existsSync(timetablePath) || !fs.existsSync(substitutePath)) {
+      console.warn('Required CSV files not found, skipping teacher extraction');
       return;
     }
 
+    const timetableContent = fs.readFileSync(timetablePath, 'utf-8');
+    const substituteContent = fs.readFileSync(substitutePath, 'utf-8');
+
     // Process teachers using the improved extraction function
-    const teacherData = await processTeacherFiles(ttContent, subContent);
+    const teacherData = await processTeacherFiles(timetableContent, substituteContent);
     const teachers = teacherData.split('\n')
       .slice(1) // Skip header
       .filter(line => line.trim())
@@ -91,12 +70,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply auth middleware to all /api routes
   app.use('/api', checkAuth);
 
-  // File upload routes
+  // File upload routes with automatic teacher extraction
   app.post("/api/upload/timetable", upload.single('file'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
     try {
       const fileContent = req.file.buffer.toString('utf-8');
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/timetable_file.csv');
+
+      // Save the file
+      fs.writeFileSync(filePath, fileContent);
 
       // Process timetable
       const schedules = await processTimetableCSV(fileContent);
@@ -104,13 +89,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createSchedule(schedule);
       }
 
-      // Save file
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const filePath = path.join(__dirname, '../data/timetable_file.csv');
-      fs.writeFileSync(filePath, fileContent);
-
-      // Process teachers again with new file
+      // Re-run teacher extraction
       await processAndSaveTeachers();
 
       res.json({ message: "Timetable uploaded and processed successfully" });
@@ -125,17 +104,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const fileContent = req.file.buffer.toString('utf-8');
-
-      // Process substitutes
-      const substitutes = await processSubstituteCSV(fileContent);
-
-      // Save file
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const filePath = path.join(__dirname, '../data/Substitude_file.csv');
+
+      // Save the file
       fs.writeFileSync(filePath, fileContent);
 
-      // Process teachers again with new file
+      // Process substitutes
+      await processSubstituteCSV(fileContent);
+
+      // Re-run teacher extraction
       await processAndSaveTeachers();
 
       res.json({ message: "Substitute list uploaded and processed successfully" });
@@ -154,22 +133,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (fs.existsSync(totalTeacherPath)) {
         const teachers = JSON.parse(fs.readFileSync(totalTeacherPath, 'utf-8'));
-        // Filter out any potential duplicates by name
-        const uniqueTeachers = Array.from(new Map(
-          teachers.map((t: any) => [t.name.toLowerCase(), t])
-        ).values());
-
-        // Map to the expected format and ensure exactly 34 teachers
-        const formattedTeachers = uniqueTeachers
-          .slice(0, 34) // Ensure we only take the first 34 teachers
-          .map((t: any, index: number) => ({
-            id: index + 1,
-            name: t.name,
-            phoneNumber: t.phone || null,
-            isSubstitute: false
-          }));
-
-        console.log(`Sending ${formattedTeachers.length} teachers to client`);
+        const formattedTeachers = teachers.map((t: any, index: number) => ({
+          id: index + 1,
+          name: t.name,
+          phoneNumber: t.phone || null,
+          isSubstitute: false
+        }));
         res.json(formattedTeachers);
       } else {
         console.warn('total_teacher.json not found');
@@ -212,24 +181,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/absences", async (req, res) => {
-    const absences = await storage.getAbsences();
-    res.json(absences);
+    try {
+      const absences = await storage.getAbsences();
+      res.json(absences);
+    } catch (error) {
+      console.error('Error getting absences:', error);
+      res.status(500).json({ error: 'Failed to get absences' });
+    }
   });
 
   app.post("/api/absences", async (req, res) => {
-    const parsed = insertAbsenceSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json(parsed.error);
-    const absence = await storage.createAbsence(parsed.data);
-    const teacher = await storage.getTeacher(parsed.data.teacherId);
-    if (teacher) {
-      const { recordAttendance } = await import('./attendance-tracker.js');
-      recordAttendance(
-        parsed.data.date,
-        teacher.name,
-        'Absent'
-      );
+    try {
+      const { teacherId, date } = req.body;
+      if (!teacherId || !date) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const absence = await storage.createAbsence({
+        teacherId,
+        date,
+        substituteId: null
+      });
+
+      res.status(201).json(absence);
+    } catch (error) {
+      console.error('Error creating absence:', error);
+      res.status(500).json({ error: 'Failed to create absence' });
     }
-    res.status(201).json(absence);
   });
 
   app.post("/api/absences/:id/substitute", async (req, res) => {
@@ -315,7 +293,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
   const httpServer = createServer(app);
   return httpServer;
 }
+
+// Middleware to check authorization token
+const checkAuth = (req: any, res: any, next: any) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const token = authHeader.split(' ')[1];
+    const user = JSON.parse(token);
+    if (user.username === 'Rehan') {
+      req.user = user;
+      next();
+    } else {
+      res.status(401).json({ error: "Unauthorized" });
+    }
+  } catch (error) {
+    res.status(401).json({ error: "Unauthorized" });
+  }
+};
