@@ -17,7 +17,7 @@ const upload = multer({
 const checkAuth = (req: any, res: any, next: any) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).send('Unauthorized');
+    return res.status(401).json({ error: "Unauthorized" }); // Changed to return JSON
   }
 
   try {
@@ -27,10 +27,10 @@ const checkAuth = (req: any, res: any, next: any) => {
       req.user = user;
       next();
     } else {
-      res.status(401).send('Unauthorized');
+      res.status(401).json({ error: "Unauthorized" }); // Changed to return JSON
     }
   } catch (error) {
-    res.status(401).send('Unauthorized');
+    res.status(401).json({ error: "Unauthorized" }); // Changed to return JSON
   }
 };
 
@@ -40,7 +40,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // CSV Upload Routes
   app.post("/api/upload/timetable", upload.single('file'), async (req, res) => {
-    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
     try {
       const fileContent = req.file.buffer.toString('utf-8');
@@ -58,14 +58,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Timetable upload error:', error);
       res.status(400).json({ 
-        message: "Failed to process timetable file",
-        error: error.message 
+        error: error.message || "Failed to process timetable file"
       });
     }
   });
 
   app.post("/api/upload/substitutes", upload.single('file'), async (req, res) => {
-    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
     try {
       const fileContent = req.file.buffer.toString('utf-8');
@@ -77,8 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Substitute upload error:', error);
       res.status(400).json({ 
-        message: "Failed to process substitute teachers file",
-        error: error.message
+        error: error.message || "Failed to process substitute teachers file"
       });
     }
   });

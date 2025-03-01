@@ -39,7 +39,7 @@ export default function HomePage() {
   const currentDay = getDayOfWeek();
   const [currentPeriod, setCurrentPeriod] = useState(getInitialPeriod());
 
-  // Queries remain unchanged
+  // Queries remain unchanged with improved error handling
   const { data: currentSchedule, isLoading: loadingSchedule } = useQuery({
     queryKey: ["/api/schedule", currentDay],
     queryFn: async () => {
@@ -48,7 +48,10 @@ export default function HomePage() {
           'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
         }
       });
-      if (!res.ok) throw new Error('Failed to fetch schedule');
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to fetch schedule');
+      }
       return res.json();
     }
   });
@@ -61,7 +64,10 @@ export default function HomePage() {
           'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
         }
       });
-      if (!res.ok) throw new Error('Failed to fetch absences');
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to fetch absences');
+      }
       return res.json();
     }
   });
@@ -74,16 +80,20 @@ export default function HomePage() {
           'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
         }
       });
-      if (!res.ok) throw new Error('Failed to fetch teachers');
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to fetch teachers');
+      }
       return res.json();
     }
   });
 
-  // Updated mutations with proper error handling and auth headers
+  // Updated mutations with proper error handling
   const uploadTimetableMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
+
       const res = await fetch('/api/upload/timetable', {
         method: 'POST',
         headers: {
@@ -93,13 +103,8 @@ export default function HomePage() {
       });
 
       if (!res.ok) {
-        const text = await res.text();
-        try {
-          const error = JSON.parse(text);
-          throw new Error(error.error || 'Failed to upload timetable');
-        } catch {
-          throw new Error(text || 'Failed to upload timetable');
-        }
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to upload timetable');
       }
 
       return res.json();
@@ -124,6 +129,7 @@ export default function HomePage() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
+
       const res = await fetch('/api/upload/substitutes', {
         method: 'POST',
         headers: {
@@ -133,13 +139,8 @@ export default function HomePage() {
       });
 
       if (!res.ok) {
-        const text = await res.text();
-        try {
-          const error = JSON.parse(text);
-          throw new Error(error.error || 'Failed to upload substitute teachers');
-        } catch {
-          throw new Error(text || 'Failed to upload substitute teachers');
-        }
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to upload substitute teachers');
       }
 
       return res.json();
@@ -172,14 +173,14 @@ export default function HomePage() {
       .map(schedule => {
         const teacher = teachers.find(t => t.id === schedule.teacherId);
         const isAbsent = absences.some(
-          a => a.teacherId === teacher?.id && 
+          a => a.teacherId === teacher?.id &&
           format(new Date(a.date), "yyyy-MM-dd") === todayStr
         );
 
         let substituteTeacher = null;
         if (isAbsent) {
           const absence = absences.find(
-            a => a.teacherId === teacher?.id && 
+            a => a.teacherId === teacher?.id &&
             format(new Date(a.date), "yyyy-MM-dd") === todayStr
           );
           if (absence?.substituteId) {
@@ -189,8 +190,8 @@ export default function HomePage() {
 
         return {
           className: schedule.className,
-          teacher: isAbsent 
-            ? substituteTeacher 
+          teacher: isAbsent
+            ? substituteTeacher
               ? `${substituteTeacher.name} (Substitute)`
               : "Teacher Absent"
             : teacher?.name || "No teacher"
@@ -343,8 +344,8 @@ export default function HomePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => setCurrentPeriod(p => p === 1 ? 8 : p - 1)}
               className="w-full sm:w-auto"
@@ -354,7 +355,7 @@ export default function HomePage() {
             <div className="text-sm text-center text-muted-foreground">
               {format(new Date(), "EEEE, MMMM d")} - Period {currentPeriod}
             </div>
-            <Button 
+            <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentPeriod(p => p === 8 ? 1 : p + 1)}
@@ -366,19 +367,19 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
             {currentTeachers.map(({ className, teacher }) => (
-              <div 
-                key={className} 
+              <div
+                key={className}
                 className={`p-3 rounded-lg border ${
                   teacher === "Teacher Absent" ? "bg-destructive/5 border-destructive/20" :
-                  teacher.includes("(Substitute)") ? "bg-warning/5 border-warning/20" :
-                  ""
+                    teacher.includes("(Substitute)") ? "bg-warning/5 border-warning/20" :
+                      ""
                 }`}
               >
                 <div className="font-medium">{className.toUpperCase()}</div>
                 <div className={`text-sm ${
                   teacher === "Teacher Absent" ? "text-destructive" :
-                  teacher.includes("(Substitute)") ? "text-warning-foreground" :
-                  "text-muted-foreground"
+                    teacher.includes("(Substitute)") ? "text-warning-foreground" :
+                      "text-muted-foreground"
                 }`}>
                   {teacher}
                 </div>
