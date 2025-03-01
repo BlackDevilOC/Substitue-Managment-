@@ -325,24 +325,7 @@ export async function extractTeacherNames(timetablePath: string, substitutePath:
         
         // Read from timetable file
         try {
-            const timetableContent = fs.readFileSync(timetablePath, 'utf-8');
-            const ttRecords = parse(timetableContent, {
-                columns: false,
-                skip_empty_lines: true,
-                trim: true
-            });
-            
-            // Extract teachers from timetable (skipping header row)
-            ttRecords.slice(1).forEach((row: any) => {
-                row.slice(2).forEach((name: any) => {
-                    if (name && name.toLowerCase() !== 'empty') {
-                        timetableTeachers.push({
-                            name: name.trim(),
-                            phone: ''
-                        });
-                    }
-                });
-            });
+            timetableTeachers = await readCSV(timetablePath);
             console.log(`Found ${timetableTeachers.length} teachers in timetable file`);
         } catch (err: any) {
             console.warn(`Error reading timetable file: ${err.message}`);
@@ -350,21 +333,7 @@ export async function extractTeacherNames(timetablePath: string, substitutePath:
         
         // Read from substitute file
         try {
-            const substituteContent = fs.readFileSync(substitutePath, 'utf-8');
-            const subRecords = parse(substituteContent, {
-                columns: false,
-                skip_empty_lines: true,
-                trim: true
-            });
-            
-            subRecords.forEach((row: any) => {
-                if (row[0]) {
-                    substituteTeachers.push({
-                        name: row[0].trim(),
-                        phone: row[1]?.trim() || ''
-                    });
-                }
-            });
+            substituteTeachers = await readCSV(substitutePath);
             console.log(`Found ${substituteTeachers.length} teachers in substitute file`);
         } catch (err: any) {
             console.warn(`Error reading substitute file: ${err.message}`);
