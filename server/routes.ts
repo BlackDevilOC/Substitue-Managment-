@@ -51,6 +51,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createSchedule(schedule);
       }
 
+      // Save the file to the data folder
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      const { fileURLToPath } = await import('url');
+      
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const dataFolder = path.join(__dirname, '../data');
+      const filePath = path.join(dataFolder, 'timetable_file.csv');
+      
+      try {
+        // Ensure the data directory exists
+        await fs.mkdir(dataFolder, { recursive: true });
+        // Write the file
+        await fs.writeFile(filePath, fileContent);
+        console.log(`Timetable file saved to ${filePath}`);
+      } catch (fsError) {
+        console.error('Error saving timetable file:', fsError);
+      }
+
       res.status(200).json({ 
         message: "Timetable uploaded successfully",
         schedulesCreated: schedules.length
@@ -69,6 +89,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const fileContent = req.file.buffer.toString('utf-8');
       const teachers = await processSubstituteCSV(fileContent);
+      
+      // Save the file to the data folder
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      const { fileURLToPath } = await import('url');
+      
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const dataFolder = path.join(__dirname, '../data');
+      const filePath = path.join(dataFolder, 'Substitude_file.csv');
+      
+      try {
+        // Ensure the data directory exists
+        await fs.mkdir(dataFolder, { recursive: true });
+        // Write the file
+        await fs.writeFile(filePath, fileContent);
+        console.log(`Substitute file saved to ${filePath}`);
+      } catch (fsError) {
+        console.error('Error saving substitute file:', fsError);
+      }
+      
       res.status(200).json({ 
         message: "Substitute teachers uploaded successfully",
         teachersCreated: teachers.length

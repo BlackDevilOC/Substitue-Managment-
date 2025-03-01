@@ -61,15 +61,11 @@ app.use((req, res, next) => {
   const port = 5000;
   app.listen(port, "0.0.0.0", async () => {
     console.log(`[express] serving on port ${port}`);
+    // Import and call the loadInitialData function from csv-handler
+    const { loadInitialData } = await import('./csv-handler');
+    console.log("[loadInitialData] Loading data from CSV files...");
     await loadInitialData();
+    console.log("[loadInitialData] Data loading complete.");
   });
 })();
-
-
-// Placeholder function - Replace with actual CSV loading logic
-async function loadInitialData() {
-  console.log("[loadInitialData] Loading data from CSV files...");
-  // Implement logic to read and process teacher.csv and timetable.csv here.
-  // This might involve using a library like 'csv-parser'
-  console.log("[loadInitialData] Data loading complete.");
 }

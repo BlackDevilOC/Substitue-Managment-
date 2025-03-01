@@ -203,7 +203,8 @@ export default function HomePage() {
   const handleTimetableUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (file.type !== 'text/csv') {
+
+    if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
       toast({
         title: "Invalid file type",
         description: "Please upload a CSV file",
@@ -211,13 +212,20 @@ export default function HomePage() {
       });
       return;
     }
+
+    toast({
+      title: "Uploading timetable",
+      description: "The file will be saved as timetable_file.csv",
+    });
+
     uploadTimetableMutation.mutate(file);
   };
 
   const handleSubstitutesUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (file.type !== 'text/csv') {
+
+    if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
       toast({
         title: "Invalid file type",
         description: "Please upload a CSV file",
@@ -225,6 +233,12 @@ export default function HomePage() {
       });
       return;
     }
+
+    toast({
+      title: "Uploading substitute teachers",
+      description: "The file will be saved as Substitude_file.csv",
+    });
+
     uploadSubstitutesMutation.mutate(file);
   };
 

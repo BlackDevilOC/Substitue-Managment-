@@ -13,13 +13,24 @@ const SUBSTITUTE_PATH = path.join(__dirname, '../data/Substitude_file.csv');
 
 export async function loadInitialData() {
   try {
-    const timetableContent = fs.readFileSync(TIMETABLE_PATH, 'utf-8');
-    const substituteContent = fs.readFileSync(SUBSTITUTE_PATH, 'utf-8');
+    // Check if files exist before reading
+    if (!fs.existsSync(TIMETABLE_PATH)) {
+      console.log(`Timetable file not found at ${TIMETABLE_PATH}`);
+    } else {
+      const timetableContent = fs.readFileSync(TIMETABLE_PATH, 'utf-8');
+      await processTimetableCSV(timetableContent);
+      console.log('Timetable data loaded successfully');
+    }
 
-    await processTimetableCSV(timetableContent);
-    await processSubstituteCSV(substituteContent);
+    if (!fs.existsSync(SUBSTITUTE_PATH)) {
+      console.log(`Substitute file not found at ${SUBSTITUTE_PATH}`);
+    } else {
+      const substituteContent = fs.readFileSync(SUBSTITUTE_PATH, 'utf-8');
+      await processSubstituteCSV(substituteContent);
+      console.log('Substitute data loaded successfully');
+    }
 
-    console.log('Initial data loaded successfully');
+    console.log('Initial data loading completed');
   } catch (error) {
     console.error('Error loading initial data:', error);
   }
