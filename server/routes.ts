@@ -7,6 +7,7 @@ import multer from "multer";
 import { format } from "date-fns";
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import * as fs from 'fs';
 
 
 const upload = multer({ 
@@ -249,23 +250,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
-      
-      // Clear old attendance records to prevent stale data
-      await clearAttendanceStorage();
 
-      // Extract teacher names from CSV files
       const timetablePath = path.join(__dirname, '../data/timetable_file.csv');
       const substitutePath = path.join(__dirname, '../data/Substitude_file.csv');
 
-      console.log(`Loading teachers from: ${timetablePath} and ${substitutePath}`);
-      
+      console.log('Loading teachers from CSV files:');
+      console.log(`- Timetable path: ${timetablePath}`);
+      console.log(`- Substitute path: ${substitutePath}`);
+
+      // Check if files exist
+      if (!fs.existsSync(timetablePath) && !fs.existsSync(substitutePath)) {
+        return res.status(404).json({
+          success: false,
+          message: 'CSV files not found. Please make sure the files exist in the data directory.',
+          teachers: []
+        });
+      }
+
+      // Extract teachers from both CSV files
       const teachersFromCSV = await extractTeacherNames(timetablePath, substitutePath);
-      console.log(`Extracted ${teachersFromCSV.length} unique teachers from CSV files`);
+
+      if (!teachersFromCSV || teachersFromCSV.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'No teachers found in CSV files',
+          teachers: []
+        });
+      }
 
       // First, clear existing teachers to prevent duplicates
       await storage.clearTeachers();
       console.log('Cleared existing teachers from database');
-      
+
+      // Clear attendance storage
+      await clearAttendanceStorage();
+
       // Save teachers to storage
       const savedTeachers = [];
       for (const teacher of teachersFromCSV) {
@@ -273,7 +292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const savedTeacher = await storage.createTeacher({
             name: teacher.name,
             phoneNumber: teacher.phone || null,
-            isSubstitute: false // Default value, modify as needed
+            isSubstitute: false // Default value
           });
           savedTeachers.push(savedTeacher);
         } catch (err) {
@@ -282,7 +301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`Successfully saved ${savedTeachers.length} teachers to database`);
-      
+
       res.json({ 
         success: true, 
         message: `Loaded ${savedTeachers.length} unique teachers from CSV files`,
@@ -292,7 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error loading teachers from CSV:', error);
       res.status(500).json({ 
         success: false, 
-        message: 'Failed to load teachers from CSV files',
+        message: `Failed to load teachers from CSV files: ${error.message}`,
         error: error.message
       });
     }

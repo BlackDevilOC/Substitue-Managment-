@@ -417,20 +417,21 @@ export default function AttendancePage() {
                 if (result.success) {
                   toast({
                     title: "Teachers loaded",
-                    description: `${result.message} (${result.teachers?.length || 0} teachers)`,
+                    description: `${result.message} (${result.teachers?.length || 0} unique teachers)`,
                   });
                   
                   // Refresh teachers list
-                  queryClient.invalidateQueries({
-                    queryKey: ["/api/teachers"],
-                  });
+                  await refetchTeachers();
                   
-                  // Clear local storage for current date
+                  // Clear local storage for current date to prevent duplicates
                   const todayKey = selectedDate.toISOString().split("T")[0];
                   localStorage.removeItem(`attendance_${todayKey}`);
                   
                   // Reset the local attendance state
                   setLocalAttendance({});
+                  
+                  // Clear any existing absent teacher data to start fresh
+                  localStorage.removeItem("absent_teacher_for_substitute");
                 } else {
                   toast({
                     title: "Error loading teachers",
