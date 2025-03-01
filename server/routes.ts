@@ -267,7 +267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Extract teachers from both CSV files
+      // Extract teachers from both CSV files - this now includes duplicate detection
       const teachersFromCSV = await extractTeacherNames(timetablePath, substitutePath);
 
       if (!teachersFromCSV || teachersFromCSV.length === 0) {
@@ -285,6 +285,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Clear attendance storage
       await clearAttendanceStorage();
 
+      // Calculate how many duplicates were fixed (original count minus final count)
+      // This is an estimate based on the expected total from the files vs. what we got
+      const totalTeachersInFiles = timetableTeachers + substituteTeachers;
+      const duplicatesFixed = Math.max(0, totalTeachersInFiles - teachersFromCSV.length);
+      console.log(`Identified approximately ${duplicatesFixed} duplicate teacher entries`);
+
       // Save teachers to storage
       const savedTeachers = [];
       for (const teacher of teachersFromCSV) {
@@ -295,7 +301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             isSubstitute: false // Default value
           });
           savedTeachers.push(savedTeacher);
-        } catch (err) {
+        } catch (err: any) {
           console.warn(`Failed to save teacher ${teacher.name}: ${err.message}`);
         }
       }
@@ -305,7 +311,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         success: true, 
         message: `Loaded ${savedTeachers.length} unique teachers from CSV files`,
-        teachers: savedTeachers
+        teachers: savedTeachers,
+        duplicatesFixed: duplicatesFixed
       });
     } catch (error) {
       console.error('Error loading teachers from CSV:', error);

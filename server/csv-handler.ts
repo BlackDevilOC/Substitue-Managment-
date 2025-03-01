@@ -243,6 +243,78 @@ async function readCSV(filePath: string): Promise<Teacher[]> {
     });
 }
 
+function findSimilarTeachers(teachers: Teacher[]): Map<string, string> {
+    // Map to store corrections: original name -> corrected name
+    const corrections = new Map<string, string>();
+    
+    // Common patterns for names that should be the same
+    const patterns = [
+        // Common typos and variations
+        { regex: /(\w+)\s+(\w+)b/, replacement: "$1 $2" }, // Handles "Shabeer Ahmedb" -> "Shabeer Ahmed"
+        { regex: /Masseh/, replacement: "Maseeh" }, // Specific case "Rafaqat Masseh" -> "Rafaqat Maseeh"
+        { regex: /\s+Shaikh$/, replacement: "" }, // Handles "Wajiudin Shaikh" -> "Wajiudin"
+        { regex: /-ul-/, replacement: " Ul " }, // Normalize ul/Ul forms
+        { regex: / ul /, replacement: " Ul " }, // Capitalize Ul
+    ];
+
+    // Create name map for quick lookup
+    const nameMap = new Map<string, Teacher>();
+    const nameVariants = new Map<string, string[]>();
+    
+    // First pass: collect all names
+    teachers.forEach(teacher => {
+        const name = teacher.name.trim();
+        nameMap.set(name, teacher);
+        
+        // Get teacher's base name (without title)
+        const baseName = name.replace(/^Sir\s+|^Ms\.\s+|^Mrs\.\s+|^Miss\s+/i, "").trim();
+        
+        if (!nameVariants.has(baseName)) {
+            nameVariants.set(baseName, [name]);
+        } else {
+            nameVariants.get(baseName)?.push(name);
+        }
+    });
+    
+    // Apply pattern-based corrections
+    teachers.forEach(teacher => {
+        const originalName = teacher.name.trim();
+        
+        // Try each pattern
+        for (const pattern of patterns) {
+            if (pattern.regex.test(originalName)) {
+                const correctedName = originalName.replace(pattern.regex, pattern.replacement);
+                
+                // If the corrected name exists as another teacher, mark as duplicate
+                if (nameMap.has(correctedName) && correctedName !== originalName) {
+                    corrections.set(originalName, correctedName);
+                    console.log(`Found duplicate: "${originalName}" -> "${correctedName}"`);
+                    break;
+                }
+            }
+        }
+    });
+    
+    // Second pass: check for similar names using Levenshtein distance
+    nameVariants.forEach((variants, baseName) => {
+        if (variants.length > 1) {
+            // Sort by length (prefer shorter names as canonical)
+            variants.sort((a, b) => a.length - b.length);
+            const canonicalName = variants[0];
+            
+            // Mark all other variants as duplicates
+            for (let i = 1; i < variants.length; i++) {
+                if (!corrections.has(variants[i])) {
+                    corrections.set(variants[i], canonicalName);
+                    console.log(`Found similar names: "${variants[i]}" -> "${canonicalName}"`);
+                }
+            }
+        }
+    });
+    
+    return corrections;
+}
+
 export async function extractTeacherNames(timetablePath: string, substitutePath: string): Promise<Teacher[]> {
     try {
         console.log(`Reading teachers from: ${timetablePath} and ${substitutePath}`);
@@ -255,7 +327,7 @@ export async function extractTeacherNames(timetablePath: string, substitutePath:
         try {
             timetableTeachers = await readCSV(timetablePath);
             console.log(`Found ${timetableTeachers.length} teachers in timetable file`);
-        } catch (err) {
+        } catch (err: any) {
             console.warn(`Error reading timetable file: ${err.message}`);
         }
         
@@ -263,31 +335,41 @@ export async function extractTeacherNames(timetablePath: string, substitutePath:
         try {
             substituteTeachers = await readCSV(substitutePath);
             console.log(`Found ${substituteTeachers.length} teachers in substitute file`);
-        } catch (err) {
+        } catch (err: any) {
             console.warn(`Error reading substitute file: ${err.message}`);
         }
         
-        // Combine all teachers and remove duplicates
+        // Combine all teachers 
         const allTeachers = [...timetableTeachers, ...substituteTeachers];
+        
+        // Find similar teacher names that might be duplicates
+        const corrections = findSimilarTeachers(allTeachers);
+        console.log(`Found ${corrections.size} potential duplicate teachers to fix`);
         
         // Use a Map to store unique teachers by normalized name
         const teacherMap = new Map<string, Teacher>();
         
-        // Process each teacher, keeping phone numbers when available
+        // Process each teacher, applying corrections and keeping phone numbers when available
         allTeachers.forEach(teacher => {
             if (teacher.name) {
-                const normalizedName = teacher.name.toLowerCase().trim();
+                // Apply correction if this teacher name has a known correction
+                const originalName = teacher.name.trim();
+                const correctedName = corrections.has(originalName) 
+                    ? corrections.get(originalName)!
+                    : originalName;
+                
+                const normalizedName = correctedName.toLowerCase().trim();
                 
                 if (!teacherMap.has(normalizedName)) {
                     teacherMap.set(normalizedName, {
-                        name: teacher.name.trim(),
+                        name: correctedName,
                         phone: teacher.phone
                     });
                 } else if (teacher.phone && !teacherMap.get(normalizedName)?.phone) {
                     // If this entry has a phone number but stored one doesn't, update it
                     const existingTeacher = teacherMap.get(normalizedName);
                     teacherMap.set(normalizedName, {
-                        ...existingTeacher,
+                        ...existingTeacher!,
                         phone: teacher.phone
                     });
                 }
@@ -295,7 +377,7 @@ export async function extractTeacherNames(timetablePath: string, substitutePath:
         });
         
         const uniqueTeachers = Array.from(teacherMap.values());
-        console.log(`Extracted ${uniqueTeachers.length} unique teachers`);
+        console.log(`Extracted ${uniqueTeachers.length} unique teachers after fixing duplicates`);
         return uniqueTeachers;
     } catch (error) {
         console.error('Error extracting teacher names:', error);

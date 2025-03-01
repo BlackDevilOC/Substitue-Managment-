@@ -417,9 +417,13 @@ export default function AttendancePage() {
                 const result = await response.json();
 
                 if (result.success) {
+                  const duplicateInfo = result.duplicatesFixed && result.duplicatesFixed > 0 
+                      ? ` (${result.duplicatesFixed} duplicate names fixed)`
+                      : '';
+
                   toast({
                     title: "Teachers loaded",
-                    description: `${result.message} (${result.teachers?.length || 0} unique teachers)`,
+                    description: `${result.message} (${result.teachers?.length || 0} unique teachers)${duplicateInfo}`,
                   });
 
                   // Refresh teachers list
