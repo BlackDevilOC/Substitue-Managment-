@@ -62,12 +62,6 @@ export default function Nav() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link to="/auto-assign-page" className="w-full">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Auto Assign
-                </Link>
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

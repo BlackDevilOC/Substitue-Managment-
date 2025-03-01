@@ -19,7 +19,6 @@ import { ProtectedRoute } from "./lib/protected-route";
 import BottomNav from "./components/bottom-nav";
 // Added import for the new component
 import NotificationsPage from "@/pages/notifications";
-import AutoAssignPage from "./pages/auto-assign-page"; // Added import for AutoAssignPage
 
 function Router() {
   return (
@@ -37,7 +36,6 @@ function Router() {
       <ProtectedRoute path="/periods" component={PeriodsPage} />
       <Route path="/notifications" component={NotificationsPage} />{" "}
       {/* Added Notifications route */}
-      <Route path="/auto-assign" component={AutoAssignPage} /> {/* Added Auto-assign route */}
       <Route component={NotFound} />
     </Switch>
   );

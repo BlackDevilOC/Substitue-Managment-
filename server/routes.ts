@@ -1,402 +1,149 @@
-import type { Express } from "express";
-import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { insertTeacherSchema, insertScheduleSchema, insertAbsenceSchema } from "@shared/schema";
-import { processTimetableCSV, processSubstituteCSV, extractTeacherNames, clearAttendanceStorage } from "./csv-handler";
-import multer from "multer";
-import { format } from "date-fns";
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-import * as fs from 'fs';
+import express from 'express';
+import { PrismaClient } from '@prisma/client';
+import { createAttendanceHandler } from './attendance-handler';
+import { createSubstituteManager } from './substitute-manager';
+import { createSmsHandler } from './sms-handler';
+import { storage } from './storage';
+import { createCsvHandler } from './csv-handler';
 
+// Initialize routes
+export function setupRoutes(app: express.Application, prisma: PrismaClient) {
+  const attendanceHandler = createAttendanceHandler(storage);
+  const substituteManager = createSubstituteManager(storage);
+  const smsHandler = createSmsHandler(storage);
+  const csvHandler = createCsvHandler(storage);
 
-const upload = multer({ 
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  }
-});
-
-// Middleware to check authorization token
-const checkAuth = (req: any, res: any, next: any) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: "Unauthorized" }); // Changed to return JSON
-  }
-
-  try {
-    const token = authHeader.split(' ')[1];
-    const user = JSON.parse(token);
-    if (user.username === 'Rehan') {
-      req.user = user;
-      next();
-    } else {
-      res.status(401).json({ error: "Unauthorized" }); // Changed to return JSON
-    }
-  } catch (error) {
-    res.status(401).json({ error: "Unauthorized" }); // Changed to return JSON
-  }
-};
-
-export async function registerRoutes(app: Express): Promise<Server> {
-  // Apply auth middleware to all /api routes
-  app.use('/api', checkAuth);
-
-  // CSV Upload Routes
-  app.post("/api/upload/timetable", upload.single('file'), async (req, res) => {
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-
-    try {
-      const fileContent = req.file.buffer.toString('utf-8');
-      const schedules = await processTimetableCSV(fileContent);
-
-      // Save all schedules
-      for (const schedule of schedules) {
-        await storage.createSchedule(schedule);
-      }
-
-      // Save the file to the data folder
-      const fs = await import('fs/promises');
-      const { fileURLToPath } = await import('url');
-
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const dataFolder = path.join(__dirname, '../data');
-      const filePath = path.join(dataFolder, 'timetable_file.csv');
-
-      try {
-        // Ensure the data directory exists
-        await fs.mkdir(dataFolder, { recursive: true });
-        // Write the file
-        await fs.writeFile(filePath, fileContent);
-        console.log(`Timetable file saved to ${filePath}`);
-      } catch (fsError) {
-        console.error('Error saving timetable file:', fsError);
-      }
-
-      res.status(200).json({ 
-        message: "Timetable uploaded successfully",
-        schedulesCreated: schedules.length
-      });
-    } catch (error: any) {
-      console.error('Timetable upload error:', error);
-      res.status(400).json({ 
-        error: error.message || "Failed to process timetable file"
-      });
-    }
+  // Health check endpoint
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  app.post("/api/upload/substitutes", upload.single('file'), async (req, res) => {
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-
-    try {
-      const fileContent = req.file.buffer.toString('utf-8');
-      const teachers = await processSubstituteCSV(fileContent);
-
-      // Save the file to the data folder
-      const fs = await import('fs/promises');
-      const { fileURLToPath } = await import('url');
-
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const dataFolder = path.join(__dirname, '../data');
-      const filePath = path.join(dataFolder, 'Substitude_file.csv');
-
-      try {
-        // Ensure the data directory exists
-        await fs.mkdir(dataFolder, { recursive: true });
-        // Write the file
-        await fs.writeFile(filePath, fileContent);
-        console.log(`Substitute file saved to ${filePath}`);
-      } catch (fsError) {
-        console.error('Error saving substitute file:', fsError);
-      }
-
-      res.status(200).json({ 
-        message: "Substitute teachers uploaded successfully",
-        teachersCreated: teachers.length
-      });
-    } catch (error: any) {
-      console.error('Substitute upload error:', error);
-      res.status(400).json({ 
-        error: error.message || "Failed to process substitute teachers file"
-      });
-    }
+  // Teacher endpoints
+  app.get('/api/teachers', (req, res) => {
+    res.json(storage.teachers);
   });
 
-  // API Routes
-  app.get("/api/teachers", async (req, res) => {
-    const teachers = await storage.getTeachers();
-    res.json(teachers);
-  });
-
-  app.post("/api/teachers", async (req, res) => {
-    const parsed = insertTeacherSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json(parsed.error);
-    const teacher = await storage.createTeacher(parsed.data);
-    res.status(201).json(teacher);
-  });
-
-  app.get("/api/schedule/:day", async (req, res) => {
-    const schedule = await storage.getSchedulesByDay(req.params.day);
-    res.json(schedule);
-  });
-
-  app.post("/api/override-day", async (req, res) => {
-    const { day } = req.body;
-    await storage.setDayOverride(day);
-    res.json({ message: "Day override set successfully" });
-  });
-
-  app.get("/api/current-day", async (req, res) => {
-    const currentDay = await storage.getCurrentDay();
-    res.json({ currentDay });
-  });
-
-  app.post("/api/schedule", async (req, res) => {
-    const parsed = insertScheduleSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json(parsed.error);
-    const schedule = await storage.createSchedule(parsed.data);
-    res.status(201).json(schedule);
-  });
-
-  app.get("/api/absences", async (req, res) => {
-    const absences = await storage.getAbsences();
-    res.json(absences);
-  });
-
-  app.post("/api/absences", async (req, res) => {
-    const parsed = insertAbsenceSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json(parsed.error);
-    const absence = await storage.createAbsence(parsed.data);
-    const teacher = await storage.getTeacher(parsed.data.teacherId);
+  app.get('/api/teachers/:id', (req, res) => {
+    const teacher = storage.teachers.find(t => t.id === parseInt(req.params.id));
     if (teacher) {
-      const { recordAttendance } = await import('./attendance-tracker.js');
-      recordAttendance(
-        parsed.data.date,
-        teacher.name,
-        'Absent'
-      );
+      res.json(teacher);
+    } else {
+      res.status(404).json({ error: 'Teacher not found' });
     }
-    res.status(201).json(absence);
   });
 
-  app.post("/api/absences/:id/substitute", async (req, res) => {
-    const { substituteId } = req.body;
-    await storage.assignSubstitute(parseInt(req.params.id), substituteId);
-    res.sendStatus(200);
+  // Attendance endpoints
+  app.get('/api/attendance', (req, res) => {
+    const date = req.query.date as string;
+    const records = attendanceHandler.getAttendanceByDate(date);
+    res.json(records);
   });
 
-  app.post("/api/auto-assign-substitutes", async (req, res) => {
-    const date = format(new Date(), "yyyy-MM-dd");
+  app.post('/api/attendance', (req, res) => {
     try {
-      // First load fresh data from CSV files to ensure we have the latest information
-      const { SubstituteManager } = await import('./substitute-manager.js');
-      const manager = new SubstituteManager();
-      await manager.loadData();
-      
-      // Now run the auto-assignment algorithm
-      const assignments = await storage.autoAssignSubstitutes(date);
-      
-      // Get details of assignments for the response
-      const substituteAssignments = await storage.getSubstituteAssignments(date);
-      
-      res.json({
-        message: "Substitutes assigned successfully",
-        assignmentsCount: assignments.size,
-        assignments: substituteAssignments
-      });
+      const record = attendanceHandler.markAttendance(req.body);
+      res.json(record);
     } catch (error) {
-      console.error('Auto-assign substitutes error:', error);
-      res.status(500).json({ 
-        message: "Failed to assign substitutes", 
-        error: error instanceof Error ? error.message : String(error) 
-      });
+      res.status(400).json({ error: (error as Error).message });
     }
   });
 
-  app.get("/api/sms-history", async (req, res) => {
-    const history = await storage.getSmsHistory();
-    const enrichedHistory = await Promise.all(
-      history.map(async (sms) => {
-        const teacher = await storage.getTeacher(sms.teacherId);
-        return {
-          ...sms,
-          teacherName: teacher?.name || 'Unknown'
-        };
-      })
+  app.put('/api/attendance/:id', (req, res) => {
+    try {
+      const record = attendanceHandler.updateAttendance(parseInt(req.params.id), req.body);
+      res.json(record);
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+    }
+  });
+
+  // Substitution endpoints
+  app.get('/api/substitutions', (req, res) => {
+    const date = req.query.date as string;
+    const substitutions = substituteManager.getSubstitutionsByDate(date);
+    res.json(substitutions);
+  });
+
+  app.post('/api/substitutions', (req, res) => {
+    try {
+      const substitution = substituteManager.createSubstitution(req.body);
+      res.json(substitution);
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/substitutions/:id', (req, res) => {
+    try {
+      substituteManager.deleteSubstitution(parseInt(req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+    }
+  });
+
+  // SMS endpoints
+  app.post('/api/sms/send', (req, res) => {
+    try {
+      const result = smsHandler.sendSms(req.body);
+      res.json(result);
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/sms/history', (req, res) => {
+    const teacherId = req.query.teacherId ? parseInt(req.query.teacherId as string) : undefined;
+    const history = smsHandler.getSmsHistory(teacherId);
+    res.json(history);
+  });
+
+  // Timetable endpoints
+  app.get('/api/timetable', (req, res) => {
+    const day = req.query.day as string;
+    const timetable = storage.timetable.filter(t => !day || t.day === day);
+    res.json(timetable);
+  });
+
+  app.get('/api/timetable/teacher/:id', (req, res) => {
+    const teacherId = parseInt(req.params.id);
+    const day = req.query.day as string;
+
+    const timetable = storage.timetable.filter(t => 
+      t.teacherId === teacherId && (!day || t.day === day)
     );
-    res.json(enrichedHistory);
+
+    res.json(timetable);
   });
 
-  app.get("/api/substitute-assignments", async (req, res) => {
-    const date = format(new Date(), "yyyy-MM-dd");
+  app.get('/api/timetable/class/:className', (req, res) => {
+    const className = req.params.className;
+    const day = req.query.day as string;
+
+    const timetable = storage.timetable.filter(t => 
+      t.className === className && (!day || t.day === day)
+    );
+
+    res.json(timetable);
+  });
+
+  // CSV upload endpoints
+  app.post('/api/upload/timetable', csvHandler.handleTimetableUpload);
+  app.post('/api/upload/substitute', csvHandler.handleSubstituteUpload);
+
+  // Configuration endpoints
+  app.get('/api/config/periods', (req, res) => {
+    res.json(storage.periodConfig);
+  });
+
+  app.post('/api/config/periods', (req, res) => {
     try {
-      const assignments = await storage.getSubstituteAssignments(date);
-      res.json(assignments);
+      storage.periodConfig = req.body;
+      res.json(storage.periodConfig);
     } catch (error) {
-      console.error('Get substitute assignments error:', error);
-      res.status(500).json({ message: "Failed to get substitute assignments" });
+      res.status(400).json({ error: (error as Error).message });
     }
   });
 
-  app.post("/api/reset-assignments", async (req, res) => {
-    try {
-      // Clear all substitute assignments for today's absences
-      const today = format(new Date(), "yyyy-MM-dd");
-      const absences = await storage.getAbsences();
-
-      for (const absence of absences) {
-        if (absence.date === today && absence.substituteId) {
-          await storage.assignSubstitute(absence.id, null);
-        }
-      }
-      
-      // Also clear assignments in the substitute manager
-      const { SubstituteManager } = await import('./substitute-manager.js');
-      const manager = new SubstituteManager();
-      manager.clearAssignments();
-
-      res.json({ message: "Assignments reset successfully" });
-    } catch (error) {
-      console.error('Reset assignments error:', error);
-      res.status(500).json({ message: "Failed to reset assignments" });
-    }
-  });
-  
-  // Endpoint to assign substitutes for a specific teacher and day
-  app.post("/api/assign-substitute", async (req, res) => {
-    try {
-      const { teacherName, day } = req.body;
-      
-      if (!teacherName || !day) {
-        return res.status(400).json({ 
-          message: "Teacher name and day are required" 
-        });
-      }
-      
-      // Load the substitute manager
-      const { SubstituteManager } = await import('./substitute-manager.js');
-      const manager = new SubstituteManager();
-      await manager.loadData();
-      
-      // Clear previous assignments to avoid conflicts
-      manager.clearAssignments();
-      
-      // Run assignment algorithm for the specific teacher and day
-      const assignments = manager.assignSubstitutes(teacherName, day);
-      
-      // Format the assignments for response
-      const formattedAssignments = {};
-      assignments.forEach(assignment => {
-        const key = `${assignment.period}-${assignment.className}`;
-        formattedAssignments[key] = {
-          period: assignment.period,
-          className: assignment.className,
-          originalTeacher: assignment.originalTeacher,
-          substitute: assignment.substitute,
-          substitutePhone: assignment.substitutePhone || 'N/A',
-          day: assignment.day
-        };
-      });
-      
-      // Get verification report
-      const verificationReport = manager.verifyAssignments();
-      
-      res.json({
-        message: "Substitutes assigned successfully",
-        assignments: formattedAssignments,
-        verification: verificationReport
-      });
-    } catch (error) {
-      console.error('Assignment error:', error);
-      res.status(500).json({ 
-        message: "Failed to assign substitutes", 
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-
-  // Endpoint to load teachers from CSV files
-  app.post("/api/load-teachers-from-csv", async (req, res) => {
-    try {
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-
-      const timetablePath = path.join(__dirname, '../data/timetable_file.csv');
-      const substitutePath = path.join(__dirname, '../data/Substitude_file.csv');
-
-      console.log('Loading teachers from CSV files:');
-      console.log(`- Timetable path: ${timetablePath}`);
-      console.log(`- Substitute path: ${substitutePath}`);
-
-      // Check if files exist
-      if (!fs.existsSync(timetablePath) && !fs.existsSync(substitutePath)) {
-        return res.status(404).json({
-          success: false,
-          message: 'CSV files not found. Please make sure the files exist in the data directory.',
-          teachers: []
-        });
-      }
-
-      // Extract teachers from both CSV files - this now includes duplicate detection
-      const teachersFromCSV = await extractTeacherNames(timetablePath, substitutePath);
-
-      if (!teachersFromCSV || teachersFromCSV.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: 'No teachers found in CSV files',
-          teachers: []
-        });
-      }
-
-      // First, clear existing teachers to prevent duplicates
-      await storage.clearTeachers();
-      console.log('Cleared existing teachers from database');
-
-      // Clear attendance storage
-      await clearAttendanceStorage();
-
-      // Calculate how many duplicates were fixed (original count minus final count)
-      // This is an estimate based on the expected total from the files vs. what we got
-      const totalTeachersInFiles = timetableTeachers + substituteTeachers;
-      const duplicatesFixed = Math.max(0, totalTeachersInFiles - teachersFromCSV.length);
-      console.log(`Identified approximately ${duplicatesFixed} duplicate teacher entries`);
-
-      // Save teachers to storage
-      const savedTeachers = [];
-      for (const teacher of teachersFromCSV) {
-        try {
-          const savedTeacher = await storage.createTeacher({
-            name: teacher.name,
-            phoneNumber: teacher.phone || null,
-            isSubstitute: false // Default value
-          });
-          savedTeachers.push(savedTeacher);
-        } catch (err: any) {
-          console.warn(`Failed to save teacher ${teacher.name}: ${err.message}`);
-        }
-      }
-
-      console.log(`Successfully saved ${savedTeachers.length} teachers to database`);
-
-      res.json({ 
-        success: true, 
-        message: `Loaded ${savedTeachers.length} unique teachers from CSV files`,
-        teachers: savedTeachers,
-        duplicatesFixed: duplicatesFixed
-      });
-    } catch (error) {
-      console.error('Error loading teachers from CSV:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: `Failed to load teachers from CSV files: ${error.message}`,
-        error: error.message
-      });
-    }
-  });
-
-
-  const httpServer = createServer(app);
-  return httpServer;
+  return app;
 }
