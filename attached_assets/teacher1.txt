@@ -1,0 +1,83 @@
+import { parse } from 'csv-parse/sync';
+
+interface Teacher {
+  canonicalName: string;
+  phone: string;
+  variations: Set<string>;
+}
+
+const TEACHER_MAP = new Map<string, Teacher>();
+const SIMILARITY_THRESHOLD = 0.85;
+
+// 1. Name Normalization Pipeline
+const normalizeName = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/(sir|miss|mr|ms|mrs|sr)\.?\s*/gi, '')
+    .replace(/[^a-z\s-]/g, '')
+    .trim()
+    .split(/\s+/)
+    .sort()
+    .join(' ');
+};
+
+// 2. Phonetic Encoding
+const metaphone = (str: string): string => {
+  // Implementation of metaphone algorithm or use a library
+  return simplifiedMetaphone(str);
+};
+
+// 3. Similarity Check
+const nameSimilarity = (a: string, b: string): number => {
+  const aMeta = metaphone(a);
+  const bMeta = metaphone(b);
+  const distance = levenshtein(aMeta, bMeta);
+  return 1 - distance / Math.max(aMeta.length, bMeta.length);
+};
+
+// 4. Teacher Registry
+const registerTeacher = (rawName: string, phone: string = '') => {
+  const normalized = normalizeName(rawName);
+  const existing = Array.from(TEACHER_MAP.values()).find(teacher => 
+    nameSimilarity(normalized, teacher.canonicalName) > SIMILARITY_THRESHOLD
+  );
+
+  if (!existing) {
+    TEACHER_MAP.set(normalized, {
+      canonicalName: rawName.trim().replace(/\s+/g, ' '),
+      phone,
+      variations: new Set([rawName])
+    });
+  } else {
+    existing.variations.add(rawName);
+    if (phone && !existing.phone) existing.phone = phone;
+  }
+};
+
+// 5. Processing Pipeline
+const processFiles = (timetable: string, substitutes: string) => {
+  // Load substitute teachers
+  const subRecords = parse(substitutes, { columns: true });
+  subRecords.forEach((row: any) => registerTeacher(row.name, row.phone));
+
+  // Load timetable teachers
+  const ttRecords = parse(timetable, { columns: true });
+  ttRecords.forEach((row: any) => {
+    Object.values(row)
+      .slice(2) // Skip Day/Period columns
+      .forEach((name: unknown) => registerTeacher(name as string));
+  });
+
+  // Generate CSV
+  let csv = 'Canonical Name,Phone Number,Variations\n';
+  Array.from(TEACHER_MAP.values()).forEach(teacher => {
+    csv += `"${teacher.canonicalName}","${teacher.phone}","${Array.from(teacher.variations).join('|')}"\n`;
+  });
+
+  return csv;
+};
+
+// Usage
+const timetableContent = `...`;
+const substitutesContent = `...`;
+const result = processFiles(timetableContent, substitutesContent);

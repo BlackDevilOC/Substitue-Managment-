@@ -15,6 +15,8 @@ const EXPECTED_TEACHER_COUNT = 34;
 
 // Improved name normalization with better handling of titles and special cases
 const normalizeName = (name: string): string => {
+  if (!name || typeof name !== 'string') return '';
+
   return name
     .toLowerCase()
     .replace(/(sir|miss|mr|ms|mrs|sr|dr)\.?\s*/gi, '')
@@ -27,8 +29,10 @@ const normalizeName = (name: string): string => {
     .join(' ');
 };
 
-// Improved metaphone implementation
+// Improved metaphone implementation for Urdu/Arabic names
 const simplifiedMetaphone = (str: string): string => {
+  if (!str || typeof str !== 'string') return '';
+
   return str
     .toLowerCase()
     .replace(/[aeiou]/g, 'a') // Replace all vowels with 'a'
@@ -39,6 +43,7 @@ const simplifiedMetaphone = (str: string): string => {
 
 // Enhanced Levenshtein distance with custom weights
 const levenshtein = (a: string, b: string): number => {
+  if (!a || !b) return 0;
   if (a.length === 0) return b.length;
   if (b.length === 0) return a.length;
 
@@ -61,16 +66,26 @@ const levenshtein = (a: string, b: string): number => {
   return matrix[b.length][a.length];
 };
 
-// Enhanced name similarity check
+// Enhanced name similarity check with extra checks for common variations
 const nameSimilarity = (a: string, b: string): number => {
+  if (!a || !b) return 0;
+
   const aMeta = simplifiedMetaphone(a);
   const bMeta = simplifiedMetaphone(b);
   const distance = levenshtein(aMeta, bMeta);
   const similarity = 1 - distance / Math.max(aMeta.length, bMeta.length, 1);
 
-  // Add additional checks for very similar names
+  // Additional checks for very similar names
   if (a.includes(b) || b.includes(a)) {
     return Math.max(similarity, 0.95);
+  }
+
+  // Check for name parts match
+  const aParts = a.split(' ');
+  const bParts = b.split(' ');
+  const commonParts = aParts.filter(part => bParts.includes(part));
+  if (commonParts.length > 0) {
+    return Math.max(similarity, 0.85 + (0.05 * commonParts.length));
   }
 
   return similarity;
@@ -94,13 +109,20 @@ const registerTeacher = (rawName: string, phone: string = ''): boolean => {
   }
 
   // Check for similar names
-  const existing = Array.from(TEACHER_MAP.values()).find(teacher => 
-    nameSimilarity(normalized, normalizeName(teacher.canonicalName)) > SIMILARITY_THRESHOLD
-  );
+  let bestMatch: Teacher | undefined;
+  let bestSimilarity = 0;
 
-  if (existing) {
-    existing.variations.add(rawName);
-    if (phone && !existing.phone) existing.phone = phone;
+  for (const teacher of TEACHER_MAP.values()) {
+    const similarity = nameSimilarity(normalized, normalizeName(teacher.canonicalName));
+    if (similarity > SIMILARITY_THRESHOLD && similarity > bestSimilarity) {
+      bestMatch = teacher;
+      bestSimilarity = similarity;
+    }
+  }
+
+  if (bestMatch) {
+    bestMatch.variations.add(rawName);
+    if (phone && !bestMatch.phone) bestMatch.phone = phone;
     return true;
   }
 
@@ -124,12 +146,13 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
     const subRecords = parse(substitutesContent, {
       columns: false,
       skip_empty_lines: true,
-      trim: true
+      trim: true,
+      relax_column_count: true // Allow varying column counts
     });
 
     let subTeacherCount = 0;
     subRecords.forEach((row: any) => {
-      if (row[0] && registerTeacher(row[0], row[1] || '')) {
+      if (Array.isArray(row) && row[0] && registerTeacher(row[0], row[1] || '')) {
         subTeacherCount++;
       }
     });
@@ -140,13 +163,15 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
     const ttRecords = parse(timetableContent, {
       columns: false,
       skip_empty_lines: true,
-      trim: true
+      trim: true,
+      relax_column_count: true // Allow varying column counts
     });
 
     const timetableTeachers = new Set<string>();
     ttRecords.slice(1).forEach((row: any) => {
+      if (!Array.isArray(row)) return;
       row.slice(2).forEach((name: any) => {
-        if (name && name.toLowerCase() !== 'empty') {
+        if (name && typeof name === 'string' && name.toLowerCase() !== 'empty') {
           if (registerTeacher(name)) {
             timetableTeachers.add(name.toLowerCase().trim());
           }
@@ -156,15 +181,12 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
 
     console.log(`Processed ${timetableTeachers.size} unique teachers from timetable`);
 
-    // Validate teacher count
+    // Additional merging for very similar names
     const uniqueTeachers = Array.from(TEACHER_MAP.values());
-    console.log(`Total unique teachers extracted: ${uniqueTeachers.length}`);
-
-    if (uniqueTeachers.length > EXPECTED_TEACHER_COUNT) {
-      console.warn('Too many teachers extracted. Attempting to merge similar entries...');
-      // Additional similarity check to merge very similar entries
-      for (let i = 0; i < uniqueTeachers.length; i++) {
-        for (let j = i + 1; j < uniqueTeachers.length; j++) {
+    while (uniqueTeachers.length > EXPECTED_TEACHER_COUNT) {
+      let merged = false;
+      for (let i = 0; i < uniqueTeachers.length - 1 && !merged; i++) {
+        for (let j = i + 1; j < uniqueTeachers.length && !merged; j++) {
           const similarity = nameSimilarity(
             normalizeName(uniqueTeachers[i].canonicalName),
             normalizeName(uniqueTeachers[j].canonicalName)
@@ -172,14 +194,18 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
           if (similarity > 0.95) {
             // Merge teachers
             uniqueTeachers[i].variations = new Set([
-              ...uniqueTeachers[i].variations,
-              ...uniqueTeachers[j].variations
+              ...Array.from(uniqueTeachers[i].variations),
+              ...Array.from(uniqueTeachers[j].variations)
             ]);
+            if (!uniqueTeachers[i].phone && uniqueTeachers[j].phone) {
+              uniqueTeachers[i].phone = uniqueTeachers[j].phone;
+            }
             uniqueTeachers.splice(j, 1);
-            j--;
+            merged = true;
           }
         }
       }
+      if (!merged) break; // No more merges possible
     }
 
     // Generate CSV output

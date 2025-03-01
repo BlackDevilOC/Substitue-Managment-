@@ -39,7 +39,7 @@ const checkAuth = (req: any, res: any, next: any) => {
 };
 
 // Function to process and save teachers
-async function processAndSaveTeachers() {
+async function processAndSaveTeachers(timetableContent?: string, substituteContent?: string) {
   try {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
@@ -54,16 +54,17 @@ async function processAndSaveTeachers() {
     const substitutePath = path.join(dataFolder, 'Substitude_file.csv');
     const totalTeacherPath = path.join(dataFolder, 'total_teacher.json');
 
-    if (!fs.existsSync(timetablePath) || !fs.existsSync(substitutePath)) {
-      console.error('Required CSV files not found');
+    // Use provided content or read from files
+    const ttContent = timetableContent || fs.existsSync(timetablePath) ? fs.readFileSync(timetablePath, 'utf-8') : '';
+    const subContent = substituteContent || fs.existsSync(substitutePath) ? fs.readFileSync(substitutePath, 'utf-8') : '';
+
+    if (!ttContent && !subContent) {
+      console.error('No data available for teacher extraction');
       return;
     }
 
-    const timetableContent = fs.readFileSync(timetablePath, 'utf-8');
-    const substituteContent = fs.readFileSync(substitutePath, 'utf-8');
-
     // Process teachers using the improved extraction function
-    const teacherData = await processTeacherFiles(timetableContent, substituteContent);
+    const teacherData = await processTeacherFiles(ttContent, subContent);
     const teachers = teacherData.split('\n')
       .slice(1) // Skip header
       .filter(line => line.trim())
@@ -75,8 +76,11 @@ async function processAndSaveTeachers() {
     // Save to total_teacher.json
     fs.writeFileSync(totalTeacherPath, JSON.stringify(teachers, null, 2));
     console.log(`Saved ${teachers.length} teachers to total_teacher.json`);
+
+    return teachers;
   } catch (error) {
     console.error('Error processing and saving teachers:', error);
+    throw error;
   }
 }
 
@@ -86,6 +90,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Apply auth middleware to all /api routes
   app.use('/api', checkAuth);
+
+  // File upload routes
+  app.post("/api/upload/timetable", upload.single('file'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+
+    try {
+      const fileContent = req.file.buffer.toString('utf-8');
+
+      // Process timetable
+      const schedules = await processTimetableCSV(fileContent);
+      for (const schedule of schedules) {
+        await storage.createSchedule(schedule);
+      }
+
+      // Save file
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/timetable_file.csv');
+      fs.writeFileSync(filePath, fileContent);
+
+      // Process teachers again with new file
+      await processAndSaveTeachers();
+
+      res.json({ message: "Timetable uploaded and processed successfully" });
+    } catch (error: any) {
+      console.error('Error processing timetable:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/upload/substitutes", upload.single('file'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+
+    try {
+      const fileContent = req.file.buffer.toString('utf-8');
+
+      // Process substitutes
+      const substitutes = await processSubstituteCSV(fileContent);
+
+      // Save file
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/Substitude_file.csv');
+      fs.writeFileSync(filePath, fileContent);
+
+      // Process teachers again with new file
+      await processAndSaveTeachers();
+
+      res.json({ message: "Substitute list uploaded and processed successfully" });
+    } catch (error: any) {
+      console.error('Error processing substitutes:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
   // API Routes
   app.get("/api/teachers", async (req, res) => {
