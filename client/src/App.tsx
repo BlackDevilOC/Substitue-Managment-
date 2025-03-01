@@ -26,7 +26,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/schedule" component={SchedulePage} />
-      <ProtectedRoute path="/absences" component={AbsencePage} />
+      <ProtectedRoute path="/schedule" component={AbsencePage} />
       <ProtectedRoute path="/substitutes" component={SubstitutesPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/manage-absences" component={ManageAbsencesPage} />
@@ -34,7 +34,8 @@ function Router() {
       <ProtectedRoute path="/sms-history" component={SMSHistoryPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/periods" component={PeriodsPage} />
-      <Route path="/notifications" component={NotificationsPage} /> {/* Added Notifications route */}
+      <Route path="/notifications" component={NotificationsPage} />{" "}
+      {/* Added Notifications route */}
       <Route component={NotFound} />
     </Switch>
   );
