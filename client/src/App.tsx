@@ -26,7 +26,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/schedule" component={SchedulePage} />
-      <ProtectedRoute path="/schedule" component={AbsencePage} />
+      <ProtectedRoute path="/absences" component={AbsencePage} />
       <ProtectedRoute path="/substitutes" component={SubstitutesPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/manage-absences" component={ManageAbsencesPage} />
