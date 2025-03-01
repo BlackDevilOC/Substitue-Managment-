@@ -9,8 +9,6 @@ import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
-import { defaultTeachers } from "@/data/teachers";
-import { findTeacherSchedule } from "@/utils/processTeacherData";
 
 interface AbsentTeacherData {
   teacherId: number;
@@ -26,6 +24,15 @@ export default function AttendancePage() {
 
   const { data: teachers, isLoading: teachersLoading } = useQuery<Teacher[]>({
     queryKey: ["/api/teachers"],
+    queryFn: async () => {
+      const res = await fetch('/api/teachers', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
+        }
+      });
+      if (!res.ok) throw new Error('Failed to fetch teachers');
+      return res.json();
+    }
   });
 
   // Load attendance from local storage on mount and date change
@@ -46,34 +53,6 @@ export default function AttendancePage() {
     }
   }, [selectedDate, teachers]);
 
-  // Auto-load default teachers if no teachers exist
-  useEffect(() => {
-    if (!teachers || teachers.length === 0) {
-      importTeachersMutation.mutate(defaultTeachers);
-    }
-  }, [teachers]);
-
-  const importTeachersMutation = useMutation({
-    mutationFn: async (data: any[]) => {
-      const res = await apiRequest("POST", "/api/import/teachers", data);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
-      toast({
-        title: "Teachers loaded",
-        description: "Teacher list has been updated successfully.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Loading failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
   // Function to manage absent teachers in JSON file
   const updateAbsentTeachersFile = async (teacherId: number, status: string) => {
     try {
@@ -84,7 +63,11 @@ export default function AttendancePage() {
 
       try {
         // Try to load data from the server first
-        const response = await fetch('/api/absent-teachers');
+        const response = await fetch('/api/absent-teachers', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
+          }
+        });
         if (response.ok) {
           absentTeachers = await response.json();
         }
@@ -109,8 +92,13 @@ export default function AttendancePage() {
 
         if (existingIndex === -1) {
           const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-          const schedule = findTeacherSchedule(teacher.id, dayName);
-          const periods = schedule.map(s => ({
+          const schedule = await fetch(`/api/schedule/${dayName}/${teacherId}`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
+            }
+          }).then(res => res.json());
+
+          const periods = schedule.map((s: any) => ({
             period: s.period,
             className: s.className
           }));
@@ -153,7 +141,7 @@ export default function AttendancePage() {
       // Create a CSV string
       let csvContent = `Teacher Attendance - ${monthName} ${year}\n\n`;
       csvContent += "Teacher Name,";
-      
+
       const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
       for (let i = 1; i <= daysInMonth; i++) {
         csvContent += `${i},`;
