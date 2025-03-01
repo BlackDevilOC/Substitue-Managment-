@@ -244,34 +244,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // New endpoint to load teachers from CSV files
+  // Endpoint to load teachers from CSV files
   app.post("/api/load-teachers-from-csv", async (req, res) => {
     try {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
-      // Clear old attendance records
+      
+      // Clear old attendance records to prevent stale data
       await clearAttendanceStorage();
 
       // Extract teacher names from CSV files
       const timetablePath = path.join(__dirname, '../data/timetable_file.csv');
       const substitutePath = path.join(__dirname, '../data/Substitude_file.csv');
 
+      console.log(`Loading teachers from: ${timetablePath} and ${substitutePath}`);
+      
       const teachersFromCSV = await extractTeacherNames(timetablePath, substitutePath);
+      console.log(`Extracted ${teachersFromCSV.length} unique teachers from CSV files`);
 
+      // First, clear existing teachers to prevent duplicates
+      await storage.clearTeachers();
+      console.log('Cleared existing teachers from database');
+      
       // Save teachers to storage
       const savedTeachers = [];
       for (const teacher of teachersFromCSV) {
-        const savedTeacher = await storage.createTeacher({
-          name: teacher, // Assuming extractTeacherNames returns just the name
-          phone: undefined, // Or handle phone number appropriately
-          isSubstitute: false // Default value, modify as needed
-        });
-        savedTeachers.push(savedTeacher);
+        try {
+          const savedTeacher = await storage.createTeacher({
+            name: teacher.name,
+            phoneNumber: teacher.phone || null,
+            isSubstitute: false // Default value, modify as needed
+          });
+          savedTeachers.push(savedTeacher);
+        } catch (err) {
+          console.warn(`Failed to save teacher ${teacher.name}: ${err.message}`);
+        }
       }
 
+      console.log(`Successfully saved ${savedTeachers.length} teachers to database`);
+      
       res.json({ 
         success: true, 
-        message: `Loaded ${savedTeachers.length} teachers from CSV files`,
+        message: `Loaded ${savedTeachers.length} unique teachers from CSV files`,
         teachers: savedTeachers
       });
     } catch (error) {

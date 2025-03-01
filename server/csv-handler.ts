@@ -212,20 +212,66 @@ async function readCSV(filePath: string): Promise<Teacher[]> {
 
 export async function extractTeacherNames(timetablePath: string, substitutePath: string): Promise<Teacher[]> {
     try {
-        const timetableTeachers = await readCSV(timetablePath);
-        const substituteTeachers = await readCSV(substitutePath);
-
-        const allTeachers = [...timetableTeachers, ...substituteTeachers];
+        console.log(`Reading teachers from: ${timetablePath} and ${substitutePath}`);
         
-        // Create a map to keep only unique teachers with their phone numbers
+        // Create a map to store unique teachers by normalized name
         const teacherMap = new Map<string, Teacher>();
-        allTeachers.forEach(teacher => {
-            if (!teacherMap.has(teacher.name)) {
-                teacherMap.set(teacher.name, teacher);
-            }
-        });
-
-        return Array.from(teacherMap.values());
+        
+        // Helper function to normalize teacher names for consistent comparison
+        const normalizeName = (name: string): string => {
+            return name.toLowerCase().trim();
+        };
+        
+        // Try reading from timetable file first
+        try {
+            const timetableTeachers = await readCSV(timetablePath);
+            console.log(`Found ${timetableTeachers.length} teachers in timetable file`);
+            
+            timetableTeachers.forEach(teacher => {
+                if (teacher.name) {
+                    const normalizedName = normalizeName(teacher.name);
+                    if (!teacherMap.has(normalizedName)) {
+                        teacherMap.set(normalizedName, {
+                            name: teacher.name.trim(),
+                            phone: teacher.phone
+                        });
+                    }
+                }
+            });
+        } catch (err) {
+            console.warn(`Error reading timetable file: ${err.message}`);
+        }
+        
+        // Then read from substitute file
+        try {
+            const substituteTeachers = await readCSV(substitutePath);
+            console.log(`Found ${substituteTeachers.length} teachers in substitute file`);
+            
+            substituteTeachers.forEach(teacher => {
+                if (teacher.name) {
+                    const normalizedName = normalizeName(teacher.name);
+                    if (!teacherMap.has(normalizedName)) {
+                        teacherMap.set(normalizedName, {
+                            name: teacher.name.trim(),
+                            phone: teacher.phone
+                        });
+                    } else if (teacher.phone && !teacherMap.get(normalizedName)?.phone) {
+                        // If this teacher entry has a phone number but our stored one doesn't, update it
+                        const existingTeacher = teacherMap.get(normalizedName);
+                        teacherMap.set(normalizedName, {
+                            ...existingTeacher,
+                            phone: teacher.phone
+                        });
+                    }
+                }
+            });
+        } catch (err) {
+            console.warn(`Error reading substitute file: ${err.message}`);
+        }
+        
+        const uniqueTeachers = Array.from(teacherMap.values());
+        console.log(`Extracted ${uniqueTeachers.length} unique teachers`);
+        return uniqueTeachers;
     } catch (error) {
         console.error('Error extracting teacher names:', error);
         return [];

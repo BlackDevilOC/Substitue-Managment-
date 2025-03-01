@@ -78,6 +78,12 @@ export class MemStorage implements IStorage {
     return Array.from(this.teachers.values());
   }
 
+  async clearTeachers() {
+    await db.delete(teachers);
+    console.log('All teachers deleted from database');
+  }
+
+
   // Schedule methods
   async createSchedule(schedule: Omit<Schedule, "id">): Promise<Schedule> {
     const id = this.currentId++;

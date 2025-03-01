@@ -37,10 +37,44 @@ export default function AttendancePage() {
   const [currentTime, setCurrentTime] = useState<string>(
     new Date().toLocaleTimeString(),
   );
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const { data: teachers, isLoading: teachersLoading } = useQuery<Teacher[]>({
+  const { data: teachers, isLoading: teachersLoading, refetch: refetchTeachers } = useQuery<Teacher[]>({
     queryKey: ["/api/teachers"],
   });
+
+  // Load teachers from CSV when component mounts if needed
+  useEffect(() => {
+    const loadTeachersFromCSV = async () => {
+      try {
+        console.log("Loading teachers from CSV files");
+        const response = await fetch("/api/load-teachers-from-csv", {
+          method: "POST",
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log(`Loaded ${result.teachers?.length || 0} teachers from CSV files`);
+          
+          if (result.success) {
+            // Refresh the teachers list after loading from CSV
+            refetchTeachers();
+            
+            // Reset the attendance for today to account for any new teachers
+            const todayKey = new Date().toISOString().split("T")[0];
+            localStorage.removeItem(`attendance_${todayKey}`);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load teachers from CSV:", error);
+      }
+    };
+
+    // Check if teachers data is empty before trying to load from CSV
+    if (teachers && teachers.length === 0) {
+      loadTeachersFromCSV();
+    }
+  }, [teachers, refetchTeachers]);
 
   // Load attendance from local storage on mount and date change
   useEffect(() => {
@@ -208,7 +242,8 @@ export default function AttendancePage() {
       ).getDate();
 
       // Create a set to track processed teachers to avoid duplicates
-      const processedTeachers = new Set();
+      // Use a Map to track unique teachers by name to prevent duplicates
+      const processedTeachers = new Map<string, number>();
 
       for (let i = 1; i <= daysInMonth; i++) {
         const dayDate = new Date(
@@ -225,12 +260,13 @@ export default function AttendancePage() {
 
       // Add data for each teacher (avoid duplicates)
       teachers?.forEach((teacher) => {
-        // Skip if we've already processed this teacher
-        if (processedTeachers.has(teacher.id)) {
+        // Skip if we've already processed this teacher name
+        const teacherNormalizedName = teacher.name.toLowerCase().trim();
+        if (processedTeachers.has(teacherNormalizedName)) {
           return;
         }
 
-        processedTeachers.add(teacher.id);
+        processedTeachers.set(teacherNormalizedName, teacher.id);
         csvContent += `${teacher.name},`;
 
         let presentCount = 0;
@@ -368,6 +404,11 @@ export default function AttendancePage() {
           <Button
             onClick={async () => {
               try {
+                toast({
+                  title: "Loading teachers",
+                  description: "Please wait while teachers are loaded from CSV...",
+                });
+                
                 const response = await fetch("/api/load-teachers-from-csv", {
                   method: "POST",
                 });
@@ -376,16 +417,18 @@ export default function AttendancePage() {
                 if (result.success) {
                   toast({
                     title: "Teachers loaded",
-                    description: result.message,
+                    description: `${result.message} (${result.teachers?.length || 0} teachers)`,
                   });
+                  
                   // Refresh teachers list
                   queryClient.invalidateQueries({
                     queryKey: ["/api/teachers"],
                   });
+                  
                   // Clear local storage for current date
-                  localStorage.removeItem(
-                    `attendance_${selectedDate.toISOString().split("T")[0]}`,
-                  );
+                  const todayKey = selectedDate.toISOString().split("T")[0];
+                  localStorage.removeItem(`attendance_${todayKey}`);
+                  
                   // Reset the local attendance state
                   setLocalAttendance({});
                 } else {
@@ -396,6 +439,7 @@ export default function AttendancePage() {
                   });
                 }
               } catch (error) {
+                console.error("Error loading teachers:", error);
                 toast({
                   title: "Error",
                   description: "Failed to load teachers from CSV",
