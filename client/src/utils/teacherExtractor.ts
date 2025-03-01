@@ -65,7 +65,7 @@ const nameSimilarity = (a: string, b: string): number => {
 // Teacher registration
 const registerTeacher = (rawName: string, phone: string = '') => {
   const normalized = normalizeName(rawName);
-  
+
   const existing = Array.from(TEACHER_MAP.values()).find(teacher => 
     nameSimilarity(normalized, teacher.canonicalName.toLowerCase()) > SIMILARITY_THRESHOLD
   );
@@ -92,7 +92,7 @@ export const processTeacherFiles = (timetableContent: string, substitutesContent
       skip_empty_lines: true,
       trim: true
     });
-    
+
     subRecords.forEach((row: any) => {
       if (row[0]) registerTeacher(row[0], row[1] || '');
     });
@@ -201,9 +201,9 @@ const nameSimilarity = (a: string, b: string): number => {
 // 4. Teacher Registry
 const registerTeacher = (rawName: string, phone: string = '') => {
   if (!rawName || rawName.toLowerCase() === 'empty') return;
-  
+
   const normalized = normalizeName(rawName);
-  
+
   const existing = Array.from(TEACHER_MAP.values()).find(teacher => 
     nameSimilarity(normalized, normalizeName(teacher.canonicalName)) > SIMILARITY_THRESHOLD
   );
@@ -230,7 +230,7 @@ export const processTeacherFiles = (timetableContent: string, substitutesContent
       skip_empty_lines: true,
       trim: true
     });
-    
+
     let subTeacherCount = 0;
     subRecords.forEach((row: any) => {
       if (row[0]) {
@@ -238,7 +238,7 @@ export const processTeacherFiles = (timetableContent: string, substitutesContent
         subTeacherCount++;
       }
     });
-    
+
     console.log(`Processed ${subTeacherCount} teachers from substitute file`);
 
     // Process timetable teachers
@@ -257,7 +257,7 @@ export const processTeacherFiles = (timetableContent: string, substitutesContent
         }
       });
     });
-    
+
     console.log(`Processed ${timetableTeachers.size} unique teachers from timetable file`);
 
     // Generate CSV output
@@ -270,7 +270,7 @@ export const processTeacherFiles = (timetableContent: string, substitutesContent
     // Verify teacher count
     const extractedCount = uniqueTeachers.length;
     console.log(`Total unique teachers extracted: ${extractedCount}`);
-    
+
     if (extractedCount === EXPECTED_TEACHER_COUNT) {
       console.log(`✅ Successfully extracted all ${EXPECTED_TEACHER_COUNT} teachers!`);
     } else if (extractedCount < EXPECTED_TEACHER_COUNT) {
