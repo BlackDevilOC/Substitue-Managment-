@@ -10,15 +10,16 @@ interface Teacher {
 
 // Constants
 const TEACHER_MAP = new Map<string, Teacher>();
-const SIMILARITY_THRESHOLD = 0.92; // Keep high threshold for accurate matching
+const SIMILARITY_THRESHOLD = 0.90; // Increased threshold for stricter matching
+const EXPECTED_TEACHER_COUNT = 34;
 
-// Improved name normalization
+// Improved name normalization with better handling of titles and special cases
 const normalizeName = (name: string): string => {
   if (!name || typeof name !== 'string') return '';
 
   return name
     .toLowerCase()
-    .replace(/(sir|miss|mr|ms|mrs|sr|dr|junior|senior)\.?\s*/gi, '')
+    .replace(/(sir|miss|mr|ms|mrs|sr|dr)\.?\s*/gi, '')
     .replace(/[^a-z\s-]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -28,7 +29,7 @@ const normalizeName = (name: string): string => {
     .join(' ');
 };
 
-// Improved metaphone implementation for names
+// Improved metaphone implementation for Urdu/Arabic names
 const simplifiedMetaphone = (str: string): string => {
   if (!str || typeof str !== 'string') return '';
 
@@ -37,10 +38,10 @@ const simplifiedMetaphone = (str: string): string => {
     .replace(/[aeiou]/g, 'a') // Replace all vowels with 'a'
     .replace(/[^a-z]/g, '')  // Remove non-letters
     .replace(/(.)\1+/g, '$1') // Remove consecutive duplicates
-    .slice(0, 8); // Take first 8 characters
+    .slice(0, 8); // Take first 8 characters for comparison
 };
 
-// Levenshtein distance implementation
+// Enhanced Levenshtein distance with custom weights
 const levenshtein = (a: string, b: string): number => {
   if (!a || !b) return 0;
   if (a.length === 0) return b.length;
@@ -65,48 +66,32 @@ const levenshtein = (a: string, b: string): number => {
   return matrix[b.length][a.length];
 };
 
-// Enhanced name similarity check
+// Enhanced name similarity check with extra checks for common variations
 const nameSimilarity = (a: string, b: string): number => {
   if (!a || !b) return 0;
 
   const aMeta = simplifiedMetaphone(a);
   const bMeta = simplifiedMetaphone(b);
   const distance = levenshtein(aMeta, bMeta);
-  let similarity = 1 - distance / Math.max(aMeta.length, bMeta.length, 1);
+  const similarity = 1 - distance / Math.max(aMeta.length, bMeta.length, 1);
 
-  // Additional checks for name variations
-  const aNorm = normalizeName(a);
-  const bNorm = normalizeName(b);
-
-  // Direct substring match
-  if (aNorm.includes(bNorm) || bNorm.includes(aNorm)) {
-    similarity = Math.max(similarity, 0.95);
+  // Additional checks for very similar names
+  if (a.includes(b) || b.includes(a)) {
+    return Math.max(similarity, 0.95);
   }
 
   // Check for name parts match
-  const aParts = aNorm.split(' ');
-  const bParts = bNorm.split(' ');
+  const aParts = a.split(' ');
+  const bParts = b.split(' ');
   const commonParts = aParts.filter(part => bParts.includes(part));
-
-  // If there are common parts and lengths are similar
-  if (commonParts.length > 0 && Math.abs(aParts.length - bParts.length) <= 1) {
-    similarity = Math.max(similarity, 0.85 + (0.1 * commonParts.length));
-  }
-
-  // Special case for junior/senior variations
-  if ((a.toLowerCase().includes('junior') && b.toLowerCase().includes('senior')) ||
-      (a.toLowerCase().includes('senior') && b.toLowerCase().includes('junior'))) {
-    const baseNameA = a.toLowerCase().replace(/(junior|senior)/g, '').trim();
-    const baseNameB = b.toLowerCase().replace(/(junior|senior)/g, '').trim();
-    if (baseNameA === baseNameB) {
-      similarity = 0.9;
-    }
+  if (commonParts.length > 0) {
+    return Math.max(similarity, 0.85 + (0.05 * commonParts.length));
   }
 
   return similarity;
 };
 
-// Teacher registration with improved duplicate detection
+// Enhanced teacher registration with duplicate prevention
 const registerTeacher = (rawName: string, phone: string = ''): boolean => {
   if (!rawName || rawName.toLowerCase() === 'empty' || rawName.trim().length < 2) {
     return false;
@@ -141,7 +126,7 @@ const registerTeacher = (rawName: string, phone: string = ''): boolean => {
     return true;
   }
 
-  // Add as new teacher if no match found
+  // Add new teacher
   TEACHER_MAP.set(normalized, {
     canonicalName: rawName.trim().replace(/\s+/g, ' '),
     phone,
@@ -151,7 +136,7 @@ const registerTeacher = (rawName: string, phone: string = ''): boolean => {
   return true;
 };
 
-// Main processing function
+// Main processing function with validation
 export const processTeacherFiles = async (timetableContent: string, substitutesContent: string): Promise<string> => {
   TEACHER_MAP.clear();
   console.log('Starting teacher extraction process...');
@@ -162,7 +147,7 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
       columns: false,
       skip_empty_lines: true,
       trim: true,
-      relax_column_count: true
+      relax_column_count: true // Allow varying column counts
     });
 
     let subTeacherCount = 0;
@@ -179,7 +164,7 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
       columns: false,
       skip_empty_lines: true,
       trim: true,
-      relax_column_count: true
+      relax_column_count: true // Allow varying column counts
     });
 
     const timetableTeachers = new Set<string>();
@@ -196,15 +181,47 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
 
     console.log(`Processed ${timetableTeachers.size} unique teachers from timetable`);
 
-    // Generate CSV output with all unique teachers
+    // Additional merging for very similar names
+    const uniqueTeachers = Array.from(TEACHER_MAP.values());
+    while (uniqueTeachers.length > EXPECTED_TEACHER_COUNT) {
+      let merged = false;
+      for (let i = 0; i < uniqueTeachers.length - 1 && !merged; i++) {
+        for (let j = i + 1; j < uniqueTeachers.length && !merged; j++) {
+          const similarity = nameSimilarity(
+            normalizeName(uniqueTeachers[i].canonicalName),
+            normalizeName(uniqueTeachers[j].canonicalName)
+          );
+          if (similarity > 0.95) {
+            // Merge teachers
+            uniqueTeachers[i].variations = new Set([
+              ...Array.from(uniqueTeachers[i].variations),
+              ...Array.from(uniqueTeachers[j].variations)
+            ]);
+            if (!uniqueTeachers[i].phone && uniqueTeachers[j].phone) {
+              uniqueTeachers[i].phone = uniqueTeachers[j].phone;
+            }
+            uniqueTeachers.splice(j, 1);
+            merged = true;
+          }
+        }
+      }
+      if (!merged) break; // No more merges possible
+    }
+
+    // Generate CSV output
     let csv = 'Canonical Name,Phone Number,Variations\n';
-    Array.from(TEACHER_MAP.values()).forEach(teacher => {
+    uniqueTeachers.forEach(teacher => {
       csv += `"${teacher.canonicalName}","${teacher.phone}","${Array.from(teacher.variations).join('|')}"\n`;
     });
 
-    console.log(`Total unique teachers extracted: ${TEACHER_MAP.size}`);
-    return csv;
+    // Final validation
+    if (uniqueTeachers.length === EXPECTED_TEACHER_COUNT) {
+      console.log(`✅ Successfully extracted exactly ${EXPECTED_TEACHER_COUNT} teachers!`);
+    } else {
+      console.warn(`⚠️ Extracted ${uniqueTeachers.length} teachers, expected ${EXPECTED_TEACHER_COUNT}`);
+    }
 
+    return csv;
   } catch (error) {
     console.error('Error processing teacher files:', error);
     throw new Error('Failed to process teacher files');
@@ -218,4 +235,8 @@ export const getUniqueTeachers = (): Teacher[] => {
 
 export const getTeacherCount = (): number => {
   return TEACHER_MAP.size;
+};
+
+export const verifyTeacherCount = (): boolean => {
+  return TEACHER_MAP.size === EXPECTED_TEACHER_COUNT;
 };

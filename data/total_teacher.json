@@ -10,24 +10,11 @@
   },
   {
     "name": "Sir Mushtaque Ahmed",
-    "phone": "+923337199001",
+    "phone": "",
     "variations": [
       "Sir Mushtaque Ahmed",
-      "Sir Shafique Ahmed",
-      "Sir Iqbal Ahmed",
-      "Sir Shabeer Ahmed",
-      "Sir Faraz Ahmed",
-      "Sir Imran Ahmed",
       "sir mushtaque ahmed",
-      "sir shafique ahmed",
-      "sir iqbal ahmed",
-      "sir Iqbal ahmed",
-      "sir faraz ahmed",
-      "sir shabeer ahmed",
-      "sir Imran ahmed",
-      "sir imran ahmed",
-      "Sir mushtaque ahmed",
-      "sir irshad ahmed"
+      "Sir mushtaque ahmed"
     ]
   },
   {
@@ -35,12 +22,8 @@
     "phone": "+923123131179",
     "variations": [
       "Sir Irshad Qureshi",
-      "Sir Irshad Bhutto",
       "sir Irshad Qureshi",
-      "sir Irshad Bhutto",
-      "sir irshad bhutto",
       "sir Irshad qureshi",
-      "sir Irshad bhutto",
       "sir irshad qureshi"
     ]
   },
@@ -49,10 +32,27 @@
     "phone": "+923163745043",
     "variations": [
       "Sir Muhammad Taha",
-      "Sir Meer Muhammad",
       "sir muhammad Taha",
-      "sir meer muhammad",
       "sir muhammad taha"
+    ]
+  },
+  {
+    "name": "Sir Shafique Ahmed",
+    "phone": "+923337199001",
+    "variations": [
+      "Sir Shafique Ahmed",
+      "Sir Shabeer Ahmed",
+      "sir shafique ahmed",
+      "sir shabeer ahmed"
+    ]
+  },
+  {
+    "name": "Sir Iqbal Ahmed",
+    "phone": "+923063624407",
+    "variations": [
+      "Sir Iqbal Ahmed",
+      "sir iqbal ahmed",
+      "sir Iqbal ahmed"
     ]
   },
   {
@@ -70,7 +70,6 @@
     "variations": [
       "Sir Amir Shaikh Senior",
       "Sir Amir Shaikh Junior",
-      "Sir Wajiudin Shaikh",
       "sir Amir Shaikh Senior",
       "sir Amir Shaikh Junior",
       "sir amir shaikh Junior",
@@ -99,15 +98,18 @@
   },
   {
     "name": "Sir Abdul Hameed",
-    "phone": "+923110022088",
+    "phone": "",
     "variations": [
       "Sir Abdul Hameed",
+      "sir abdul hameed"
+    ]
+  },
+  {
+    "name": "Sir Abdul Sami",
+    "phone": "+923110022088",
+    "variations": [
       "Sir Abdul Sami",
-      "Sir Abdul Rehman",
-      "sir abdul hameed",
-      "sir abdul sami",
-      "sir abdul rehman",
-      "Sir abdul rehman"
+      "sir abdul sami"
     ]
   },
   {
@@ -115,11 +117,7 @@
     "phone": "+923003150206",
     "variations": [
       "Sir Faiz Hussain",
-      "Sir Khadim Hussain",
-      "Miss Anum Hussain",
-      "sir faiz hussain",
-      "miss anum hussain",
-      "sir khadim hussain"
+      "sir faiz hussain"
     ]
   },
   {
@@ -135,12 +133,15 @@
     "phone": "+923113588606",
     "variations": [
       "Sir Waqar Ali",
+      "sir waqar ali"
+    ]
+  },
+  {
+    "name": "Sir Faisal Ali",
+    "phone": "+923473093995",
+    "variations": [
       "Sir Faisal Ali",
-      "Sir Anwar Ali",
-      "sir waqar ali",
-      "sir faisal ali",
-      "sir anwar ali",
-      "sir Anwar ali"
+      "sir faisal ali"
     ]
   },
   {
@@ -149,6 +150,15 @@
     "variations": [
       "Sir Romanulabdin",
       "sir Romanulabdin"
+    ]
+  },
+  {
+    "name": "Sir Anwar Ali",
+    "phone": "",
+    "variations": [
+      "Sir Anwar Ali",
+      "sir anwar ali",
+      "sir Anwar ali"
     ]
   },
   {
@@ -161,10 +171,61 @@
     ]
   },
   {
+    "name": "Sir Khadim Hussain",
+    "phone": "+923013976248",
+    "variations": [
+      "Sir Khadim Hussain",
+      "sir khadim hussain"
+    ]
+  },
+  {
     "name": "Sir Jawad-ul-Haq",
     "phone": "+923153122161",
     "variations": [
       "Sir Jawad-ul-Haq"
+    ]
+  },
+  {
+    "name": "Sir Faraz Ahmed",
+    "phone": "+923003150206",
+    "variations": [
+      "Sir Faraz Ahmed",
+      "sir faraz ahmed"
+    ]
+  },
+  {
+    "name": "Sir Imran Ahmed",
+    "phone": "+923328231536",
+    "variations": [
+      "Sir Imran Ahmed",
+      "sir Imran ahmed",
+      "sir imran ahmed"
+    ]
+  },
+  {
+    "name": "Miss Anum Hussain",
+    "phone": "+923090782869",
+    "variations": [
+      "Miss Anum Hussain",
+      "miss anum hussain"
+    ]
+  },
+  {
+    "name": "Sir Irshad Bhutto",
+    "phone": "+923147117789",
+    "variations": [
+      "Sir Irshad Bhutto",
+      "sir Irshad Bhutto",
+      "sir irshad bhutto",
+      "sir Irshad bhutto"
+    ]
+  },
+  {
+    "name": "Sir Meer Muhammad",
+    "phone": "+923153555253",
+    "variations": [
+      "Sir Meer Muhammad",
+      "sir meer muhammad"
     ]
   },
   {
@@ -195,12 +256,30 @@
     ]
   },
   {
+    "name": "Sir Wajiudin Shaikh",
+    "phone": "",
+    "variations": [
+      "Sir Wajiudin Shaikh",
+      "sir wajiudin",
+      "sir Wajiudin"
+    ]
+  },
+  {
     "name": "Sir Shoaib",
     "phone": "+923154988546",
     "variations": [
       "Sir Shoaib",
       "sir shoaib",
       "sir Shoaib"
+    ]
+  },
+  {
+    "name": "Sir Abdul Rehman",
+    "phone": "+923337208667",
+    "variations": [
+      "Sir Abdul Rehman",
+      "sir abdul rehman",
+      "Sir abdul rehman"
     ]
   },
   {
@@ -218,11 +297,10 @@
     ]
   },
   {
-    "name": "sir wajiudin",
+    "name": "sir irshad ahmed",
     "phone": "",
     "variations": [
-      "sir wajiudin",
-      "sir Wajiudin"
+      "sir irshad ahmed"
     ]
   }
 ]
