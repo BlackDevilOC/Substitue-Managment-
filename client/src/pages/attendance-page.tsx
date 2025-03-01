@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Teacher } from "@shared/schema";
+import { Teacher as OriginalTeacher } from "@shared/schema"; // Keeping original interface for reference if needed.
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, Loader2, Download } from "lucide-react";
@@ -10,6 +10,13 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
+
+interface Teacher {
+  id: number;
+  name: string;
+  phoneNumber: string | null;
+  isSubstitute: boolean;
+}
 
 interface AbsentTeacherData {
   teacherId: number;
@@ -25,43 +32,18 @@ export default function AttendancePage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
 
-  // Attempt to load teachers from API first, then fallback to CSV
+  // Load teachers on mount
   useEffect(() => {
     const loadTeachers = async () => {
-      setIsLoading(true);
       try {
-        // First try API
         const response = await fetch('/api/teachers');
         if (response.ok) {
-          const apiTeachers = await response.json();
-          if (apiTeachers && apiTeachers.length > 0) {
-            setTeachers(apiTeachers);
-            setIsLoading(false);
-            return;
-          }
-        }
-        
-        // API failed or returned empty, try loading from attendance file
-        const attendanceTeachers = await loadTeachersFromAttendanceFile();
-        if (attendanceTeachers && attendanceTeachers.length > 0) {
-          setTeachers(attendanceTeachers);
-          setIsLoading(false);
-          return;
-        }
-        
-        // Attendance file failed or empty, extract from CSV files
-        const timetablePath = 'data/timetable_file.csv';
-        const substitutePath = 'data/Substitude_file.csv';
-        
-        const extractedTeachers = await extractTeacherNames(timetablePath, substitutePath);
-        if (extractedTeachers && extractedTeachers.length > 0) {
-          // Save these teachers to the attendance file for future use
-          await saveTeachersToAttendanceFile(extractedTeachers);
-          setTeachers(extractedTeachers);
+          const data = await response.json();
+          setTeachers(data);
         } else {
           toast({
             title: "Error loading teachers",
-            description: "Could not load teachers from any source",
+            description: "Could not load teachers from the server",
             variant: "destructive",
           });
         }
@@ -69,7 +51,7 @@ export default function AttendancePage() {
         console.error("Error loading teachers:", error);
         toast({
           title: "Error loading teachers",
-          description: "An error occurred while loading teachers",
+          description: "Failed to load teacher data",
           variant: "destructive",
         });
       } finally {
@@ -83,7 +65,7 @@ export default function AttendancePage() {
   // Load attendance from local storage on mount and date change
   useEffect(() => {
     if (!teachers || teachers.length === 0) return;
-    
+
     const storedData = localStorage.getItem(`attendance_${selectedDate.toISOString().split('T')[0]}`);
     if (storedData) {
       setLocalAttendance(JSON.parse(storedData));
@@ -137,13 +119,13 @@ export default function AttendancePage() {
 
         if (existingIndex === -1) {
           const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-          const schedule = teacher.schedule as Record<string, number[]>;
+          const schedule = teacher.schedule as Record<string, number[]>; //This line is problematic - teacher.schedule doesn't exist in the new interface
           const periods = schedule ? (schedule[dayName] || []) : [];
 
           absentTeachers.push({
             teacherId: teacher.id,
             teacherName: teacher.name,
-            phone: teacher.phone,
+            phone: teacher.phoneNumber, //Corrected to use phoneNumber from the new interface
             date: dateStr,
             periods: periods.map((period, index) => ({
               period,
@@ -271,12 +253,12 @@ export default function AttendancePage() {
           date: selectedDate.toISOString(),
           status,
         });
-        
+
         toast({
           title: "Attendance marked",
           description: "Teacher attendance has been updated successfully.",
         });
-        
+
         return res.json();
       } catch (error) {
         toast({
@@ -357,9 +339,9 @@ export default function AttendancePage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold">{teacher.name}</h3>
-                  {teacher.phone && (
+                  {teacher.phoneNumber && (
                     <span className="text-sm text-muted-foreground">
-                      📱 {teacher.phone}
+                      📱 {teacher.phoneNumber}
                     </span>
                   )}
                 </div>

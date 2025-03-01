@@ -2,7 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTeacherSchema, insertScheduleSchema, insertAbsenceSchema } from "@shared/schema";
-import { processTimetableCSV, processSubstituteCSV, extractTeacherNames, clearAttendanceStorage } from "./csv-handler";
+import { processTimetableCSV, processSubstituteCSV } from "./csv-handler";
+import { processTeacherFiles } from "../client/src/utils/teacherExtractor";
 import multer from "multer";
 import { format } from "date-fns";
 import * as path from 'path';
@@ -37,9 +38,8 @@ const checkAuth = (req: any, res: any, next: any) => {
   }
 };
 
-// Function to automatically load teacher data
-async function loadInitialData() {
-  console.log('[loadInitialData] Loading data from CSV files...');
+// Function to process and save teachers
+async function processAndSaveTeachers() {
   try {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
@@ -52,140 +52,63 @@ async function loadInitialData() {
 
     const timetablePath = path.join(dataFolder, 'timetable_file.csv');
     const substitutePath = path.join(dataFolder, 'Substitude_file.csv');
+    const totalTeacherPath = path.join(dataFolder, 'total_teacher.json');
 
-    // Load and process timetable data if exists
-    if (fs.existsSync(timetablePath)) {
-      const timetableContent = fs.readFileSync(timetablePath, 'utf-8');
-      const schedules = await processTimetableCSV(timetableContent);
-      for (const schedule of schedules) {
-        await storage.createSchedule(schedule);
-      }
-      console.log('Timetable data loaded successfully');
+    if (!fs.existsSync(timetablePath) || !fs.existsSync(substitutePath)) {
+      console.error('Required CSV files not found');
+      return;
     }
 
-    // Load and process substitute data if exists
-    if (fs.existsSync(substitutePath)) {
-      const substituteContent = fs.readFileSync(substitutePath, 'utf-8');
-      const teachers = await processSubstituteCSV(substituteContent);
-      console.log('Substitute data loaded successfully');
-    }
+    const timetableContent = fs.readFileSync(timetablePath, 'utf-8');
+    const substituteContent = fs.readFileSync(substitutePath, 'utf-8');
 
-    // Extract and save teacher information
-    if (fs.existsSync(timetablePath) || fs.existsSync(substitutePath)) {
-      const teachers = await extractTeacherNames(timetablePath, substitutePath);
-      if (teachers && teachers.length > 0) {
-        // Clear existing teachers before loading new ones
-        await storage.clearTeachers();
-        for (const teacher of teachers) {
-          await storage.createTeacher({
-            name: teacher.name,
-            phoneNumber: teacher.phone || null,
-            isSubstitute: false
-          });
-        }
-      }
-    }
+    // Process teachers using the improved extraction function
+    const teacherData = await processTeacherFiles(timetableContent, substituteContent);
+    const teachers = teacherData.split('\n')
+      .slice(1) // Skip header
+      .filter(line => line.trim())
+      .map(line => {
+        const [name, phone, variations] = line.split(',').map(str => str.replace(/"/g, '').trim());
+        return { name, phone, variations: variations.split('|') };
+      });
 
-    console.log('Initial data loading completed');
+    // Save to total_teacher.json
+    fs.writeFileSync(totalTeacherPath, JSON.stringify(teachers, null, 2));
+    console.log(`Saved ${teachers.length} teachers to total_teacher.json`);
   } catch (error) {
-    console.error('[loadInitialData] Error loading data:', error);
+    console.error('Error processing and saving teachers:', error);
   }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Load initial data on startup
-  await loadInitialData();
-  console.log('[loadInitialData] Data loading complete.');
+  // Process and save teachers on startup
+  await processAndSaveTeachers();
 
   // Apply auth middleware to all /api routes
   app.use('/api', checkAuth);
 
-  // CSV Upload Routes
-  app.post("/api/upload/timetable", upload.single('file'), async (req, res) => {
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-
-    try {
-      const fileContent = req.file.buffer.toString('utf-8');
-      const schedules = await processTimetableCSV(fileContent);
-
-      // Save all schedules
-      for (const schedule of schedules) {
-        await storage.createSchedule(schedule);
-      }
-
-      // Save the file to the data folder
-      const fs = await import('fs/promises');
-      const { fileURLToPath } = await import('url');
-
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const dataFolder = path.join(__dirname, '../data');
-      const filePath = path.join(dataFolder, 'timetable_file.csv');
-
-      try {
-        // Ensure the data directory exists
-        await fs.mkdir(dataFolder, { recursive: true });
-        // Write the file
-        await fs.writeFile(filePath, fileContent);
-        console.log(`Timetable file saved to ${filePath}`);
-      } catch (fsError) {
-        console.error('Error saving timetable file:', fsError);
-      }
-
-      res.status(200).json({ 
-        message: "Timetable uploaded successfully",
-        schedulesCreated: schedules.length
-      });
-    } catch (error: any) {
-      console.error('Timetable upload error:', error);
-      res.status(400).json({ 
-        error: error.message || "Failed to process timetable file"
-      });
-    }
-  });
-
-  app.post("/api/upload/substitutes", upload.single('file'), async (req, res) => {
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-
-    try {
-      const fileContent = req.file.buffer.toString('utf-8');
-      const teachers = await processSubstituteCSV(fileContent);
-
-      // Save the file to the data folder
-      const fs = await import('fs/promises');
-      const { fileURLToPath } = await import('url');
-
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const dataFolder = path.join(__dirname, '../data');
-      const filePath = path.join(dataFolder, 'Substitude_file.csv');
-
-      try {
-        // Ensure the data directory exists
-        await fs.mkdir(dataFolder, { recursive: true });
-        // Write the file
-        await fs.writeFile(filePath, fileContent);
-        console.log(`Substitute file saved to ${filePath}`);
-      } catch (fsError) {
-        console.error('Error saving substitute file:', fsError);
-      }
-
-      res.status(200).json({ 
-        message: "Substitute teachers uploaded successfully",
-        teachersCreated: teachers.length
-      });
-    } catch (error: any) {
-      console.error('Substitute upload error:', error);
-      res.status(400).json({ 
-        error: error.message || "Failed to process substitute teachers file"
-      });
-    }
-  });
-
   // API Routes
   app.get("/api/teachers", async (req, res) => {
-    const teachers = await storage.getTeachers();
-    res.json(teachers);
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const totalTeacherPath = path.join(__dirname, '../data/total_teacher.json');
+
+      if (fs.existsSync(totalTeacherPath)) {
+        const teachers = JSON.parse(fs.readFileSync(totalTeacherPath, 'utf-8'));
+        res.json(teachers.map((t: any, index: number) => ({
+          id: index + 1,
+          name: t.name,
+          phoneNumber: t.phone || null,
+          isSubstitute: false
+        })));
+      } else {
+        res.json([]);
+      }
+    } catch (error) {
+      console.error('Error reading teachers:', error);
+      res.status(500).json({ error: 'Failed to load teachers' });
+    }
   });
 
   app.post("/api/teachers", async (req, res) => {
@@ -303,7 +226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Clear all substitute assignments for today's absences
       const today = format(new Date(), "yyyy-MM-dd");
       const absences = await storage.getAbsences();
-
+      
       for (const absence of absences) {
         if (absence.date === today && absence.substituteId) {
           await storage.assignSubstitute(absence.id, null);
@@ -314,7 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { SubstituteManager } = await import('./substitute-manager.js');
       const manager = new SubstituteManager();
       manager.clearAssignments();
-
+      
       res.json({ message: "Assignments reset successfully" });
     } catch (error) {
       console.error('Reset assignments error:', error);
