@@ -361,6 +361,44 @@ export default function AttendancePage() {
         </div>
         
         <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
+          <Button 
+            onClick={async () => {
+              try {
+                const response = await fetch('/api/load-teachers-from-csv', {
+                  method: 'POST',
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                  toast({
+                    title: "Teachers loaded",
+                    description: result.message,
+                  });
+                  // Refresh teachers list
+                  queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
+                  // Clear local storage for current date
+                  localStorage.removeItem(`attendance_${selectedDate.toISOString().split("T")[0]}`);
+                  // Reset the local attendance state
+                  setLocalAttendance({});
+                } else {
+                  toast({
+                    title: "Error loading teachers",
+                    description: result.message,
+                    variant: "destructive",
+                  });
+                }
+              } catch (error) {
+                toast({
+                  title: "Error",
+                  description: "Failed to load teachers from CSV",
+                  variant: "destructive",
+                });
+              }
+            }} 
+            variant="outline"
+          >
+            Load Teachers from CSV
+          </Button>
           <Button onClick={exportAttendanceToExcel} variant="outline">
             Export to Excel
           </Button>

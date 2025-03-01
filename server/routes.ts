@@ -2,9 +2,12 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTeacherSchema, insertScheduleSchema, insertAbsenceSchema } from "@shared/schema";
-import { processTimetableCSV, processSubstituteCSV } from "./csv-handler";
+import { processTimetableCSV, processSubstituteCSV, extractTeacherNames, clearAttendanceStorage } from "./csv-handler";
 import multer from "multer";
 import { format } from "date-fns";
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -53,14 +56,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Save the file to the data folder
       const fs = await import('fs/promises');
-      const path = await import('path');
       const { fileURLToPath } = await import('url');
-      
+
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const dataFolder = path.join(__dirname, '../data');
       const filePath = path.join(dataFolder, 'timetable_file.csv');
-      
+
       try {
         // Ensure the data directory exists
         await fs.mkdir(dataFolder, { recursive: true });
@@ -89,17 +91,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const fileContent = req.file.buffer.toString('utf-8');
       const teachers = await processSubstituteCSV(fileContent);
-      
+
       // Save the file to the data folder
       const fs = await import('fs/promises');
-      const path = await import('path');
       const { fileURLToPath } = await import('url');
-      
+
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const dataFolder = path.join(__dirname, '../data');
       const filePath = path.join(dataFolder, 'Substitude_file.csv');
-      
+
       try {
         // Ensure the data directory exists
         await fs.mkdir(dataFolder, { recursive: true });
@@ -109,7 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (fsError) {
         console.error('Error saving substitute file:', fsError);
       }
-      
+
       res.status(200).json({ 
         message: "Substitute teachers uploaded successfully",
         teachersCreated: teachers.length
@@ -242,6 +243,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to reset assignments" });
     }
   });
+
+  // New endpoint to load teachers from CSV files
+  app.post("/api/load-teachers-from-csv", async (req, res) => {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      // Clear old attendance records
+      await clearAttendanceStorage();
+
+      // Extract teacher names from CSV files
+      const timetablePath = path.join(__dirname, '../data/timetable_file.csv');
+      const substitutePath = path.join(__dirname, '../data/Substitude_file.csv');
+
+      const teachersFromCSV = await extractTeacherNames(timetablePath, substitutePath);
+
+      // Save teachers to storage
+      const savedTeachers = [];
+      for (const teacher of teachersFromCSV) {
+        const savedTeacher = await storage.createTeacher({
+          name: teacher, // Assuming extractTeacherNames returns just the name
+          phone: undefined, // Or handle phone number appropriately
+          isSubstitute: false // Default value, modify as needed
+        });
+        savedTeachers.push(savedTeacher);
+      }
+
+      res.json({ 
+        success: true, 
+        message: `Loaded ${savedTeachers.length} teachers from CSV files`,
+        teachers: savedTeachers
+      });
+    } catch (error) {
+      console.error('Error loading teachers from CSV:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to load teachers from CSV files',
+        error: error.message
+      });
+    }
+  });
+
 
   const httpServer = createServer(app);
   return httpServer;

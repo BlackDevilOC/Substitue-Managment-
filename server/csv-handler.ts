@@ -179,3 +179,72 @@ async function findOrCreateTeacher(
     throw new Error(`Failed to process teacher data: ${error.message}`);
   }
 }
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+import * as csv from 'csv-parser';
+
+interface Teacher {
+    name: string;
+    phone?: string;
+}
+
+async function readCSV(filePath: string): Promise<Teacher[]> {
+    return new Promise((resolve, reject) => {
+        const teachers: Teacher[] = [];
+        fs.createReadStream(filePath)
+            .pipe(csv())
+            .on('data', (row) => {
+                const name = row['name'] || row['Sir Bakir Shah']; // Adjust based on CSV structure
+                const phone = row['phone'] || row['+923156103995']; // Adjust based on CSV structure
+                if (name) {
+                    teachers.push({ name, phone });
+                }
+            })
+            .on('end', () => {
+                resolve(teachers);
+            })
+            .on('error', (error) => {
+                reject(error);
+            });
+    });
+}
+
+export async function extractTeacherNames(timetablePath: string, substitutePath: string): Promise<Teacher[]> {
+    try {
+        const timetableTeachers = await readCSV(timetablePath);
+        const substituteTeachers = await readCSV(substitutePath);
+
+        const allTeachers = [...timetableTeachers, ...substituteTeachers];
+        
+        // Create a map to keep only unique teachers with their phone numbers
+        const teacherMap = new Map<string, Teacher>();
+        allTeachers.forEach(teacher => {
+            if (!teacherMap.has(teacher.name)) {
+                teacherMap.set(teacher.name, teacher);
+            }
+        });
+
+        return Array.from(teacherMap.values());
+    } catch (error) {
+        console.error('Error extracting teacher names:', error);
+        return [];
+    }
+}
+
+export async function clearAttendanceStorage(): Promise<void> {
+    if (typeof localStorage !== 'undefined') {
+        // Get all keys in localStorage
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('attendance_')) {
+                keysToRemove.push(key);
+            }
+        }
+        
+        // Remove all attendance-related keys
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        console.log(`Cleared ${keysToRemove.length} attendance records from storage`);
+    }
+}
