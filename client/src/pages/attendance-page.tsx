@@ -2,13 +2,14 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Teacher } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, Download } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
+import { defaultTeachers, getAttendanceKey, type TeacherAttendanceRecord } from "@/data/teachers";
 
 interface AbsentTeacherData {
   teacherId: number;
@@ -20,241 +21,169 @@ interface AbsentTeacherData {
 
 export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [localAttendance, setLocalAttendance] = useState<Record<number, string>>({});
+  const [attendanceRecords, setAttendanceRecords] = useState<TeacherAttendanceRecord[]>([]);
 
+  // Load teachers from API or use default data
   const { data: teachers, isLoading: teachersLoading } = useQuery<Teacher[]>({
     queryKey: ["/api/teachers"],
     queryFn: async () => {
-      const res = await fetch('/api/teachers', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
-        }
-      });
-      if (!res.ok) throw new Error('Failed to fetch teachers');
-      return res.json();
-    }
-  });
-
-  // Load attendance from local storage on mount and date change
-  useEffect(() => {
-    const storedData = localStorage.getItem(`attendance_${selectedDate.toISOString().split('T')[0]}`);
-    if (storedData) {
-      setLocalAttendance(JSON.parse(storedData));
-    } else {
-      const initialAttendance: Record<number, string> = {};
-      teachers?.forEach(teacher => {
-        initialAttendance[teacher.id] = 'present';
-      });
-      setLocalAttendance(initialAttendance);
-      localStorage.setItem(
-        `attendance_${selectedDate.toISOString().split('T')[0]}`,
-        JSON.stringify(initialAttendance)
-      );
-    }
-  }, [selectedDate, teachers]);
-
-  // Function to manage absent teachers in JSON file
-  const updateAbsentTeachersFile = async (teacherId: number, status: string) => {
-    try {
-      const dateStr = selectedDate.toISOString().split('T')[0];
-
-      // Get existing data from the JSON file
-      let absentTeachers: AbsentTeacherData[] = [];
-
       try {
-        // Try to load data from the server first
-        const response = await fetch('/api/absent-teachers', {
+        const res = await fetch('/api/teachers', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
           }
         });
-        if (response.ok) {
-          absentTeachers = await response.json();
-        }
+        if (!res.ok) throw new Error('Failed to fetch teachers');
+        const data = await res.json();
+        return data.length > 0 ? data : defaultTeachers;
       } catch (error) {
-        console.warn('Could not fetch from server, falling back to localStorage');
-        // Fallback to localStorage if server fetch fails
-        const existingData = localStorage.getItem('absent_teacher_for_substitute');
-        if (existingData) {
-          absentTeachers = JSON.parse(existingData);
-        }
+        console.warn('Failed to fetch teachers, using default data:', error);
+        return defaultTeachers;
       }
+    }
+  });
 
-      if (status === 'absent') {
-        // Add teacher to absent list if not already present
-        const teacher = teachers?.find(t => t.id === teacherId);
-        if (!teacher) return;
+  // Load attendance records from localStorage on mount
+  useEffect(() => {
+    const storedRecords = localStorage.getItem('teacherAttendanceRecords');
+    if (storedRecords) {
+      setAttendanceRecords(JSON.parse(storedRecords));
+    } else if (teachers) {
+      // Initialize records for all teachers
+      const initialRecords: TeacherAttendanceRecord[] = teachers.map(teacher => ({
+        teacherId: teacher.id,
+        teacherName: teacher.name,
+        attendance: {}
+      }));
+      setAttendanceRecords(initialRecords);
+      localStorage.setItem('teacherAttendanceRecords', JSON.stringify(initialRecords));
+    }
+  }, [teachers]);
 
-        // Check if teacher is already in the list for this date
-        const existingIndex = absentTeachers.findIndex(
-          t => t.teacherId === teacherId && t.date === dateStr
-        );
+  // Update absent teachers list when marking attendance
+  const updateAbsentTeachersFile = async (teacherId: number, status: 'P' | 'A') => {
+    if (status !== 'A') return; // Only process absences
 
-        if (existingIndex === -1) {
-          const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-          const schedule = await fetch(`/api/schedule/${dayName}/${teacherId}`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
-            }
-          }).then(res => res.json());
+    try {
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      const teacher = teachers?.find(t => t.id === teacherId);
+      if (!teacher) return;
 
-          const periods = schedule.map((s: any) => ({
-            period: s.period,
-            className: s.className
-          }));
-
-          absentTeachers.push({
-            teacherId: teacher.id,
-            teacherName: teacher.name,
-            phone: teacher.phoneNumber,
-            date: dateStr,
-            periods
-          });
-        }
-      } else {
-        // Remove teacher from absent list
-        absentTeachers = absentTeachers.filter(
-          t => !(t.teacherId === teacherId && t.date === dateStr)
-        );
-      }
-
-      // Save updated list to localStorage
-      localStorage.setItem('absent_teacher_for_substitute', JSON.stringify(absentTeachers, null, 2));
-
-      // Try to update the actual file on the server
+      // Get teacher's schedule for the day
+      const dayName = format(selectedDate, 'EEEE').toLowerCase();
       try {
-        await apiRequest("POST", "/api/update-absent-teachers", { absentTeachers });
-      } catch (error) {
-        console.warn('Failed to update server file, changes stored locally', error);
-      }
+        const res = await fetch(`/api/schedule/${dayName}/${teacherId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
+          }
+        });
+        if (!res.ok) throw new Error('Failed to fetch schedule');
+        const schedule = await res.json();
 
+        // Create absence record
+        const absenceData = {
+          teacherId,
+          date: dateStr,
+          schedule: schedule
+        };
+
+        // Save to API
+        const absenceRes = await fetch('/api/absences', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
+          },
+          body: JSON.stringify(absenceData)
+        });
+
+        if (!absenceRes.ok) throw new Error('Failed to record absence');
+
+      } catch (error) {
+        console.error('Error updating absence record:', error);
+        // Still update local storage even if API fails
+      }
     } catch (error) {
       console.error('Error updating absent teachers file:', error);
     }
   };
 
-  const exportAttendanceToExcel = () => {
-    try {
-      const monthName = selectedDate.toLocaleString('default', { month: 'long' });
-      const year = selectedDate.getFullYear();
-
-      // Create a CSV string
-      let csvContent = `Teacher Attendance - ${monthName} ${year}\n\n`;
-      csvContent += "Teacher Name,";
-
-      const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
-      for (let i = 1; i <= daysInMonth; i++) {
-        csvContent += `${i},`;
-      }
-      csvContent += "Total Present,Total Absent\n";
-
-      // Add data for each teacher
-      teachers?.forEach(teacher => {
-        csvContent += `${teacher.name},`;
-
-        let presentCount = 0;
-        let absentCount = 0;
-
-        for (let i = 1; i <= daysInMonth; i++) {
-          const checkDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), i);
-          const dateStr = checkDate.toISOString().split('T')[0];
-          const storageKey = `attendance_${dateStr}`;
-          const attendanceData = localStorage.getItem(storageKey);
-
-          if (attendanceData) {
-            const attendance = JSON.parse(attendanceData);
-            const status = attendance[teacher.id] || 'present';
-
-            if (status === 'present') {
-              csvContent += 'P,';
-              presentCount++;
-            } else {
-              csvContent += 'A,';
-              absentCount++;
-            }
-          } else {
-            csvContent += ',';
+  const markAttendance = async (teacherId: number, status: 'P' | 'A') => {
+    const dateKey = getAttendanceKey(selectedDate);
+    const newRecords = attendanceRecords.map(record => {
+      if (record.teacherId === teacherId) {
+        return {
+          ...record,
+          attendance: {
+            ...record.attendance,
+            [dateKey]: status
           }
-        }
+        };
+      }
+      return record;
+    });
 
-        csvContent += `${presentCount},${absentCount}\n`;
-      });
+    setAttendanceRecords(newRecords);
+    localStorage.setItem('teacherAttendanceRecords', JSON.stringify(newRecords));
+    await updateAbsentTeachersFile(teacherId, status);
 
-      // Save the CSV file
-      const fileName = `attendance_${monthName}_${year}.csv`;
-      localStorage.setItem(`attendance_excel_${monthName}_${year}`, csvContent);
-
-      // Create a download link
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', fileName);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-    } catch (error) {
-      console.error('Error exporting attendance to Excel:', error);
-      toast({
-        title: "Export failed",
-        description: "Failed to export attendance data",
-        variant: "destructive",
-      });
-    }
+    // Show confirmation toast
+    toast({
+      title: "Attendance marked",
+      description: `Marked ${status === 'P' ? 'present' : 'absent'} for ${teachers?.find(t => t.id === teacherId)?.name}`,
+      duration: 2000,
+    });
   };
 
-  const markAttendanceMutation = useMutation({
-    mutationFn: async ({
-      teacherId,
-      status,
-    }: {
-      teacherId: number;
-      status: string;
-    }) => {
-      // Update local storage first
-      const newLocalAttendance = {
-        ...localAttendance,
-        [teacherId]: status,
-      };
-      localStorage.setItem(
-        `attendance_${selectedDate.toISOString().split('T')[0]}`,
-        JSON.stringify(newLocalAttendance)
-      );
-      setLocalAttendance(newLocalAttendance);
+  const exportAttendance = () => {
+    const monthName = format(selectedDate, 'MMMM');
+    const year = selectedDate.getFullYear();
 
-      // Update absent teachers JSON file
-      await updateAbsentTeachersFile(teacherId, status);
+    let csvContent = `Teacher Attendance - ${monthName} ${year}\n\n`;
+    csvContent += "Teacher Name,";
 
-      // Then try to update the server
-      try {
-        const res = await apiRequest("POST", "/api/attendance", {
-          teacherId,
-          date: selectedDate.toISOString(),
-          status,
-        });
-        return res.json();
-      } catch (error) {
-        toast({
-          title: "Offline mode",
-          description: "Changes saved locally. Will sync when online.",
-          variant: "default",
-        });
-        throw error;
+    // Add dates as columns
+    const daysInMonth = new Date(year, selectedDate.getMonth() + 1, 0).getDate();
+    for (let i = 1; i <= daysInMonth; i++) {
+      csvContent += `${i},`;
+    }
+    csvContent += "Total Present,Total Absent\n";
+
+    // Add data for each teacher
+    attendanceRecords.forEach(record => {
+      csvContent += `${record.teacherName},`;
+
+      let presentCount = 0;
+      let absentCount = 0;
+
+      for (let i = 1; i <= daysInMonth; i++) {
+        const checkDate = new Date(year, selectedDate.getMonth(), i);
+        const dateKey = getAttendanceKey(checkDate);
+        const status = record.attendance[dateKey];
+
+        if (status === 'P') {
+          csvContent += 'P,';
+          presentCount++;
+        } else if (status === 'A') {
+          csvContent += 'A,';
+          absentCount++;
+        } else {
+          csvContent += ',';
+        }
       }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
-      toast({
-        title: "Attendance marked",
-        description: "Teacher attendance has been updated successfully.",
-      });
-    },
-    onError: (error: Error) => {
-      console.error('Error marking attendance:', error);
-    },
-  });
+
+      csvContent += `${presentCount},${absentCount}\n`;
+    });
+
+    // Download the CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `attendance_${monthName}_${year}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   if (teachersLoading) {
     return (
@@ -263,6 +192,8 @@ export default function AttendancePage() {
       </div>
     );
   }
+
+  const dateKey = getAttendanceKey(selectedDate);
 
   return (
     <div className="space-y-6">
@@ -288,41 +219,28 @@ export default function AttendancePage() {
               />
             </PopoverContent>
           </Popover>
-          <Button onClick={exportAttendanceToExcel}>Export to Excel</Button>
+          <Button onClick={exportAttendance}>
+            <Download className="mr-2 h-4 w-4" />
+            Export to Excel
+          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {teachers?.map((teacher) => {
-          const status = localAttendance[teacher.id] || 'present';
-          const isAbsent = status === 'absent';
-          const isPending = markAttendanceMutation.isPending;
+        {attendanceRecords.map((record) => {
+          const status = record.attendance[dateKey] || 'P';
+          const isAbsent = status === 'A';
 
           return (
             <Card
-              key={teacher.id}
-              className={`relative cursor-pointer transition-colors ${
-                isPending ? 'opacity-50' : ''
-              } ${
-                isAbsent ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'
-              }`}
-              onClick={() => {
-                if (!isPending) {
-                  markAttendanceMutation.mutate({
-                    teacherId: teacher.id,
-                    status: isAbsent ? 'present' : 'absent',
-                  });
-                }
-              }}
+              key={record.teacherId}
+              className={`relative cursor-pointer transition-colors
+                ${isAbsent ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}`}
+              onClick={() => markAttendance(record.teacherId, isAbsent ? 'P' : 'A')}
             >
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">{teacher.name}</h3>
-                  {teacher.phoneNumber && (
-                    <span className="text-sm text-muted-foreground">
-                      📱 {teacher.phoneNumber}
-                    </span>
-                  )}
+                  <h3 className="font-semibold">{record.teacherName}</h3>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className={`text-sm font-medium ${
