@@ -68,4 +68,3 @@ app.use((req, res, next) => {
     console.log("[loadInitialData] Data loading complete.");
   });
 })();
-}
