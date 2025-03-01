@@ -19,8 +19,6 @@ import { ProtectedRoute } from "./lib/protected-route";
 import BottomNav from "./components/bottom-nav";
 // Added import for the new component
 import NotificationsPage from "@/pages/notifications";
-import TestAutoAssignPage from "@/pages/test-auto-assign"; // Added import for TestAutoAssignPage
-
 
 function Router() {
   return (
@@ -38,7 +36,6 @@ function Router() {
       <ProtectedRoute path="/periods" component={PeriodsPage} />
       <Route path="/notifications" component={NotificationsPage} />{" "}
       {/* Added Notifications route */}
-      <Route path="/test-auto-assign" component={TestAutoAssignPage} /> {/* Added TestAutoAssign route */}
       <Route component={NotFound} />
     </Switch>
   );
