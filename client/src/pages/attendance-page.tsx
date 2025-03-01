@@ -1,8 +1,8 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Teacher as OriginalTeacher } from "@shared/schema";
+import { Teacher } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Loader2, Download } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
@@ -10,13 +10,6 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
-
-interface Teacher {
-  id: number;
-  name: string;
-  phoneNumber: string | null;
-  isSubstitute: boolean;
-}
 
 interface AbsentTeacherData {
   teacherId: number;
@@ -28,83 +21,43 @@ interface AbsentTeacherData {
 export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [localAttendance, setLocalAttendance] = useState<Record<number, string>>({});
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
 
-  // Load teachers on mount
-  useEffect(() => {
-    const loadTeachers = async () => {
-      try {
-        const response = await fetch('/api/teachers');
-        if (response.ok) {
-          const data = await response.json();
-          setTeachers(data);
-        } else {
-          toast({
-            title: "Error loading teachers",
-            description: "Could not load teachers from the server",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Error loading teachers:", error);
-        toast({
-          title: "Error loading teachers",
-          description: "Failed to load teacher data",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadTeachers();
-  }, []);
+  const { data: teachers, isLoading: teachersLoading } = useQuery<Teacher[]>({
+    queryKey: ["/api/teachers"],
+  });
 
   // Load attendance from local storage on mount and date change
   useEffect(() => {
-    if (!teachers || teachers.length === 0) return;
-
-    const storedData = localStorage.getItem(`attendance_${selectedDate.toISOString().split('T')[0]}`);
+    const storedData = localStorage.getItem(
+      `attendance_${selectedDate.toISOString().split("T")[0]}`,
+    );
     if (storedData) {
       setLocalAttendance(JSON.parse(storedData));
     } else {
       const initialAttendance: Record<number, string> = {};
-      teachers.forEach(teacher => {
-        if (teacher.id) {
-          initialAttendance[teacher.id] = 'present';
-        }
+      teachers?.forEach((teacher) => {
+        initialAttendance[teacher.id] = "present";
       });
       setLocalAttendance(initialAttendance);
       localStorage.setItem(
-        `attendance_${selectedDate.toISOString().split('T')[0]}`,
-        JSON.stringify(initialAttendance)
+        `attendance_${selectedDate.toISOString().split("T")[0]}`,
+        JSON.stringify(initialAttendance),
       );
     }
   }, [selectedDate, teachers]);
 
-  // Function to manage absent teachers in JSON file
-  const updateAbsentTeachersFile = async (teacherId: number, status: string) => {
-    try {
-      const dateStr = selectedDate.toISOString().split('T')[0];
-      const teacher = teachers?.find(t => t.id === teacherId);
-      if (!teacher) return;
-
-      // Update the API
-      try {
-        await apiRequest("POST", "/api/absences", {
-          teacherId,
-          date: dateStr,
-          status
-        });
-      } catch (error) {
-        console.warn('Failed to update server, storing locally', error);
-      }
-
-    } catch (error) {
-      console.error('Error updating absent teachers file:', error);
-    }
-  };
+  const createAbsenceMutation = useMutation({
+    mutationFn: async (data: { teacherId: number; date: string }) => {
+      const res = await apiRequest("POST", "/api/absences", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/absences"] });
+    },
+    onError: (error: Error) => {
+      console.error("Error creating absence:", error);
+    },
+  });
 
   const exportAttendanceToExcel = () => {
     try {
@@ -138,7 +91,7 @@ export default function AttendancePage() {
           const storageKey = `attendance_${dateStr}`;
           const attendanceData = localStorage.getItem(storageKey);
 
-          if (attendanceData && teacher.id) {
+          if (attendanceData) {
             const attendance = JSON.parse(attendanceData);
             const status = attendance[teacher.id] || 'present';
 
@@ -181,38 +134,63 @@ export default function AttendancePage() {
     }
   };
 
-  const markAttendance = async (teacherId: number, status: string) => {
-    try {
+  const markAttendanceMutation = useMutation({
+    mutationFn: async ({
+      teacherId,
+      status,
+    }: {
+      teacherId: number;
+      status: string;
+    }) => {
       // Update local storage first
       const newLocalAttendance = {
         ...localAttendance,
         [teacherId]: status,
       };
       localStorage.setItem(
-        `attendance_${selectedDate.toISOString().split('T')[0]}`,
-        JSON.stringify(newLocalAttendance)
+        `attendance_${selectedDate.toISOString().split("T")[0]}`,
+        JSON.stringify(newLocalAttendance),
       );
       setLocalAttendance(newLocalAttendance);
 
-      // Update absent teachers file
-      await updateAbsentTeachersFile(teacherId, status);
+      // If marking as absent, create an absence record
+      if (status === 'absent') {
+        await createAbsenceMutation.mutateAsync({
+          teacherId,
+          date: selectedDate.toISOString().split('T')[0],
+        });
+      }
 
+      // Then try to update the server
+      try {
+        const res = await apiRequest("POST", "/api/attendance", {
+          teacherId,
+          date: selectedDate.toISOString(),
+          status,
+        });
+        return res.json();
+      } catch (error) {
+        toast({
+          title: "Offline mode",
+          description: "Changes saved locally. Will sync when online.",
+          variant: "default",
+        });
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
       toast({
         title: "Attendance marked",
         description: "Teacher attendance has been updated successfully.",
       });
+    },
+    onError: (error: Error) => {
+      console.error("Error marking attendance:", error);
+    },
+  });
 
-    } catch (error) {
-      console.error('Error marking attendance:', error);
-      toast({
-        title: "Error",
-        description: "Failed to mark attendance",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (isLoading) {
+  if (teachersLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin text-border" />
@@ -221,21 +199,23 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-card p-4 sm:p-6 rounded-lg shadow-sm">
-        <div className="mb-4 sm:mb-0">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between bg-card p-6 rounded-lg shadow-sm">
+        <div>
           <h1 className="text-2xl font-bold mb-2">Teacher Attendance</h1>
-          <p className="text-muted-foreground">Mark and track teacher attendance</p>
+          <p className="text-muted-foreground">
+            Mark and track teacher attendance
+          </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+        <div className="flex gap-4 items-center">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full sm:w-auto min-w-[140px]">
+              <Button variant="outline" className="min-w-[140px]">
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {format(selectedDate, "PPP")}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
+            <PopoverContent className="w-auto p-0">
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -244,54 +224,55 @@ export default function AttendancePage() {
               />
             </PopoverContent>
           </Popover>
-          <Button 
-            onClick={exportAttendanceToExcel}
-            className="w-full sm:w-auto"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export to Excel
-          </Button>
+          <Button onClick={exportAttendanceToExcel}>Export to Excel</Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {teachers?.map((teacher) => {
-          const status = teacher.id ? (localAttendance[teacher.id] || 'present') : 'present';
-          const isAbsent = status === 'absent';
+          const status = localAttendance[teacher.id] || "present";
+          const isAbsent = status === "absent";
+          const isPending = markAttendanceMutation.isPending;
 
           return (
             <Card
               key={teacher.id}
-              className={`relative cursor-pointer transition-colors hover:shadow-md ${
-                isAbsent ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'
+              className={`relative cursor-pointer transition-colors ${
+                isPending ? "opacity-50" : ""
+              } ${
+                isAbsent ? "bg-red-50 hover:bg-red-100" : "hover:bg-gray-50"
               }`}
               onClick={() => {
-                if (teacher.id) {
-                  markAttendance(
-                    teacher.id,
-                    isAbsent ? 'present' : 'absent'
-                  );
+                if (!isPending) {
+                  markAttendanceMutation.mutate({
+                    teacherId: teacher.id,
+                    status: isAbsent ? "present" : "absent",
+                  });
                 }
               }}
             >
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold line-clamp-2">{teacher.name}</h3>
+                  <h3 className="font-semibold">{teacher.name}</h3>
                   {teacher.phoneNumber && (
-                    <span className="text-sm text-muted-foreground whitespace-nowrap ml-2">
+                    <span className="text-sm text-muted-foreground">
                       📱 {teacher.phoneNumber}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className={`text-sm font-medium ${
-                    isAbsent ? 'text-red-600' : 'text-green-600'
-                  }`}>
-                    {isAbsent ? 'Absent' : 'Present'}
+                  <span
+                    className={`text-sm font-medium ${
+                      isAbsent ? "text-red-600" : "text-green-600"
+                    }`}
+                  >
+                    {isAbsent ? "Absent" : "Present"}
                   </span>
-                  <div className={`w-3 h-3 rounded-full ${
-                    isAbsent ? 'bg-red-500' : 'bg-green-500'
-                  }`} />
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      isAbsent ? "bg-red-500" : "bg-green-500"
+                    }`}
+                  />
                 </div>
               </CardContent>
             </Card>
