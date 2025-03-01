@@ -19,6 +19,17 @@ const upload = multer({
 
 // Middleware to check authorization token
 const checkAuth = (req: any, res: any, next: any) => {
+  // Skip auth check for certain paths
+  const publicPaths = [
+    '/api/update-absent-teachers-file',
+    '/api/get-absent-teachers',
+    '/api/update-absent-teachers'
+  ];
+  
+  if (publicPaths.includes(req.path)) {
+    return next();
+  }
+  
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: "Unauthorized" });
@@ -333,7 +344,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Handle updating absent_teachers.json file in data folder
-  app.post('/api/update-absent-teachers-file', async (req, res) => {
+  // Get absent teachers from data/absent_teachers.json
+  app.get('/api/get-absent-teachers', (req, res) => {
+    try {
+      const filePath = path.join(__dirname, '../data/absent_teachers.json');
+      
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        fs.writeFileSync(filePath, JSON.stringify([], null, 2));
+        return res.json([]);
+      }
+      
+      // Read file
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      const absentTeachers = JSON.parse(fileContent);
+      
+      res.json(absentTeachers);
+    } catch (error) {
+      console.error('Error reading absent teachers file:', error);
+      res.status(500).json({ error: 'Failed to read absent teachers file' });
+    }
+  });
+
+  app.post('/api/update-absent-teachers-file', (req, res) => {
     try {
       const { teacherName, isAbsent } = req.body;
       const filePath = path.join(__dirname, '../data/absent_teachers.json');
@@ -344,23 +377,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Read current absent teachers
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      const fileContent = fs.readFileSync(filePath, 'utf8');
       let absentTeachers = JSON.parse(fileContent);
 
       if (isAbsent) {
         // Add teacher if not already in the list
         if (!absentTeachers.includes(teacherName)) {
           absentTeachers.push(teacherName);
+          console.log(`Added ${teacherName} to absent teachers list`);
         }
       } else {
         // Remove teacher from the list
+        const initialLength = absentTeachers.length;
         absentTeachers = absentTeachers.filter(name => name !== teacherName);
+        
+        if (initialLength !== absentTeachers.length) {
+          console.log(`Removed ${teacherName} from absent teachers list`);
+        }
       }
 
       // Write updated list back to file
       fs.writeFileSync(filePath, JSON.stringify(absentTeachers, null, 2));
 
-      res.json({ success: true });
+      res.json({ success: true, absentTeachers });
     } catch (error) {
       console.error('Error updating absent teachers file:', error);
       res.status(500).json({ error: 'Failed to update absent teachers file' });

@@ -19,6 +19,10 @@ interface AbsentTeacherData {
   periods?: { period: number; className: string }[];
 }
 
+const findTeacherSchedule = (teacher: Teacher): Record<string, number[]> | undefined => {
+  return teacher.schedule;
+};
+
 export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [localAttendance, setLocalAttendance] = useState<Record<number, string>>({});
@@ -206,9 +210,7 @@ export default function AttendancePage() {
 
       try {
         // Try to load data from the server first
-        const response = await fetch(
-          "/client/src/data/absent_teacher_for_substitute.json",
-        );
+        const response = await fetch("/api/get-absent-teachers");
         if (response.ok) {
           absentTeachers = await response.json();
         }
@@ -239,8 +241,8 @@ export default function AttendancePage() {
           const dayName = selectedDate
             .toLocaleDateString("en-US", { weekday: "long" })
             .toLowerCase();
-          const schedule = teacher.schedule as Record<string, number[]>;
-          const periods = schedule[dayName] || [];
+          const schedule = findTeacherSchedule(teacher) || {};
+          const periods = (schedule[dayName] as number[]) || [];
 
           absentTeachers.push({
             teacherId: teacher.id,
@@ -253,7 +255,7 @@ export default function AttendancePage() {
             })),
           });
 
-          // Add teacher to absent_teachers.json file
+          // Also save to the simple absent teachers list
           await updateAbsentTeachersDataFile(teacher.name, true);
         }
       } else {
@@ -266,7 +268,7 @@ export default function AttendancePage() {
           (t) => !(t.teacherId === teacherId && t.date === dateStr),
         );
 
-        // Remove teacher from absent_teachers.json file if they exist
+        // Also remove from the simple absent teachers list
         if (teacherToRemove) {
           await updateAbsentTeachersDataFile(teacherToRemove.teacherName, false);
         }
@@ -304,6 +306,27 @@ export default function AttendancePage() {
       });
     } catch (error) {
       console.warn("Failed to update absent teachers data file", error);
+
+      // Fallback to updating localStorage
+      try {
+        const absentTeachersKey = "absent_teachers_simple";
+        let absentTeachers: string[] = [];
+
+        const stored = localStorage.getItem(absentTeachersKey);
+        if (stored) {
+          absentTeachers = JSON.parse(stored);
+        }
+
+        if (isAbsent && !absentTeachers.includes(teacherName)) {
+          absentTeachers.push(teacherName);
+        } else if (!isAbsent) {
+          absentTeachers = absentTeachers.filter(name => name !== teacherName);
+        }
+
+        localStorage.setItem(absentTeachersKey, JSON.stringify(absentTeachers));
+      } catch (e) {
+        console.error("Failed to update local storage fallback", e);
+      }
     }
   };
 
