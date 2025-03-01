@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, UserCheck } from "lucide-react";
+import { User, UserCheck, Loader2 } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 
 interface TeacherStatus {
@@ -15,43 +17,46 @@ export default function SubstitutesPage() {
   const { user } = useAuth();
   const [teacherStatuses, setTeacherStatuses] = useState<TeacherStatus[]>([]);
 
-  const { data: teachers } = useQuery({
-    queryKey: ["teachers"],
+  const { data: teachers, isLoading: teachersLoading } = useQuery({
+    queryKey: ["/api/teachers"],
     queryFn: async () => {
-      const res = await fetch("/api/teachers");
+      const res = await apiRequest("GET", "/api/teachers");
       return res.json();
     },
   });
 
-  const { data: assignments } = useQuery({
-    queryKey: ["substitute-assignments"],
+  const { data: assignments, isLoading: assignmentsLoading } = useQuery({
+    queryKey: ["/api/substitute-assignments"],
     queryFn: async () => {
-      const res = await fetch("/api/substitute-assignments");
+      const res = await apiRequest("GET", "/api/substitute-assignments");
       return res.json();
     },
+    enabled: !!user, // Only run query if user is authenticated
   });
 
-  const { data: absences } = useQuery({
-    queryKey: ["absences"],
+  const { data: absences, isLoading: absencesLoading } = useQuery({
+    queryKey: ["/api/absences"],
     queryFn: async () => {
-      const res = await fetch("/api/absences");
+      const res = await apiRequest("GET", "/api/absences");
       return res.json();
     },
+    enabled: !!user, // Only run query if user is authenticated
   });
 
+  // Load statuses from localStorage on component mount
   useEffect(() => {
-    // Load statuses from localStorage
     const savedStatuses = localStorage.getItem('teacherStatuses');
     if (savedStatuses) {
       setTeacherStatuses(JSON.parse(savedStatuses));
     }
   }, []);
 
+  // Update statuses when data changes
   useEffect(() => {
     if (teachers && assignments && absences) {
       const newStatuses: TeacherStatus[] = teachers.map((teacher: any) => {
         const assignment = assignments.find((a: any) =>
-          a.substitute?.id === teacher.id || a.absence.teacherId === teacher.id
+          a.substitute?.id === teacher.id || a.absence?.teacherId === teacher.id
         );
 
         const isAbsent = absences.some((a: any) => a.teacherId === teacher.id);
@@ -78,6 +83,18 @@ export default function SubstitutesPage() {
     }
   }, [teachers, assignments, absences]);
 
+  // Show loading state
+  if (teachersLoading || assignmentsLoading || absencesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
+  }
+
+  // Handle the case when API calls fail but we have local data
+  const displayTeachers = teachers || [];
+
   return (
     <div className="container py-6">
       <Card>
@@ -89,7 +106,13 @@ export default function SubstitutesPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {teachers?.map((teacher: any) => {
+            {displayTeachers.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No teacher data available
+              </div>
+            )}
+            
+            {displayTeachers.map((teacher: any) => {
               const status = teacherStatuses.find(s => s.teacherId === teacher.id);
 
               return (
