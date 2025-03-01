@@ -1,57 +1,81 @@
 
 import { useState } from "react";
-import { apiRequest } from "../lib/api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription, 
+  CardFooter 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+
+const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
 
 export default function AutoAssignPage() {
   const [selectedTeacher, setSelectedTeacher] = useState("");
-  const [selectedDay, setSelectedDay] = useState("");
+  const [selectedDay, setSelectedDay] = useState(DAYS[0]);
   const [assignmentResults, setAssignmentResults] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  // Fetch teachers
   const { data: teachers, isLoading: teachersLoading } = useQuery({
     queryKey: ["/api/teachers"],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/teachers");
+      const res = await fetch("/api/teachers");
+      if (!res.ok) throw new Error("Failed to load teachers");
       return res.json();
-    },
+    }
   });
 
-  // Days of the week
-  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
-  const handleAssign = async () => {
-    if (!selectedTeacher || !selectedDay) {
-      setError("Please select both a teacher and a day");
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // Mock API call - replace this with your actual API endpoint for assignments
-      const response = await apiRequest("POST", "/api/assign-substitute", {
-        teacherName: selectedTeacher,
-        day: selectedDay.toLowerCase(),
+  const assignMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedTeacher) {
+        throw new Error("Please select a teacher");
+      }
+      
+      const response = await fetch("/api/assign-substitute", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          teacherName: selectedTeacher,
+          day: selectedDay,
+        }),
       });
       
-      const data = await response.json();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to assign substitutes");
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
       setAssignmentResults(data);
-    } catch (err) {
-      setError("Failed to assign substitutes. Please try again.");
-      console.error("Assignment error:", err);
-    } finally {
-      setIsLoading(false);
+      toast({
+        title: "Success",
+        description: "Substitutes assigned successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
-  };
+  });
 
   return (
     <div className="container py-6">
@@ -100,9 +124,9 @@ export default function AutoAssignPage() {
                     <SelectValue placeholder="Select a day" />
                   </SelectTrigger>
                   <SelectContent>
-                    {days.map((day) => (
+                    {DAYS.map((day) => (
                       <SelectItem key={day} value={day}>
-                        {day}
+                        {day.charAt(0).toUpperCase() + day.slice(1)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -110,60 +134,73 @@ export default function AutoAssignPage() {
               </div>
             </div>
 
-            <Button 
-              onClick={handleAssign} 
-              disabled={isLoading || !selectedTeacher || !selectedDay}
-              className="w-full"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Assigning...
-                </>
-              ) : (
-                "Assign Substitutes"
-              )}
-            </Button>
-
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            <div>
+              <Button 
+                onClick={() => assignMutation.mutate()}
+                disabled={!selectedTeacher || assignMutation.isPending}
+              >
+                {assignMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Assigning...
+                  </>
+                ) : (
+                  "Assign Substitutes"
+                )}
+              </Button>
+            </div>
           </div>
 
-          {/* Results Table */}
+          {/* Results Display */}
           {assignmentResults && (
             <div className="mt-6">
-              <h3 className="text-lg font-medium mb-2">Assignment Results</h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Period</TableHead>
-                    <TableHead>Class</TableHead>
-                    <TableHead>Original Teacher</TableHead>
-                    <TableHead>Substitute</TableHead>
-                    <TableHead>Phone</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Object.entries(assignmentResults.assignments || {}).length > 0 ? (
-                    Object.entries(assignmentResults.assignments || {}).map(([key, assignment]: [string, any]) => (
-                      <TableRow key={key}>
-                        <TableCell>{assignment.period}</TableCell>
-                        <TableCell>{assignment.className}</TableCell>
-                        <TableCell>{assignment.originalTeacher}</TableCell>
-                        <TableCell>{assignment.substitute}</TableCell>
-                        <TableCell>{assignment.substitutePhone || "N/A"}</TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-4">
-                        No assignments found
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+              <h3 className="text-lg font-medium mb-4">Assignment Results</h3>
+              
+              {Object.keys(assignmentResults.assignments).length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-muted">
+                        <th className="px-4 py-2 text-left font-medium">Period</th>
+                        <th className="px-4 py-2 text-left font-medium">Class</th>
+                        <th className="px-4 py-2 text-left font-medium">Original Teacher</th>
+                        <th className="px-4 py-2 text-left font-medium">Substitute</th>
+                        <th className="px-4 py-2 text-left font-medium">Phone</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.values(assignmentResults.assignments).map((assignment: any, index: number) => (
+                        <tr key={index} className="border-b border-border">
+                          <td className="px-4 py-2">{assignment.period}</td>
+                          <td className="px-4 py-2">{assignment.className}</td>
+                          <td className="px-4 py-2">{assignment.originalTeacher}</td>
+                          <td className="px-4 py-2">{assignment.substitute}</td>
+                          <td className="px-4 py-2">{assignment.substitutePhone}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p>No assignments were made. The teacher might not have classes on this day.</p>
+              )}
+              
+              {assignmentResults.verification && (
+                <div className="mt-4 p-4 bg-muted rounded-md">
+                  <h4 className="font-medium mb-2">Verification</h4>
+                  <pre className="text-xs overflow-x-auto whitespace-pre-wrap">
+                    {JSON.stringify(assignmentResults.verification, null, 2)}
+                  </pre>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
+        <CardFooter className="flex justify-between">
+          <p className="text-sm text-muted-foreground">
+            The system will automatically find the best substitute teachers based on availability.
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );
