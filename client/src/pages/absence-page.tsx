@@ -51,15 +51,15 @@ export default function AttendancePage() {
         const response = await fetch("/api/load-teachers-from-csv", {
           method: "POST",
         });
-        
+
         if (response.ok) {
           const result = await response.json();
           console.log(`Loaded ${result.teachers?.length || 0} teachers from CSV files`);
-          
+
           if (result.success) {
             // Refresh the teachers list after loading from CSV
             refetchTeachers();
-            
+
             // Reset the attendance for today to account for any new teachers
             const todayKey = new Date().toISOString().split("T")[0];
             localStorage.removeItem(`attendance_${todayKey}`);
@@ -399,7 +399,9 @@ export default function AttendancePage() {
             {new Date().toLocaleDateString("en-US", { weekday: "long" })}
           </div>
         </div>
-
+        <div className="bg-gray-100 p-4 rounded-md">
+          <p className="text-lg font-medium">Total Teachers: {teachers?.length || 0}</p>
+        </div>
         <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
           <Button
             onClick={async () => {
@@ -408,7 +410,7 @@ export default function AttendancePage() {
                   title: "Loading teachers",
                   description: "Please wait while teachers are loaded from CSV...",
                 });
-                
+
                 const response = await fetch("/api/load-teachers-from-csv", {
                   method: "POST",
                 });
@@ -419,17 +421,17 @@ export default function AttendancePage() {
                     title: "Teachers loaded",
                     description: `${result.message} (${result.teachers?.length || 0} unique teachers)`,
                   });
-                  
+
                   // Refresh teachers list
                   await refetchTeachers();
-                  
+
                   // Clear local storage for current date to prevent duplicates
                   const todayKey = selectedDate.toISOString().split("T")[0];
                   localStorage.removeItem(`attendance_${todayKey}`);
-                  
+
                   // Reset the local attendance state
                   setLocalAttendance({});
-                  
+
                   // Clear any existing absent teacher data to start fresh
                   localStorage.removeItem("absent_teacher_for_substitute");
                 } else {
@@ -477,7 +479,7 @@ export default function AttendancePage() {
 
       {/* Teacher Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-        {teachers?.map((teacher) => {
+        {teachers?.map((teacher, index) => {
           const status = localAttendance[teacher.id] || "present";
           const isAbsent = status === "absent";
           const isPending = markAttendanceMutation.isPending;
@@ -503,7 +505,9 @@ export default function AttendancePage() {
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-lg">{teacher.name}</h3>
+                  <h3 className="font-semibold text-lg">
+                    {index + 1}. {teacher.name}
+                  </h3>
                   {teacher.phone && (
                     <span className="text-sm text-muted-foreground">
                       📱 {teacher.phone}
