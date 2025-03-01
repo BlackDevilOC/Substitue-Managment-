@@ -43,7 +43,11 @@ export default function HomePage() {
   const { data: currentSchedule, isLoading: loadingSchedule } = useQuery({
     queryKey: ["/api/schedule", currentDay],
     queryFn: async () => {
-      const res = await fetch(`/api/schedule/${currentDay}`);
+      const res = await fetch(`/api/schedule/${currentDay}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
+        }
+      });
       if (!res.ok) throw new Error('Failed to fetch schedule');
       return res.json();
     }
@@ -51,25 +55,53 @@ export default function HomePage() {
 
   const { data: absences, isLoading: loadingAbsences } = useQuery({
     queryKey: ["/api/absences"],
+    queryFn: async () => {
+      const res = await fetch('/api/absences', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
+        }
+      });
+      if (!res.ok) throw new Error('Failed to fetch absences');
+      return res.json();
+    }
   });
 
   const { data: teachers, isLoading: loadingTeachers } = useQuery({
     queryKey: ["/api/teachers"],
+    queryFn: async () => {
+      const res = await fetch('/api/teachers', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
+        }
+      });
+      if (!res.ok) throw new Error('Failed to fetch teachers');
+      return res.json();
+    }
   });
 
-  // Mutations remain unchanged
+  // Updated mutations with proper error handling and auth headers
   const uploadTimetableMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
       const res = await fetch('/api/upload/timetable', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
+        },
         body: formData,
       });
+
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to upload timetable');
+        const text = await res.text();
+        try {
+          const error = JSON.parse(text);
+          throw new Error(error.error || 'Failed to upload timetable');
+        } catch {
+          throw new Error(text || 'Failed to upload timetable');
+        }
       }
+
       return res.json();
     },
     onSuccess: (data) => {
@@ -94,12 +126,22 @@ export default function HomePage() {
       formData.append('file', file);
       const res = await fetch('/api/upload/substitutes', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
+        },
         body: formData,
       });
+
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to upload substitute teachers');
+        const text = await res.text();
+        try {
+          const error = JSON.parse(text);
+          throw new Error(error.error || 'Failed to upload substitute teachers');
+        } catch {
+          throw new Error(text || 'Failed to upload substitute teachers');
+        }
       }
+
       return res.json();
     },
     onSuccess: (data) => {

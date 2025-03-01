@@ -1,15 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
-import { insertTeacherSchema, insertScheduleSchema, insertAbsenceSchema, changePasswordSchema } from "@shared/schema";
+import { insertTeacherSchema, insertScheduleSchema, insertAbsenceSchema } from "@shared/schema";
 import { processTimetableCSV, processSubstituteCSV } from "./csv-handler";
 import multer from "multer";
-import { scrypt, timingSafeEqual, randomBytes } from "crypto";
-import { promisify } from "util";
 import { format } from "date-fns";
 
-const scryptAsync = promisify(scrypt);
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: {
@@ -17,46 +13,33 @@ const upload = multer({
   }
 });
 
-export async function registerRoutes(app: Express): Promise<Server> {
-  setupAuth(app);
+// Middleware to check authorization token
+const checkAuth = (req: any, res: any, next: any) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).send('Unauthorized');
+  }
 
-  // User routes
-  app.post("/api/user/change-password", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-
-    const parsed = changePasswordSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json(parsed.error);
-
-    try {
-      const user = await storage.getUser(req.user!.id);
-      if (!user) return res.status(404).json({ message: "User not found" });
-
-      // Verify current password
-      const [hashedCurrent, salt] = user.password.split(".");
-      const hashedCurrentBuf = Buffer.from(hashedCurrent, "hex");
-      const suppliedBuf = (await scryptAsync(parsed.data.currentPassword, salt, 64)) as Buffer;
-
-      if (!timingSafeEqual(hashedCurrentBuf, suppliedBuf)) {
-        return res.status(400).json({ message: "Current password is incorrect" });
-      }
-
-      // Hash new password
-      const newSalt = randomBytes(16).toString("hex");
-      const newHashedBuf = (await scryptAsync(parsed.data.newPassword, newSalt, 64)) as Buffer;
-      const newPassword = `${newHashedBuf.toString("hex")}.${newSalt}`;
-
-      // Update password
-      await storage.updateUserPassword(user.id, newPassword);
-      res.json({ message: "Password updated successfully" });
-    } catch (error: any) {
-      console.error('Password change error:', error);
-      res.status(500).json({ message: "Failed to change password" });
+  try {
+    const token = authHeader.split(' ')[1];
+    const user = JSON.parse(token);
+    if (user.username === 'Rehan') {
+      req.user = user;
+      next();
+    } else {
+      res.status(401).send('Unauthorized');
     }
-  });
+  } catch (error) {
+    res.status(401).send('Unauthorized');
+  }
+};
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Apply auth middleware to all /api routes
+  app.use('/api', checkAuth);
 
   // CSV Upload Routes
   app.post("/api/upload/timetable", upload.single('file'), async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
     try {
@@ -82,7 +65,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/upload/substitutes", upload.single('file'), async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
     try {
@@ -103,13 +85,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // API Routes
   app.get("/api/teachers", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
     const teachers = await storage.getTeachers();
     res.json(teachers);
   });
 
   app.post("/api/teachers", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
     const parsed = insertTeacherSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
     const teacher = await storage.createTeacher(parsed.data);
@@ -117,26 +97,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/schedule/:day", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
     const schedule = await storage.getSchedulesByDay(req.params.day);
     res.json(schedule);
   });
 
   app.post("/api/override-day", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
     const { day } = req.body;
     await storage.setDayOverride(day);
     res.json({ message: "Day override set successfully" });
   });
 
   app.get("/api/current-day", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
     const currentDay = await storage.getCurrentDay();
     res.json({ currentDay });
   });
 
   app.post("/api/schedule", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
     const parsed = insertScheduleSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
     const schedule = await storage.createSchedule(parsed.data);
@@ -144,19 +120,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/absences", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
     const absences = await storage.getAbsences();
     res.json(absences);
   });
 
   app.post("/api/absences", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
     const parsed = insertAbsenceSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    
     const absence = await storage.createAbsence(parsed.data);
     const teacher = await storage.getTeacher(parsed.data.teacherId);
-    
     if (teacher) {
       const { recordAttendance } = await import('./attendance-tracker.js');
       recordAttendance(
@@ -165,20 +137,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'Absent'
       );
     }
-    
     res.status(201).json(absence);
   });
 
   app.post("/api/absences/:id/substitute", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
     const { substituteId } = req.body;
     await storage.assignSubstitute(parseInt(req.params.id), substituteId);
     res.sendStatus(200);
   });
 
   app.post("/api/auto-assign-substitutes", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-
     const date = format(new Date(), "yyyy-MM-dd");
     try {
       const assignments = await storage.autoAssignSubstitutes(date);
@@ -193,7 +161,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/sms-history", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
     const history = await storage.getSmsHistory();
     const enrichedHistory = await Promise.all(
       history.map(async (sms) => {
@@ -208,8 +175,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/substitute-assignments", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-
     const date = format(new Date(), "yyyy-MM-dd");
     try {
       const assignments = await storage.getSubstituteAssignments(date);
@@ -221,8 +186,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/reset-assignments", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-
     try {
       // Clear all substitute assignments for today's absences
       const today = format(new Date(), "yyyy-MM-dd");
