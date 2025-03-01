@@ -10,7 +10,7 @@ interface Teacher {
 
 // Constants
 const TEACHER_MAP = new Map<string, Teacher>();
-const SIMILARITY_THRESHOLD = 0.90; // Increased threshold for stricter matching
+const SIMILARITY_THRESHOLD = 0.92; // Increased threshold for stricter matching
 const EXPECTED_TEACHER_COUNT = 34;
 
 // Improved name normalization with better handling of titles and special cases
@@ -19,7 +19,7 @@ const normalizeName = (name: string): string => {
 
   return name
     .toLowerCase()
-    .replace(/(sir|miss|mr|ms|mrs|sr|dr)\.?\s*/gi, '')
+    .replace(/(sir|miss|mr|ms|mrs|sr|dr|junior|senior)\.?\s*/gi, '') // Added junior/senior
     .replace(/[^a-z\s-]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -33,12 +33,14 @@ const normalizeName = (name: string): string => {
 const simplifiedMetaphone = (str: string): string => {
   if (!str || typeof str !== 'string') return '';
 
-  return str
+  const normalized = str
     .toLowerCase()
     .replace(/[aeiou]/g, 'a') // Replace all vowels with 'a'
     .replace(/[^a-z]/g, '')  // Remove non-letters
     .replace(/(.)\1+/g, '$1') // Remove consecutive duplicates
-    .slice(0, 8); // Take first 8 characters for comparison
+    .replace(/([a-z])\1+/g, '$1'); // Further remove repeating characters
+
+  return normalized.slice(0, 8); // Take first 8 characters for comparison
 };
 
 // Enhanced Levenshtein distance with custom weights
@@ -66,32 +68,48 @@ const levenshtein = (a: string, b: string): number => {
   return matrix[b.length][a.length];
 };
 
-// Enhanced name similarity check with extra checks for common variations
+// Enhanced name similarity check with improved rules
 const nameSimilarity = (a: string, b: string): number => {
   if (!a || !b) return 0;
 
   const aMeta = simplifiedMetaphone(a);
   const bMeta = simplifiedMetaphone(b);
   const distance = levenshtein(aMeta, bMeta);
-  const similarity = 1 - distance / Math.max(aMeta.length, bMeta.length, 1);
+  let similarity = 1 - distance / Math.max(aMeta.length, bMeta.length, 1);
 
-  // Additional checks for very similar names
-  if (a.includes(b) || b.includes(a)) {
-    return Math.max(similarity, 0.95);
+  // Additional checks for name variations
+  const aNorm = normalizeName(a);
+  const bNorm = normalizeName(b);
+
+  // Direct substring match
+  if (aNorm.includes(bNorm) || bNorm.includes(aNorm)) {
+    similarity = Math.max(similarity, 0.95);
   }
 
   // Check for name parts match
-  const aParts = a.split(' ');
-  const bParts = b.split(' ');
+  const aParts = aNorm.split(' ');
+  const bParts = bNorm.split(' ');
   const commonParts = aParts.filter(part => bParts.includes(part));
-  if (commonParts.length > 0) {
-    return Math.max(similarity, 0.85 + (0.05 * commonParts.length));
+
+  // If there are common parts and lengths are similar
+  if (commonParts.length > 0 && Math.abs(aParts.length - bParts.length) <= 1) {
+    similarity = Math.max(similarity, 0.85 + (0.1 * commonParts.length));
+  }
+
+  // Special case for junior/senior variations
+  if ((a.toLowerCase().includes('junior') && b.toLowerCase().includes('senior')) ||
+      (a.toLowerCase().includes('senior') && b.toLowerCase().includes('junior'))) {
+    const baseNameA = a.toLowerCase().replace(/(junior|senior)/g, '').trim();
+    const baseNameB = b.toLowerCase().replace(/(junior|senior)/g, '').trim();
+    if (baseNameA === baseNameB) {
+      similarity = 0.9; // High but not perfect match
+    }
   }
 
   return similarity;
 };
 
-// Enhanced teacher registration with duplicate prevention
+// Enhanced teacher registration with strict duplicate prevention
 const registerTeacher = (rawName: string, phone: string = ''): boolean => {
   if (!rawName || rawName.toLowerCase() === 'empty' || rawName.trim().length < 2) {
     return false;
@@ -108,7 +126,7 @@ const registerTeacher = (rawName: string, phone: string = ''): boolean => {
     return true;
   }
 
-  // Check for similar names
+  // Find best matching teacher
   let bestMatch: Teacher | undefined;
   let bestSimilarity = 0;
 
@@ -126,14 +144,35 @@ const registerTeacher = (rawName: string, phone: string = ''): boolean => {
     return true;
   }
 
-  // Add new teacher
-  TEACHER_MAP.set(normalized, {
-    canonicalName: rawName.trim().replace(/\s+/g, ' '),
-    phone,
-    variations: new Set([rawName])
-  });
+  // Only add new teacher if we haven't reached the limit
+  if (TEACHER_MAP.size < EXPECTED_TEACHER_COUNT) {
+    TEACHER_MAP.set(normalized, {
+      canonicalName: rawName.trim().replace(/\s+/g, ' '),
+      phone,
+      variations: new Set([rawName])
+    });
+    return true;
+  }
 
-  return true;
+  // If we've reached the limit, try to merge with the most similar existing teacher
+  let fallbackMatch: Teacher | undefined;
+  let fallbackSimilarity = 0;
+
+  for (const teacher of TEACHER_MAP.values()) {
+    const similarity = nameSimilarity(normalized, normalizeName(teacher.canonicalName));
+    if (similarity > fallbackSimilarity) {
+      fallbackMatch = teacher;
+      fallbackSimilarity = similarity;
+    }
+  }
+
+  if (fallbackMatch) {
+    fallbackMatch.variations.add(rawName);
+    if (phone && !fallbackMatch.phone) fallbackMatch.phone = phone;
+    return true;
+  }
+
+  return false;
 };
 
 // Main processing function with validation
@@ -147,7 +186,7 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
       columns: false,
       skip_empty_lines: true,
       trim: true,
-      relax_column_count: true // Allow varying column counts
+      relax_column_count: true
     });
 
     let subTeacherCount = 0;
@@ -164,7 +203,7 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
       columns: false,
       skip_empty_lines: true,
       trim: true,
-      relax_column_count: true // Allow varying column counts
+      relax_column_count: true
     });
 
     const timetableTeachers = new Set<string>();
@@ -181,7 +220,7 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
 
     console.log(`Processed ${timetableTeachers.size} unique teachers from timetable`);
 
-    // Additional merging for very similar names
+    // Additional merging for very similar names if we still have too many
     const uniqueTeachers = Array.from(TEACHER_MAP.values());
     while (uniqueTeachers.length > EXPECTED_TEACHER_COUNT) {
       let merged = false;
@@ -191,7 +230,7 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
             normalizeName(uniqueTeachers[i].canonicalName),
             normalizeName(uniqueTeachers[j].canonicalName)
           );
-          if (similarity > 0.95) {
+          if (similarity > 0.90) { // Slightly lower threshold for final merging
             // Merge teachers
             uniqueTeachers[i].variations = new Set([
               ...Array.from(uniqueTeachers[i].variations),
@@ -205,7 +244,7 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
           }
         }
       }
-      if (!merged) break; // No more merges possible
+      if (!merged) break;
     }
 
     // Generate CSV output
