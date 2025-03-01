@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Teacher } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
@@ -314,15 +315,20 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between bg-card p-6 rounded-lg shadow-sm">
-        <div>
-          <h1 className="text-2xl font-bold mb-2">Teacher Attendance</h1>
-          <p className="text-muted-foreground">
+    <div className="space-y-6 p-4">
+      {/* Title and Top Controls */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col">
+          <h1 className="text-3xl font-bold">Teacher Attendance</h1>
+          <p className="text-muted-foreground mt-1">
             Mark and track teacher attendance
           </p>
         </div>
-        <div className="flex gap-4 items-center">
+        
+        <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
+          <Button onClick={exportAttendanceToExcel} variant="outline">
+            Export to Excel
+          </Button>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="min-w-[140px]">
@@ -330,7 +336,7 @@ export default function AttendancePage() {
                 {format(selectedDate, "PPP")}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
+            <PopoverContent className="w-auto p-0" align="end">
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -339,11 +345,11 @@ export default function AttendancePage() {
               />
             </PopoverContent>
           </Popover>
-          <Button onClick={exportAttendanceToExcel}>Export to Excel</Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Teacher Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
         {teachers?.map((teacher) => {
           const status = localAttendance[teacher.id] || "present";
           const isAbsent = status === "absent";
@@ -352,10 +358,12 @@ export default function AttendancePage() {
           return (
             <Card
               key={teacher.id}
-              className={`relative cursor-pointer transition-colors ${
+              className={`relative cursor-pointer transition-all ${
                 isPending ? "opacity-50" : ""
               } ${
-                isAbsent ? "bg-red-50 hover:bg-red-100" : "hover:bg-gray-50"
+                isAbsent 
+                  ? "bg-red-50 hover:bg-red-100 border-red-200" 
+                  : "hover:bg-gray-50 border-green-200"
               }`}
               onClick={() => {
                 if (!isPending) {
@@ -366,9 +374,9 @@ export default function AttendancePage() {
                 }
               }}
             >
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">{teacher.name}</h3>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-lg">{teacher.name}</h3>
                   {teacher.phone && (
                     <span className="text-sm text-muted-foreground">
                       📱 {teacher.phone}
