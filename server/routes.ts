@@ -263,6 +263,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to reset assignments" });
     }
   });
+  
+  // Endpoint to assign substitutes for a specific teacher and day
+  app.post("/api/assign-substitute", async (req, res) => {
+    try {
+      const { teacherName, day } = req.body;
+      
+      if (!teacherName || !day) {
+        return res.status(400).json({ 
+          message: "Teacher name and day are required" 
+        });
+      }
+      
+      // Load the substitute manager
+      const { SubstituteManager } = await import('./substitute-manager.js');
+      const manager = new SubstituteManager();
+      await manager.loadData();
+      
+      // Clear previous assignments to avoid conflicts
+      manager.clearAssignments();
+      
+      // Run assignment algorithm for the specific teacher and day
+      const assignments = manager.assignSubstitutes(teacherName, day);
+      
+      // Format the assignments for response
+      const formattedAssignments = {};
+      assignments.forEach(assignment => {
+        const key = `${assignment.period}-${assignment.className}`;
+        formattedAssignments[key] = {
+          period: assignment.period,
+          className: assignment.className,
+          originalTeacher: assignment.originalTeacher,
+          substitute: assignment.substitute,
+          substitutePhone: assignment.substitutePhone || 'N/A',
+          day: assignment.day
+        };
+      });
+      
+      // Get verification report
+      const verificationReport = manager.verifyAssignments();
+      
+      res.json({
+        message: "Substitutes assigned successfully",
+        assignments: formattedAssignments,
+        verification: verificationReport
+      });
+    } catch (error) {
+      console.error('Assignment error:', error);
+      res.status(500).json({ 
+        message: "Failed to assign substitutes", 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
 
   // Endpoint to load teachers from CSV files
   app.post("/api/load-teachers-from-csv", async (req, res) => {
