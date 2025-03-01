@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Teacher } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,7 +34,9 @@ export default function AttendancePage() {
   const [localAttendance, setLocalAttendance] = useState<
     Record<number, string>
   >({});
-  const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString());
+  const [currentTime, setCurrentTime] = useState<string>(
+    new Date().toLocaleTimeString(),
+  );
 
   const { data: teachers, isLoading: teachersLoading } = useQuery<Teacher[]>({
     queryKey: ["/api/teachers"],
@@ -66,7 +67,7 @@ export default function AttendancePage() {
     const timeInterval = setInterval(() => {
       setCurrentTime(new Date().toLocaleTimeString());
     }, 60000); // Update every minute
-    
+
     return () => clearInterval(timeInterval);
   }, []);
 
@@ -205,17 +206,19 @@ export default function AttendancePage() {
         selectedDate.getMonth() + 1,
         0,
       ).getDate();
-      
+
       // Create a set to track processed teachers to avoid duplicates
       const processedTeachers = new Set();
-      
+
       for (let i = 1; i <= daysInMonth; i++) {
         const dayDate = new Date(
           selectedDate.getFullYear(),
           selectedDate.getMonth(),
           i,
         );
-        const dayName = dayDate.toLocaleDateString('en-US', { weekday: 'short' });
+        const dayName = dayDate.toLocaleDateString("en-US", {
+          weekday: "short",
+        });
         csvContent += `${i} (${dayName}),`;
       }
       csvContent += "Total Present,Total Absent\n";
@@ -226,7 +229,7 @@ export default function AttendancePage() {
         if (processedTeachers.has(teacher.id)) {
           return;
         }
-        
+
         processedTeachers.add(teacher.id);
         csvContent += `${teacher.name},`;
 
@@ -356,28 +359,33 @@ export default function AttendancePage() {
             Mark and track teacher attendance
           </p>
           <div className="text-sm text-muted-foreground mt-1">
-            Current time: {currentTime} | {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
+            Current time: {currentTime} |{" "}
+            {new Date().toLocaleDateString("en-US", { weekday: "long" })}
           </div>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
-          <Button 
+          <Button
             onClick={async () => {
               try {
-                const response = await fetch('/api/load-teachers-from-csv', {
-                  method: 'POST',
+                const response = await fetch("/api/load-teachers-from-csv", {
+                  method: "POST",
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                   toast({
                     title: "Teachers loaded",
                     description: result.message,
                   });
                   // Refresh teachers list
-                  queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
+                  queryClient.invalidateQueries({
+                    queryKey: ["/api/teachers"],
+                  });
                   // Clear local storage for current date
-                  localStorage.removeItem(`attendance_${selectedDate.toISOString().split("T")[0]}`);
+                  localStorage.removeItem(
+                    `attendance_${selectedDate.toISOString().split("T")[0]}`,
+                  );
                   // Reset the local attendance state
                   setLocalAttendance({});
                 } else {
@@ -394,7 +402,7 @@ export default function AttendancePage() {
                   variant: "destructive",
                 });
               }
-            }} 
+            }}
             variant="outline"
           >
             Load Teachers from CSV
@@ -435,8 +443,8 @@ export default function AttendancePage() {
               className={`relative cursor-pointer transition-all ${
                 isPending ? "opacity-50" : ""
               } ${
-                isAbsent 
-                  ? "bg-red-50 hover:bg-red-100 border-red-200" 
+                isAbsent
+                  ? "bg-red-50 hover:bg-red-100 border-red-200"
                   : "hover:bg-gray-50 border-green-200"
               }`}
               onClick={() => {
