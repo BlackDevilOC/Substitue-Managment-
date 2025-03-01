@@ -10,77 +10,19 @@ const __dirname = path.dirname(__filename);
 
 const TIMETABLE_PATH = path.join(__dirname, '../data/timetable_file.csv');
 const SUBSTITUTE_PATH = path.join(__dirname, '../data/Substitude_file.csv');
-const TOTAL_TEACHERS_PATH = path.join(__dirname, '../data/Total_Teacher.csv');
 
-interface TeacherInfo {
-  name: string;
-  isSubstitute: boolean;
-  phoneNumber?: string;
-}
+export async function loadInitialData() {
+  try {
+    const timetableContent = fs.readFileSync(TIMETABLE_PATH, 'utf-8');
+    const substituteContent = fs.readFileSync(SUBSTITUTE_PATH, 'utf-8');
 
-export function extractAndSaveTeachers(timetableContent: string, substituteContent: string): TeacherInfo[] {
-  const teachers = new Set<string>();
-  const teacherInfo: TeacherInfo[] = [];
-  const substitutes = new Map<string, string>(); // name -> phone number
+    await processTimetableCSV(timetableContent);
+    await processSubstituteCSV(substituteContent);
 
-  // Process substitute teachers first
-  const substituteRecords = parse(substituteContent, {
-    columns: false,
-    skip_empty_lines: true,
-    trim: true
-  });
-
-  for (const row of substituteRecords) {
-    if (row[0]) {
-      const name = normalizeTeacherName(row[0]);
-      const phone = row[1]?.trim() || undefined;
-      substitutes.set(name, phone);
-      teachers.add(name);
-    }
+    console.log('Initial data loaded successfully');
+  } catch (error) {
+    console.error('Error loading initial data:', error);
   }
-
-  // Process timetable teachers
-  const timetableRecords = parse(timetableContent, {
-    columns: false,
-    skip_empty_lines: true,
-    trim: true
-  });
-
-  // Skip header row
-  for (let i = 1; i < timetableRecords.length; i++) {
-    const row = timetableRecords[i];
-    for (let j = 2; j < row.length; j++) {
-      if (row[j] && row[j].toLowerCase() !== 'empty') {
-        const name = normalizeTeacherName(row[j]);
-        teachers.add(name);
-      }
-    }
-  }
-
-  // Convert to TeacherInfo array
-  for (const name of teachers) {
-    teacherInfo.push({
-      name,
-      isSubstitute: substitutes.has(name),
-      phoneNumber: substitutes.get(name)
-    });
-  }
-
-  // Save to Total_Teacher.csv
-  const csvContent = 'Name,IsSubstitute,PhoneNumber\n' + 
-    teacherInfo.map(t => 
-      `${t.name},${t.isSubstitute},${t.phoneNumber || ''}`
-    ).join('\n');
-
-  // Ensure data directory exists
-  const dataDir = path.dirname(TOTAL_TEACHERS_PATH);
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-
-  fs.writeFileSync(TOTAL_TEACHERS_PATH, csvContent, 'utf-8');
-
-  return teacherInfo;
 }
 
 export async function processTimetableCSV(fileContent: string): Promise<Schedule[]> {
@@ -101,9 +43,6 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
                        '8a', '8b', '8c', '7a', '7b', '7c', 
                        '6a', '6b', '6c'];
 
-    // Save timetable file
-    fs.writeFileSync(TIMETABLE_PATH, fileContent, 'utf-8');
-
     // Clear existing schedules before adding new ones
     await storage.clearSchedules();
 
@@ -112,6 +51,7 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
       const row = records[i];
       if (!row[0] || !row[1]) continue;
 
+      // Normalize day name
       const rawDay = row[0].toLowerCase().trim();
       const day = normalizeDay(rawDay);
       if (!day) {
@@ -125,13 +65,14 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
         continue;
       }
 
+      // Process each teacher column
       for (let j = 2; j < Math.min(row.length, validClasses.length + 2); j++) {
         const teacherName = row[j]?.trim();
         if (teacherName && teacherName.toLowerCase() !== 'empty') {
           let teacher = await findOrCreateTeacher(normalizeTeacherName(teacherName));
 
           schedules.push({
-            id: 0,
+            id: 0, // Will be set by storage
             day,
             period,
             teacherId: teacher.id,
@@ -150,9 +91,6 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
 
 export async function processSubstituteCSV(fileContent: string): Promise<Teacher[]> {
   try {
-    // Save substitute file
-    fs.writeFileSync(SUBSTITUTE_PATH, fileContent, 'utf-8');
-
     const records = parse(fileContent, {
       columns: false,
       skip_empty_lines: true,
@@ -175,12 +113,6 @@ export async function processSubstituteCSV(fileContent: string): Promise<Teacher
       }
     }
 
-    // If both files exist, extract and save total teachers
-    if (fs.existsSync(TIMETABLE_PATH)) {
-      const timetableContent = fs.readFileSync(TIMETABLE_PATH, 'utf-8');
-      extractAndSaveTeachers(timetableContent, fileContent);
-    }
-
     return teachers;
   } catch (error: any) {
     console.error('Error processing substitute CSV:', error);
@@ -189,7 +121,7 @@ export async function processSubstituteCSV(fileContent: string): Promise<Teacher
 }
 
 function normalizeDay(day: string): string | null {
-  const days: Record<string, string> = {
+  const days = {
     'monday': 'monday',
     'tuesday': 'tuesday',
     'wednesday': 'wednesday',
