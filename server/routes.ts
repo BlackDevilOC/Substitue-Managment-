@@ -154,13 +154,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (fs.existsSync(totalTeacherPath)) {
         const teachers = JSON.parse(fs.readFileSync(totalTeacherPath, 'utf-8'));
-        res.json(teachers.map((t: any, index: number) => ({
-          id: index + 1,
-          name: t.name,
-          phoneNumber: t.phone || null,
-          isSubstitute: false
-        })));
+        // Filter out any potential duplicates by name
+        const uniqueTeachers = Array.from(new Map(
+          teachers.map((t: any) => [t.name.toLowerCase(), t])
+        ).values());
+
+        // Map to the expected format and ensure exactly 34 teachers
+        const formattedTeachers = uniqueTeachers
+          .slice(0, 34) // Ensure we only take the first 34 teachers
+          .map((t: any, index: number) => ({
+            id: index + 1,
+            name: t.name,
+            phoneNumber: t.phone || null,
+            isSubstitute: false
+          }));
+
+        console.log(`Sending ${formattedTeachers.length} teachers to client`);
+        res.json(formattedTeachers);
       } else {
+        console.warn('total_teacher.json not found');
         res.json([]);
       }
     } catch (error) {
