@@ -125,9 +125,6 @@ export const processTeacherFiles = (timetableContent: string, substitutesContent
   }
 };
 
-export const getUniqueTeachers = (): Teacher[] => {
-  return Array.from(TEACHER_MAP.values());
-};
 import { parse } from 'csv-parse/sync';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -140,6 +137,7 @@ interface Teacher {
 
 const TEACHER_MAP = new Map<string, Teacher>();
 const SIMILARITY_THRESHOLD = 0.85;
+const EXPECTED_TEACHER_COUNT = 34;
 
 // 1. Name Normalization Pipeline
 const normalizeName = (name: string): string => {
@@ -233,9 +231,15 @@ export const processTeacherFiles = (timetableContent: string, substitutesContent
       trim: true
     });
     
+    let subTeacherCount = 0;
     subRecords.forEach((row: any) => {
-      if (row[0]) registerTeacher(row[0], row[1] || '');
+      if (row[0]) {
+        registerTeacher(row[0], row[1] || '');
+        subTeacherCount++;
+      }
     });
+    
+    console.log(`Processed ${subTeacherCount} teachers from substitute file`);
 
     // Process timetable teachers
     const ttRecords = parse(timetableContent, {
@@ -244,19 +248,36 @@ export const processTeacherFiles = (timetableContent: string, substitutesContent
       trim: true
     });
 
+    const timetableTeachers = new Set<string>();
     ttRecords.slice(1).forEach((row: any) => {
       row.slice(2).forEach((name: any) => {
         if (name && name.toLowerCase() !== 'empty') {
           registerTeacher(name);
+          timetableTeachers.add(name.toLowerCase().trim());
         }
       });
     });
+    
+    console.log(`Processed ${timetableTeachers.size} unique teachers from timetable file`);
 
     // Generate CSV output
     let csv = 'Canonical Name,Phone Number,Variations\n';
-    Array.from(TEACHER_MAP.values()).forEach(teacher => {
+    const uniqueTeachers = Array.from(TEACHER_MAP.values());
+    uniqueTeachers.forEach(teacher => {
       csv += `"${teacher.canonicalName}","${teacher.phone}","${Array.from(teacher.variations).join('|')}"\n`;
     });
+
+    // Verify teacher count
+    const extractedCount = uniqueTeachers.length;
+    console.log(`Total unique teachers extracted: ${extractedCount}`);
+    
+    if (extractedCount === EXPECTED_TEACHER_COUNT) {
+      console.log(`✅ Successfully extracted all ${EXPECTED_TEACHER_COUNT} teachers!`);
+    } else if (extractedCount < EXPECTED_TEACHER_COUNT) {
+      console.warn(`⚠️ Only extracted ${extractedCount}/${EXPECTED_TEACHER_COUNT} teachers. Some teachers might be missing.`);
+    } else {
+      console.warn(`⚠️ Extracted ${extractedCount} teachers, which is more than the expected ${EXPECTED_TEACHER_COUNT}. There might be duplicates.`);
+    }
 
     return csv;
   } catch (error) {
@@ -267,4 +288,12 @@ export const processTeacherFiles = (timetableContent: string, substitutesContent
 
 export const getUniqueTeachers = (): Teacher[] => {
   return Array.from(TEACHER_MAP.values());
+};
+
+export const getTeacherCount = (): number => {
+  return TEACHER_MAP.size;
+};
+
+export const verifyTeacherCount = (): boolean => {
+  return TEACHER_MAP.size === EXPECTED_TEACHER_COUNT;
 };
