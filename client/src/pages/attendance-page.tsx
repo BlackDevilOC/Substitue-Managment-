@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Teacher as OriginalTeacher } from "@shared/schema"; // Keeping original interface for reference if needed.
+import { Teacher as OriginalTeacher } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, Loader2, Download } from "lucide-react";
@@ -23,7 +23,6 @@ interface AbsentTeacherData {
   teacherName: string;
   phone?: string;
   date: string;
-  periods: Array<{ period: number; className: string }>;
 }
 
 export default function AttendancePage() {
@@ -88,66 +87,18 @@ export default function AttendancePage() {
   const updateAbsentTeachersFile = async (teacherId: number, status: string) => {
     try {
       const dateStr = selectedDate.toISOString().split('T')[0];
+      const teacher = teachers?.find(t => t.id === teacherId);
+      if (!teacher) return;
 
-      // Get existing data from the JSON file
-      let absentTeachers: AbsentTeacherData[] = [];
-
+      // Update the API
       try {
-        // Try to load data from the server first
-        const response = await fetch('/client/src/data/absent_teacher_for_substitute.json');
-        if (response.ok) {
-          absentTeachers = await response.json();
-        }
+        await apiRequest("POST", "/api/absences", {
+          teacherId,
+          date: dateStr,
+          status
+        });
       } catch (error) {
-        console.warn('Could not fetch from server, falling back to localStorage');
-        // Fallback to localStorage if server fetch fails
-        const existingData = localStorage.getItem('absent_teacher_for_substitute');
-        if (existingData) {
-          absentTeachers = JSON.parse(existingData);
-        }
-      }
-
-      if (status === 'absent') {
-        // Add teacher to absent list if not already present
-        const teacher = teachers?.find(t => t.id === teacherId);
-        if (!teacher) return;
-
-        // Check if teacher is already in the list for this date
-        const existingIndex = absentTeachers.findIndex(
-          t => t.teacherId === teacherId && t.date === dateStr
-        );
-
-        if (existingIndex === -1) {
-          const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-          const schedule = teacher.schedule as Record<string, number[]>; //This line is problematic - teacher.schedule doesn't exist in the new interface
-          const periods = schedule ? (schedule[dayName] || []) : [];
-
-          absentTeachers.push({
-            teacherId: teacher.id,
-            teacherName: teacher.name,
-            phone: teacher.phoneNumber, //Corrected to use phoneNumber from the new interface
-            date: dateStr,
-            periods: periods.map((period, index) => ({
-              period,
-              className: `Class ${index + 1}`
-            }))
-          });
-        }
-      } else {
-        // Remove teacher from absent list
-        absentTeachers = absentTeachers.filter(
-          t => !(t.teacherId === teacherId && t.date === dateStr)
-        );
-      }
-
-      // Save updated list to localStorage
-      localStorage.setItem('absent_teacher_for_substitute', JSON.stringify(absentTeachers, null, 2));
-
-      // Try to update the actual file on the server
-      try {
-        await apiRequest("POST", "/api/update-absent-teachers", { absentTeachers });
-      } catch (error) {
-        console.warn('Failed to update server file, changes stored locally', error);
+        console.warn('Failed to update server, storing locally', error);
       }
 
     } catch (error) {
@@ -243,30 +194,14 @@ export default function AttendancePage() {
       );
       setLocalAttendance(newLocalAttendance);
 
-      // Update absent teachers JSON file
+      // Update absent teachers file
       await updateAbsentTeachersFile(teacherId, status);
 
-      // Then try to update the server
-      try {
-        const res = await apiRequest("POST", "/api/attendance", {
-          teacherId,
-          date: selectedDate.toISOString(),
-          status,
-        });
+      toast({
+        title: "Attendance marked",
+        description: "Teacher attendance has been updated successfully.",
+      });
 
-        toast({
-          title: "Attendance marked",
-          description: "Teacher attendance has been updated successfully.",
-        });
-
-        return res.json();
-      } catch (error) {
-        toast({
-          title: "Offline mode",
-          description: "Changes saved locally. Will sync when online.",
-          variant: "default",
-        });
-      }
     } catch (error) {
       console.error('Error marking attendance:', error);
       toast({
@@ -286,21 +221,21 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between bg-card p-6 rounded-lg shadow-sm">
-        <div>
+    <div className="container mx-auto px-4 space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-card p-4 sm:p-6 rounded-lg shadow-sm">
+        <div className="mb-4 sm:mb-0">
           <h1 className="text-2xl font-bold mb-2">Teacher Attendance</h1>
           <p className="text-muted-foreground">Mark and track teacher attendance</p>
         </div>
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="min-w-[140px]">
+              <Button variant="outline" className="w-full sm:w-auto min-w-[140px]">
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {format(selectedDate, "PPP")}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
+            <PopoverContent className="w-auto p-0" align="end">
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -309,22 +244,25 @@ export default function AttendancePage() {
               />
             </PopoverContent>
           </Popover>
-          <Button onClick={exportAttendanceToExcel}>
+          <Button 
+            onClick={exportAttendanceToExcel}
+            className="w-full sm:w-auto"
+          >
             <Download className="mr-2 h-4 w-4" />
             Export to Excel
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {teachers?.map((teacher) => {
           const status = teacher.id ? (localAttendance[teacher.id] || 'present') : 'present';
           const isAbsent = status === 'absent';
 
           return (
             <Card
-              key={teacher.id || teacher.name}
-              className={`relative cursor-pointer transition-colors ${
+              key={teacher.id}
+              className={`relative cursor-pointer transition-colors hover:shadow-md ${
                 isAbsent ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'
               }`}
               onClick={() => {
@@ -338,9 +276,9 @@ export default function AttendancePage() {
             >
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">{teacher.name}</h3>
+                  <h3 className="font-semibold line-clamp-2">{teacher.name}</h3>
                   {teacher.phoneNumber && (
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap ml-2">
                       📱 {teacher.phoneNumber}
                     </span>
                   )}
