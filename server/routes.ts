@@ -9,7 +9,6 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import * as fs from 'fs';
 
-
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: {
@@ -21,7 +20,7 @@ const upload = multer({
 const checkAuth = (req: any, res: any, next: any) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: "Unauthorized" }); // Changed to return JSON
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   try {
@@ -31,14 +30,73 @@ const checkAuth = (req: any, res: any, next: any) => {
       req.user = user;
       next();
     } else {
-      res.status(401).json({ error: "Unauthorized" }); // Changed to return JSON
+      res.status(401).json({ error: "Unauthorized" });
     }
   } catch (error) {
-    res.status(401).json({ error: "Unauthorized" }); // Changed to return JSON
+    res.status(401).json({ error: "Unauthorized" });
   }
 };
 
+// Function to automatically load teacher data
+async function loadInitialData() {
+  console.log('[loadInitialData] Loading data from CSV files...');
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const dataFolder = path.join(__dirname, '../data');
+
+    // Ensure data directory exists
+    if (!fs.existsSync(dataFolder)) {
+      fs.mkdirSync(dataFolder, { recursive: true });
+    }
+
+    const timetablePath = path.join(dataFolder, 'timetable_file.csv');
+    const substitutePath = path.join(dataFolder, 'Substitude_file.csv');
+
+    // Load and process timetable data if exists
+    if (fs.existsSync(timetablePath)) {
+      const timetableContent = fs.readFileSync(timetablePath, 'utf-8');
+      const schedules = await processTimetableCSV(timetableContent);
+      for (const schedule of schedules) {
+        await storage.createSchedule(schedule);
+      }
+      console.log('Timetable data loaded successfully');
+    }
+
+    // Load and process substitute data if exists
+    if (fs.existsSync(substitutePath)) {
+      const substituteContent = fs.readFileSync(substitutePath, 'utf-8');
+      const teachers = await processSubstituteCSV(substituteContent);
+      console.log('Substitute data loaded successfully');
+    }
+
+    // Extract and save teacher information
+    if (fs.existsSync(timetablePath) || fs.existsSync(substitutePath)) {
+      const teachers = await extractTeacherNames(timetablePath, substitutePath);
+      if (teachers && teachers.length > 0) {
+        // Clear existing teachers before loading new ones
+        await storage.clearTeachers();
+        for (const teacher of teachers) {
+          await storage.createTeacher({
+            name: teacher.name,
+            phoneNumber: teacher.phone || null,
+            isSubstitute: false
+          });
+        }
+      }
+    }
+
+    console.log('Initial data loading completed');
+  } catch (error) {
+    console.error('[loadInitialData] Error loading data:', error);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Load initial data on startup
+  await loadInitialData();
+  console.log('[loadInitialData] Data loading complete.');
+
   // Apply auth middleware to all /api routes
   app.use('/api', checkAuth);
 
@@ -261,85 +319,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Reset assignments error:', error);
       res.status(500).json({ message: "Failed to reset assignments" });
-    }
-  });
-
-  // Endpoint to load teachers from CSV files
-  app.post("/api/load-teachers-from-csv", async (req, res) => {
-    try {
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-
-      const timetablePath = path.join(__dirname, '../data/timetable_file.csv');
-      const substitutePath = path.join(__dirname, '../data/Substitude_file.csv');
-
-      console.log('Loading teachers from CSV files:');
-      console.log(`- Timetable path: ${timetablePath}`);
-      console.log(`- Substitute path: ${substitutePath}`);
-
-      // Check if files exist
-      if (!fs.existsSync(timetablePath) && !fs.existsSync(substitutePath)) {
-        return res.status(404).json({
-          success: false,
-          message: 'CSV files not found. Please make sure the files exist in the data directory.',
-          teachers: []
-        });
-      }
-
-      // Extract teachers from both CSV files - this now includes duplicate detection
-      const teachersFromCSV = await extractTeacherNames(timetablePath, substitutePath);
-
-      if (!teachersFromCSV || teachersFromCSV.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: 'No teachers found in CSV files',
-          teachers: []
-        });
-      }
-
-      // First, clear existing teachers to prevent duplicates
-      await storage.clearTeachers();
-      console.log('Cleared existing teachers from database');
-
-      // Clear attendance storage
-      await clearAttendanceStorage();
-
-      // Calculate how many duplicates were fixed (original count minus final count)
-      // This is an estimate based on the expected total from the files vs. what we got
-      const totalTeachersInFiles = timetableTeachers + substituteTeachers;
-      const duplicatesFixed = Math.max(0, totalTeachersInFiles - teachersFromCSV.length);
-      console.log(`Identified approximately ${duplicatesFixed} duplicate teacher entries`);
-
-      // Save teachers to storage
-      const savedTeachers = [];
-      for (const teacher of teachersFromCSV) {
-        try {
-          const savedTeacher = await storage.createTeacher({
-            name: teacher.name,
-            phoneNumber: teacher.phone || null,
-            isSubstitute: false // Default value
-          });
-          savedTeachers.push(savedTeacher);
-        } catch (err: any) {
-          console.warn(`Failed to save teacher ${teacher.name}: ${err.message}`);
-        }
-      }
-
-      console.log(`Successfully saved ${savedTeachers.length} teachers to database`);
-
-      res.json({ 
-        success: true, 
-        message: `Loaded ${savedTeachers.length} unique teachers from CSV files`,
-        teachers: savedTeachers,
-        duplicatesFixed: duplicatesFixed
-      });
-    } catch (error) {
-      console.error('Error loading teachers from CSV:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: `Failed to load teachers from CSV files: ${error.message}`,
-        error: error.message
-      });
     }
   });
 

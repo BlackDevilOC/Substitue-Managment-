@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Teacher } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +9,7 @@ import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
-import { extractTeacherNames, saveTeachersToAttendanceFile, loadTeachersFromAttendanceFile } from "@/utils/csvLoader";
+import * as XLSX from 'xlsx';
 
 interface AbsentTeacherData {
   teacherId: number;
@@ -179,21 +178,24 @@ export default function AttendancePage() {
       const monthName = selectedDate.toLocaleString('default', { month: 'long' });
       const year = selectedDate.getFullYear();
 
-      // Create a CSV string
-      let csvContent = `Teacher Attendance - ${monthName} ${year}\n\n`;
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws_data = [
+        [`Teacher Attendance - ${monthName} ${year}`],
+        [], // Empty row for spacing
+        ['Teacher Name']
+      ];
 
-      // Add headers - days of month
-      csvContent += "Teacher Name,";
+      // Add day numbers to header
       const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
       for (let i = 1; i <= daysInMonth; i++) {
-        csvContent += `${i},`;
+        ws_data[2].push(i.toString());
       }
-      csvContent += "Total Present,Total Absent\n";
+      ws_data[2].push('Total Present', 'Total Absent');
 
       // Add data for each teacher
       teachers?.forEach(teacher => {
-        csvContent += `${teacher.name},`;
-
+        const rowData = [teacher.name];
         let presentCount = 0;
         let absentCount = 0;
 
@@ -208,41 +210,41 @@ export default function AttendancePage() {
             const status = attendance[teacher.id] || 'present';
 
             if (status === 'present') {
-              csvContent += 'P,';
+              rowData.push('P');
               presentCount++;
             } else {
-              csvContent += 'A,';
+              rowData.push('A');
               absentCount++;
             }
           } else {
-            csvContent += ','; // No data for this day
+            rowData.push(''); // No data for this day
           }
         }
 
-        csvContent += `${presentCount},${absentCount}\n`;
+        rowData.push(presentCount.toString(), absentCount.toString());
+        ws_data.push(rowData);
       });
 
-      // Save the CSV file
-      const fileName = `attendance_${monthName}_${year}.csv`;
-      localStorage.setItem(`attendance_excel_${monthName}_${year}`, csvContent);
+      // Create worksheet and add to workbook
+      const ws = XLSX.utils.aoa_to_sheet(ws_data);
+      XLSX.utils.book_append_sheet(wb, ws, "Attendance");
 
-      console.log(`Attendance exported to ${fileName}`);
+      // Save the file
+      const fileName = `attendance_${monthName}_${year}.xlsx`;
+      XLSX.writeFile(wb, fileName);
 
-      // Create a download link (works in browser environment)
-      if (typeof window !== 'undefined') {
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', fileName);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
+      toast({
+        title: "Export successful",
+        description: `Attendance report exported to ${fileName}`,
+      });
 
     } catch (error) {
       console.error('Error exporting attendance to Excel:', error);
+      toast({
+        title: "Export failed",
+        description: "Failed to export attendance report",
+        variant: "destructive",
+      });
     }
   };
 
