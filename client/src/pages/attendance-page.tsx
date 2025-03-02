@@ -9,19 +9,14 @@ import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
-import * as XLSX from 'xlsx';
 
 interface AbsentTeacherData {
   teacherId: number;
   teacherName: string;
-  phone?: string;
+  phoneNumber?: string | null;
   date: string;
   periods?: { period: number; className: string }[];
 }
-
-const findTeacherSchedule = (teacher: Teacher): Record<string, number[]> | undefined => {
-  return teacher.schedule;
-};
 
 export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -51,16 +46,82 @@ export default function AttendancePage() {
     }
   }, [selectedDate, teachers]);
 
-  const createAbsenceMutation = useMutation({
-    mutationFn: async (data: { teacherId: number; date: string }) => {
-      const res = await apiRequest("POST", "/api/absences", data);
+  const updateAbsentTeachersMutation = useMutation({
+    mutationFn: async ({ teacherName, isAbsent }: { teacherName: string; isAbsent: boolean }) => {
+      const res = await apiRequest("POST", "/api/update-absent-teachers-file", {
+        teacherName,
+        isAbsent,
+      });
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/absences"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/get-absent-teachers"] });
     },
     onError: (error: Error) => {
-      console.error("Error creating absence:", error);
+      console.error("Error updating absent teachers:", error);
+      toast({
+        title: "Update failed",
+        description: "Failed to update absent teacher status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const markAttendanceMutation = useMutation({
+    mutationFn: async ({
+      teacherId,
+      status,
+    }: {
+      teacherId: number;
+      status: string;
+    }) => {
+      // Update local storage first
+      const newLocalAttendance = {
+        ...localAttendance,
+        [teacherId]: status,
+      };
+      localStorage.setItem(
+        `attendance_${selectedDate.toISOString().split("T")[0]}`,
+        JSON.stringify(newLocalAttendance),
+      );
+      setLocalAttendance(newLocalAttendance);
+
+      // Get the teacher info
+      const teacher = teachers?.find(t => t.id === teacherId);
+      if (!teacher) throw new Error("Teacher not found");
+
+      // Update absent teachers list through API
+      await updateAbsentTeachersMutation.mutateAsync({
+        teacherName: teacher.name,
+        isAbsent: status === "absent"
+      });
+
+      // Then try to update the server
+      try {
+        const res = await apiRequest("POST", "/api/attendance", {
+          teacherId,
+          date: selectedDate.toISOString(),
+          status,
+        });
+        return res.json();
+      } catch (error) {
+        toast({
+          title: "Offline mode",
+          description: "Changes saved locally. Will sync when online.",
+          variant: "default",
+        });
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
+      toast({
+        title: "Attendance marked",
+        description: "Teacher attendance has been updated successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      console.error("Error marking attendance:", error);
     },
   });
 
@@ -139,197 +200,6 @@ export default function AttendancePage() {
     }
   };
 
-  const markAttendanceMutation = useMutation({
-    mutationFn: async ({
-      teacherId,
-      status,
-    }: {
-      teacherId: number;
-      status: string;
-    }) => {
-      // Update local storage first
-      const newLocalAttendance = {
-        ...localAttendance,
-        [teacherId]: status,
-      };
-      localStorage.setItem(
-        `attendance_${selectedDate.toISOString().split("T")[0]}`,
-        JSON.stringify(newLocalAttendance),
-      );
-      setLocalAttendance(newLocalAttendance);
-
-      // If marking as absent, create an absence record
-      if (status === 'absent') {
-        await createAbsenceMutation.mutateAsync({
-          teacherId,
-          date: selectedDate.toISOString().split('T')[0],
-        });
-      }
-
-      // Then try to update the server
-      try {
-        const res = await apiRequest("POST", "/api/attendance", {
-          teacherId,
-          date: selectedDate.toISOString(),
-          status,
-        });
-        return res.json();
-      } catch (error) {
-        toast({
-          title: "Offline mode",
-          description: "Changes saved locally. Will sync when online.",
-          variant: "default",
-        });
-        throw error;
-      }
-      await updateAbsentTeachersFile(teacherId, status); // Call the new function here
-
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
-      toast({
-        title: "Attendance marked",
-        description: "Teacher attendance has been updated successfully.",
-      });
-    },
-    onError: (error: Error) => {
-      console.error("Error marking attendance:", error);
-    },
-  });
-
-  // Function to manage absent teachers in JSON file
-  const updateAbsentTeachersFile = async (
-    teacherId: number,
-    status: string,
-  ) => {
-    try {
-      const dateStr = selectedDate.toISOString().split("T")[0];
-
-      // Get existing data from the JSON file
-      let absentTeachers: AbsentTeacherData[] = [];
-
-      try {
-        // Try to load data from the server first
-        const response = await fetch("/api/get-absent-teachers");
-        if (response.ok) {
-          absentTeachers = await response.json();
-        }
-      } catch (error) {
-        console.warn(
-          "Could not fetch from server, falling back to localStorage",
-        );
-        // Fallback to localStorage if server fetch fails
-        const existingData = localStorage.getItem(
-          "absent_teacher_for_substitute",
-        );
-        if (existingData) {
-          absentTeachers = JSON.parse(existingData);
-        }
-      }
-
-      if (status === "absent") {
-        // Add teacher to absent list if not already present
-        const teacher = teachers?.find((t) => t.id === teacherId);
-        if (!teacher) return;
-
-        // Check if teacher is already in the list for this date
-        const existingIndex = absentTeachers.findIndex(
-          (t) => t.teacherId === teacherId && t.date === dateStr,
-        );
-
-        if (existingIndex === -1) {
-          const dayName = selectedDate
-            .toLocaleDateString("en-US", { weekday: "long" })
-            .toLowerCase();
-          const schedule = findTeacherSchedule(teacher) || {};
-          const periods = (schedule[dayName] as number[]) || [];
-
-          absentTeachers.push({
-            teacherId: teacher.id,
-            teacherName: teacher.name,
-            phone: teacher.phone,
-            date: dateStr,
-            periods: periods.map((period, index) => ({
-              period,
-              className: `Class ${index + 1}`,
-            })),
-          });
-
-          // Also save to the simple absent teachers list
-          await updateAbsentTeachersDataFile(teacher.name, true);
-        }
-      } else {
-        // Remove teacher from absent list
-        const teacherToRemove = absentTeachers.find(
-          (t) => t.teacherId === teacherId && t.date === dateStr
-        );
-
-        absentTeachers = absentTeachers.filter(
-          (t) => !(t.teacherId === teacherId && t.date === dateStr),
-        );
-
-        // Also remove from the simple absent teachers list
-        if (teacherToRemove) {
-          await updateAbsentTeachersDataFile(teacherToRemove.teacherName, false);
-        }
-      }
-
-      // Save updated list to localStorage
-      localStorage.setItem(
-        "absent_teacher_for_substitute",
-        JSON.stringify(absentTeachers, null, 2),
-      );
-
-      // Try to update the actual file on the server
-      try {
-        await apiRequest("POST", "/api/update-absent-teachers", {
-          absentTeachers,
-        });
-      } catch (error) {
-        console.warn(
-          "Failed to update server file, changes stored locally",
-          error,
-        );
-      }
-    } catch (error) {
-      console.error("Error updating absent teachers file:", error);
-    }
-  };
-
-  // Function to update the absent_teachers.json file in the data folder
-  const updateAbsentTeachersDataFile = async (teacherName: string, isAbsent: boolean) => {
-    try {
-      // Call the API endpoint to update the absent teachers file
-      await apiRequest("POST", "/api/update-absent-teachers-file", {
-        teacherName,
-        isAbsent
-      });
-    } catch (error) {
-      console.warn("Failed to update absent teachers data file", error);
-
-      // Fallback to updating localStorage
-      try {
-        const absentTeachersKey = "absent_teachers_simple";
-        let absentTeachers: string[] = [];
-
-        const stored = localStorage.getItem(absentTeachersKey);
-        if (stored) {
-          absentTeachers = JSON.parse(stored);
-        }
-
-        if (isAbsent && !absentTeachers.includes(teacherName)) {
-          absentTeachers.push(teacherName);
-        } else if (!isAbsent) {
-          absentTeachers = absentTeachers.filter(name => name !== teacherName);
-        }
-
-        localStorage.setItem(absentTeachersKey, JSON.stringify(absentTeachers));
-      } catch (e) {
-        console.error("Failed to update local storage fallback", e);
-      }
-    }
-  };
-
   if (teachersLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -339,7 +209,7 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
       <div className="flex items-center justify-between bg-card p-6 rounded-lg shadow-sm">
         <div>
           <h1 className="text-2xl font-bold mb-2">Teacher Attendance</h1>
@@ -422,3 +292,5 @@ export default function AttendancePage() {
     </div>
   );
 }
+
+import * as XLSX from 'xlsx';
