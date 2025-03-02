@@ -283,13 +283,6 @@
     ]
   },
   {
-    "name": "Sir Rehan Ahmed",
-    "phone": "+923133469238",
-    "variations": [
-      "Sir Rehan Ahmed"
-    ]
-  },
-  {
     "name": "sir jawad ul haq",
     "phone": "",
     "variations": [
