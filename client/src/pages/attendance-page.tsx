@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
+import * as XLSX from 'xlsx';
 
 interface AbsentTeacherData {
   teacherId: number;
@@ -22,8 +23,12 @@ export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [localAttendance, setLocalAttendance] = useState<Record<number, string>>({});
 
+  // Fetch teachers with aggressive refetching to ensure fresh data
   const { data: teachers, isLoading: teachersLoading } = useQuery<Teacher[]>({
     queryKey: ["/api/teachers"],
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Consider data immediately stale
   });
 
   // Load attendance from local storage on mount and date change
@@ -56,12 +61,16 @@ export default function AttendancePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/get-absent-teachers"] });
+      toast({
+        title: "Status updated",
+        description: "Teacher's attendance status has been updated.",
+      });
     },
     onError: (error: Error) => {
       console.error("Error updating absent teachers:", error);
       toast({
         title: "Update failed",
-        description: "Failed to update absent teacher status",
+        description: "Failed to update teacher's status",
         variant: "destructive",
       });
     },
@@ -292,5 +301,3 @@ export default function AttendancePage() {
     </div>
   );
 }
-
-import * as XLSX from 'xlsx';
