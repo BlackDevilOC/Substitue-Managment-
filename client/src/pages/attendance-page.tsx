@@ -9,7 +9,6 @@ import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
-import * as XLSX from 'xlsx';
 import { updateAbsentTeacher } from "@/utils/absentTeacherManager";
 
 interface AbsentTeacherData {
@@ -17,11 +16,19 @@ interface AbsentTeacherData {
   teacherName: string;
   phoneNumber?: string | null;
   date: string;
-  periods: Array<{ period: number; className: string }>;
+  periods: Array<{
+    period: number;
+    className: string;
+  }>;
 }
 
 export default function AttendancePage() {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  // Use the current date from the device
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const today = new Date();
+    // Set to beginning of the day to avoid time zone issues
+    return new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  });
   const [localAttendance, setLocalAttendance] = useState<Record<number, string>>({});
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString());
 
@@ -43,17 +50,19 @@ export default function AttendancePage() {
 
   // Load attendance from local storage on mount and date change
   useEffect(() => {
-    const storedData = localStorage.getItem(`attendance_${selectedDate.toISOString().split('T')[0]}`);
+    const storedData = localStorage.getItem(
+      `attendance_${selectedDate.toISOString().split("T")[0]}`
+    );
     if (storedData) {
       setLocalAttendance(JSON.parse(storedData));
     } else {
       const initialAttendance: Record<number, string> = {};
-      teachers?.forEach(teacher => {
-        initialAttendance[teacher.id] = 'present';
+      teachers?.forEach((teacher) => {
+        initialAttendance[teacher.id] = "present";
       });
       setLocalAttendance(initialAttendance);
       localStorage.setItem(
-        `attendance_${selectedDate.toISOString().split('T')[0]}`,
+        `attendance_${selectedDate.toISOString().split("T")[0]}`,
         JSON.stringify(initialAttendance)
       );
     }
@@ -67,41 +76,31 @@ export default function AttendancePage() {
       teacherId: number;
       status: string;
     }) => {
-      // Update local storage first
+      // Find the teacher
+      const teacher = teachers?.find((t) => t.id === teacherId);
+      if (!teacher) throw new Error("Teacher not found");
+
+      // Update local storage first for immediate feedback
       const newLocalAttendance = {
         ...localAttendance,
         [teacherId]: status,
       };
       localStorage.setItem(
-        `attendance_${selectedDate.toISOString().split('T')[0]}`,
+        `attendance_${selectedDate.toISOString().split("T")[0]}`,
         JSON.stringify(newLocalAttendance)
       );
       setLocalAttendance(newLocalAttendance);
 
-      // Find the teacher
-      const teacher = teachers?.find(t => t.id === teacherId);
-      if (!teacher) throw new Error("Teacher not found");
-
       // Update absent teachers using the utility function
-      try {
-        await updateAbsentTeacher(
-          teacherId,
-          {
-            name: teacher.name,
-            phone: teacher.phoneNumber
-          },
-          selectedDate.toISOString().split('T')[0],
-          status === 'absent'
-        );
-      } catch (error) {
-        console.error('Error updating absent teachers:', error);
-        toast({
-          title: "Update failed",
-          description: "Failed to update absent teacher status",
-          variant: "destructive",
-        });
-        throw error;
-      }
+      await updateAbsentTeacher(
+        teacherId,
+        {
+          name: teacher.name,
+          phone: teacher.phoneNumber
+        },
+        selectedDate.toISOString().split("T")[0],
+        status === "absent"
+      );
 
       // Update server attendance
       try {
@@ -112,37 +111,40 @@ export default function AttendancePage() {
         });
         return res.json();
       } catch (error) {
+        console.error("Error marking attendance:", error);
+        // Still show offline mode toast but don't throw since local changes are saved
         toast({
           title: "Offline mode",
           description: "Changes saved locally. Will sync when online.",
           variant: "default",
         });
-        throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
       queryClient.invalidateQueries({ queryKey: ["/api/absences"] });
-      toast({
-        title: "Attendance marked",
-        description: "Teacher attendance has been updated successfully.",
-      });
     },
     onError: (error: Error) => {
-      console.error('Error marking attendance:', error);
+      console.error("Error marking attendance:", error);
     },
   });
 
-  const exportAttendanceToExcel = () => {
+  const exportAttendanceToCSV = () => {
     try {
-      const monthName = selectedDate.toLocaleString('default', { month: 'long' });
+      const monthName = selectedDate.toLocaleString("default", { month: "long" });
       const year = selectedDate.getFullYear();
 
-      // Create a CSV string
+      // Create CSV content
       let csvContent = `Teacher Attendance - ${monthName} ${year}\n\n`;
       csvContent += "Teacher Name,";
 
-      const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
+      const daysInMonth = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth() + 1,
+        0
+      ).getDate();
+
+      // Add headers with day names
       for (let i = 1; i <= daysInMonth; i++) {
         const dayDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), i);
         const dayName = dayDate.toLocaleDateString("en-US", { weekday: "short" });
@@ -150,67 +152,53 @@ export default function AttendancePage() {
       }
       csvContent += "Total Present,Total Absent\n";
 
-      // Create a set to track processed teachers to avoid duplicates
-      const processedTeachers = new Map<string, number>();
-
-      teachers?.forEach(teacher => {
-        // Skip if we've already processed this teacher name
-        const teacherNormalizedName = teacher.name.toLowerCase().trim();
-        if (processedTeachers.has(teacherNormalizedName)) {
-          return;
-        }
-
-        processedTeachers.set(teacherNormalizedName, teacher.id);
+      // Process teacher data
+      teachers?.forEach((teacher) => {
         csvContent += `${teacher.name},`;
-
         let presentCount = 0;
         let absentCount = 0;
 
         for (let i = 1; i <= daysInMonth; i++) {
           const checkDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), i);
-          const dateStr = checkDate.toISOString().split('T')[0];
+          const dateStr = checkDate.toISOString().split("T")[0];
           const storageKey = `attendance_${dateStr}`;
           const attendanceData = localStorage.getItem(storageKey);
 
           if (attendanceData) {
             const attendance = JSON.parse(attendanceData);
-            const status = attendance[teacher.id] || 'present';
-
-            if (status === 'present') {
-              csvContent += 'P,';
+            const status = attendance[teacher.id] || "present";
+            if (status === "present") {
+              csvContent += "P,";
               presentCount++;
             } else {
-              csvContent += 'A,';
+              csvContent += "A,";
               absentCount++;
             }
           } else {
-            csvContent += ','; // No data for this day
+            csvContent += ","; // No data
           }
         }
 
         csvContent += `${presentCount},${absentCount}\n`;
       });
 
-      // Save the CSV file
+      // Download file
       const fileName = `attendance_${monthName}_${year}.csv`;
-
-      // Create a download link
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', fileName);
-      link.style.visibility = 'hidden';
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", fileName);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
       toast({
         title: "Export successful",
-        description: `Attendance report exported to ${fileName}`,
+        description: `Attendance exported to ${fileName}`,
       });
     } catch (error) {
-      console.error('Error exporting attendance to Excel:', error);
+      console.error("Error exporting attendance:", error);
       toast({
         title: "Export failed",
         description: "Failed to export attendance report",
@@ -237,7 +225,8 @@ export default function AttendancePage() {
             Mark and track teacher attendance
           </p>
           <div className="text-sm text-muted-foreground mt-1">
-            Current time: {currentTime} | {new Date().toLocaleDateString("en-US", { weekday: "long" })}
+            Current time: {currentTime} |{" "}
+            {new Date().toLocaleDateString("en-US", { weekday: "long" })}
           </div>
         </div>
         <div className="bg-gray-100 p-4 rounded-md">
@@ -261,30 +250,32 @@ export default function AttendancePage() {
               />
             </PopoverContent>
           </Popover>
-          <Button onClick={exportAttendanceToExcel}>Export to CSV</Button>
+          <Button onClick={exportAttendanceToCSV}>Export to CSV</Button>
         </div>
       </div>
 
       {/* Teacher Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
         {teachers?.map((teacher, index) => {
-          const status = localAttendance[teacher.id] || 'present';
-          const isAbsent = status === 'absent';
+          const status = localAttendance[teacher.id] || "present";
+          const isAbsent = status === "absent";
           const isPending = markAttendanceMutation.isPending;
 
           return (
             <Card
               key={teacher.id}
               className={`relative cursor-pointer transition-all ${
-                isPending ? 'opacity-50' : ''
+                isPending ? "opacity-50" : ""
               } ${
-                isAbsent ? 'bg-red-50 hover:bg-red-100 border-red-200' : 'hover:bg-gray-50 border-green-200'
+                isAbsent
+                  ? "bg-red-50 hover:bg-red-100 border-red-200"
+                  : "hover:bg-gray-50 border-green-200"
               }`}
               onClick={() => {
                 if (!isPending) {
                   markAttendanceMutation.mutate({
                     teacherId: teacher.id,
-                    status: isAbsent ? 'present' : 'absent',
+                    status: isAbsent ? "present" : "absent",
                   });
                 }
               }}
@@ -301,14 +292,18 @@ export default function AttendancePage() {
                   )}
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className={`text-sm font-medium ${
-                    isAbsent ? 'text-red-600' : 'text-green-600'
-                  }`}>
-                    {isAbsent ? 'Absent' : 'Present'}
+                  <span
+                    className={`text-sm font-medium ${
+                      isAbsent ? "text-red-600" : "text-green-600"
+                    }`}
+                  >
+                    {isAbsent ? "Absent" : "Present"}
                   </span>
-                  <div className={`w-3 h-3 rounded-full ${
-                    isAbsent ? 'bg-red-500' : 'bg-green-500'
-                  }`} />
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      isAbsent ? "bg-red-500" : "bg-green-500"
+                    }`}
+                  />
                 </div>
               </CardContent>
             </Card>
