@@ -140,83 +140,26 @@ export default function AttendancePage() {
   ) => {
     try {
       const dateStr = selectedDate.toISOString().split("T")[0];
+      const teacher = teachers?.find((t) => t.id === teacherId);
+      if (!teacher) return;
 
-      // Get existing data from the JSON file
-      let absentTeachers: AbsentTeacherData[] = [];
-
-      try {
-        // Try to load data from the server first
-        const response = await fetch(
-          "/client/src/data/absent_teacher_for_substitute.json",
-        );
-        if (response.ok) {
-          absentTeachers = await response.json();
-        }
-      } catch (error) {
-        console.warn(
-          "Could not fetch from server, falling back to localStorage",
-        );
-        // Fallback to localStorage if server fetch fails
-        const existingData = localStorage.getItem(
-          "absent_teacher_for_substitute",
-        );
-        if (existingData) {
-          absentTeachers = JSON.parse(existingData);
-        }
-      }
-
-      if (status === "absent") {
-        // Add teacher to absent list if not already present
-        const teacher = teachers?.find((t) => t.id === teacherId);
-        if (!teacher) return;
-
-        // Check if teacher is already in the list for this date
-        const existingIndex = absentTeachers.findIndex(
-          (t) => t.teacherId === teacherId && t.date === dateStr,
-        );
-
-        if (existingIndex === -1) {
-          const dayName = selectedDate
-            .toLocaleDateString("en-US", { weekday: "long" })
-            .toLowerCase();
-          const schedule = teacher.schedule as Record<string, number[]>;
-          const periods = schedule[dayName] || [];
-
-          absentTeachers.push({
-            teacherId: teacher.id,
-            teacherName: teacher.name,
-            phone: teacher.phone,
-            date: dateStr,
-            periods: periods.map((period, index) => ({
-              period,
-              className: `Class ${index + 1}`,
-            })),
-          });
-        }
-      } else {
-        // Remove teacher from absent list
-        absentTeachers = absentTeachers.filter(
-          (t) => !(t.teacherId === teacherId && t.date === dateStr),
-        );
-      }
-
-      // Save updated list to localStorage
-      localStorage.setItem(
-        "absent_teacher_for_substitute",
-        JSON.stringify(absentTeachers, null, 2),
+      // Import the utility function
+      const { updateAbsentTeacher } = await import("../utils/absentTeacherManager");
+      
+      // Update the absent teacher list
+      await updateAbsentTeacher(
+        teacherId,
+        {
+          name: teacher.name,
+          phone: teacher.phoneNumber
+        },
+        dateStr,
+        status === "absent",
+        teacher.schedule as Record<string, number[]>
       );
 
-      // Try to update the actual file on the server
-      try {
-        await apiRequest("POST", "/api/update-absent-teachers", {
-          absentTeachers,
-        });
-      } catch (error) {
-        console.warn(
-          "Failed to update server file, changes stored locally",
-          error,
-        );
-      }
+      // Refresh UI by refetching data
+      queryClient.invalidateQueries({ queryKey: ["/api/absences"] });
     } catch (error) {
       console.error("Error updating absent teachers file:", error);
     }

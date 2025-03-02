@@ -21,7 +21,8 @@ const checkAuth = (req: any, res: any, next: any) => {
   const publicPaths = [
     '/api/update-absent-teachers-file',
     '/api/get-absent-teachers',
-    '/api/update-absent-teachers'
+    '/api/update-absent-teachers',
+    '/api/attendance'
   ];
   
   if (publicPaths.includes(req.path)) {
@@ -297,7 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/update-absent-teachers-file', (req, res) => {
     try {
-      const { teacherName, isAbsent } = req.body;
+      const { teacherName, isAbsent, absentTeachers } = req.body;
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const filePath = path.join(__dirname, '../data/absent_teachers.json');
@@ -306,22 +307,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fs.writeFileSync(filePath, JSON.stringify([], null, 2));
       }
 
+      // If absentTeachers array is provided, use it directly
+      if (Array.isArray(absentTeachers)) {
+        fs.writeFileSync(filePath, JSON.stringify(absentTeachers, null, 2));
+        console.log(`Updated absent teachers list with ${absentTeachers.length} teachers`);
+        return res.json({ success: true, absentTeachers });
+      }
+
+      // Otherwise handle the single teacherName update
       const fileContent = fs.readFileSync(filePath, 'utf8');
-      let absentTeachers = JSON.parse(fileContent);
+      let currentAbsentTeachers = JSON.parse(fileContent);
 
       if (isAbsent) {
-        if (!absentTeachers.includes(teacherName)) {
-          absentTeachers.push(teacherName);
+        if (!currentAbsentTeachers.includes(teacherName)) {
+          currentAbsentTeachers.push(teacherName);
           console.log(`Added ${teacherName} to absent teachers list`);
         }
       } else {
-        absentTeachers = absentTeachers.filter((name: string) => name !== teacherName);
+        currentAbsentTeachers = currentAbsentTeachers.filter((name: string) => name !== teacherName);
         console.log(`Removed ${teacherName} from absent teachers list`);
       }
 
-      fs.writeFileSync(filePath, JSON.stringify(absentTeachers, null, 2));
-
-      res.json({ success: true, absentTeachers });
+      fs.writeFileSync(filePath, JSON.stringify(currentAbsentTeachers, null, 2));
+      res.json({ success: true, absentTeachers: currentAbsentTeachers });
     } catch (error) {
       console.error('Error updating absent teachers file:', error);
       res.status(500).json({ error: 'Failed to update absent teachers file' });
