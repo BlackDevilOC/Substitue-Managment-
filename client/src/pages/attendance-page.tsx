@@ -10,18 +10,20 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
+import { updateAbsentTeacher } from "@/utils/absentTeacherManager";
 
 interface AbsentTeacherData {
   teacherId: number;
   teacherName: string;
   phoneNumber?: string | null;
   date: string;
-  periods?: { period: number; className: string }[];
+  periods: Array<{ period: number; className: string }>;
 }
 
 export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [localAttendance, setLocalAttendance] = useState<Record<number, string>>({});
+  const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString());
 
   // Keep aggressive refetching for fresh data
   const { data: teachers, isLoading: teachersLoading } = useQuery<Teacher[]>({
@@ -30,6 +32,14 @@ export default function AttendancePage() {
     refetchOnWindowFocus: true,
     staleTime: 0,
   });
+
+  // Update current time every minute
+  useEffect(() => {
+    const timeInterval = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString());
+    }, 60000);
+    return () => clearInterval(timeInterval);
+  }, []);
 
   // Load attendance from local storage on mount and date change
   useEffect(() => {
@@ -48,87 +58,6 @@ export default function AttendancePage() {
       );
     }
   }, [selectedDate, teachers]);
-
-  // Function to manage absent teachers in JSON file
-  const updateAbsentTeachersFile = async (teacherId: number, status: string) => {
-    try {
-      const dateStr = selectedDate.toISOString().split('T')[0];
-
-      // Get existing data from the JSON file
-      let absentTeachers: AbsentTeacherData[] = [];
-
-      try {
-        // Try to load data from the server first
-        const response = await fetch('/api/get-absent-teachers');
-        if (response.ok) {
-          absentTeachers = await response.json();
-        }
-      } catch (error) {
-        console.warn('Could not fetch from server, falling back to localStorage');
-        // Fallback to localStorage if server fetch fails
-        const existingData = localStorage.getItem('absent_teacher_for_substitute');
-        if (existingData) {
-          absentTeachers = JSON.parse(existingData);
-        }
-      }
-
-      if (status === 'absent') {
-        // Add teacher to absent list if not already present
-        const teacher = teachers?.find(t => t.id === teacherId);
-        if (!teacher) return;
-
-        // Check if teacher is already in the list for this date
-        const existingIndex = absentTeachers.findIndex(
-          t => t.teacherId === teacherId && t.date === dateStr
-        );
-
-        if (existingIndex === -1) {
-          const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-
-          absentTeachers.push({
-            teacherId: teacher.id,
-            teacherName: teacher.name,
-            phoneNumber: teacher.phoneNumber,
-            date: dateStr,
-          });
-
-          // Update server with teacher name and status
-          try {
-            await apiRequest("POST", "/api/update-absent-teachers-file", {
-              teacherName: teacher.name,
-              isAbsent: true
-            });
-          } catch (error) {
-            console.warn('Failed to update server file, changes stored locally only', error);
-          }
-        }
-      } else {
-        // Remove teacher from absent list
-        const teacherToRemove = teachers?.find(t => t.id === teacherId);
-        if (teacherToRemove) {
-          absentTeachers = absentTeachers.filter(
-            t => !(t.teacherId === teacherId && t.date === dateStr)
-          );
-
-          // Update server that teacher is now present
-          try {
-            await apiRequest("POST", "/api/update-absent-teachers-file", {
-              teacherName: teacherToRemove.name,
-              isAbsent: false
-            });
-          } catch (error) {
-            console.warn('Failed to update server file, changes stored locally only', error);
-          }
-        }
-      }
-
-      // Save updated list to localStorage as backup
-      localStorage.setItem('absent_teacher_for_substitute', JSON.stringify(absentTeachers, null, 2));
-
-    } catch (error) {
-      console.error('Error updating absent teachers file:', error);
-    }
-  };
 
   const markAttendanceMutation = useMutation({
     mutationFn: async ({
@@ -149,10 +78,32 @@ export default function AttendancePage() {
       );
       setLocalAttendance(newLocalAttendance);
 
-      // Update absent teachers file
-      await updateAbsentTeachersFile(teacherId, status);
+      // Find the teacher
+      const teacher = teachers?.find(t => t.id === teacherId);
+      if (!teacher) throw new Error("Teacher not found");
 
-      // Then try to update the server
+      // Update absent teachers using the utility function
+      try {
+        await updateAbsentTeacher(
+          teacherId,
+          {
+            name: teacher.name,
+            phone: teacher.phoneNumber
+          },
+          selectedDate.toISOString().split('T')[0],
+          status === 'absent'
+        );
+      } catch (error) {
+        console.error('Error updating absent teachers:', error);
+        toast({
+          title: "Update failed",
+          description: "Failed to update absent teacher status",
+          variant: "destructive",
+        });
+        throw error;
+      }
+
+      // Update server attendance
       try {
         const res = await apiRequest("POST", "/api/attendance", {
           teacherId,
@@ -171,6 +122,7 @@ export default function AttendancePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/absences"] });
       toast({
         title: "Attendance marked",
         description: "Teacher attendance has been updated successfully.",
@@ -285,7 +237,7 @@ export default function AttendancePage() {
             Mark and track teacher attendance
           </p>
           <div className="text-sm text-muted-foreground mt-1">
-            {new Date().toLocaleDateString("en-US", { weekday: "long" })}
+            Current time: {currentTime} | {new Date().toLocaleDateString("en-US", { weekday: "long" })}
           </div>
         </div>
         <div className="bg-gray-100 p-4 rounded-md">
@@ -304,7 +256,7 @@ export default function AttendancePage() {
                 mode="single"
                 selected={selectedDate}
                 onSelect={(date) => date && setSelectedDate(date)}
-                defaultMonth={new Date()} // Set default month to current month
+                defaultMonth={new Date()}
                 initialFocus
               />
             </PopoverContent>
