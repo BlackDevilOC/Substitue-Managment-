@@ -1,10 +1,10 @@
+
 import React from "react";
 
-export default function AttendancePage() {
+export default function AbsencePage() {
   return (
     <div className="p-6">
-      {/* Attendance page content was removed */}
-      echos
+      {/* Absence page content */}
     </div>
   );
 }
