@@ -273,7 +273,13 @@ export default function AttendancePage() {
       <div className="flex items-center justify-between bg-card p-6 rounded-lg shadow-sm">
         <div>
           <h1 className="text-2xl font-bold mb-2">Teacher Attendance</h1>
-          <p className="text-muted-foreground">Mark and track teacher attendance</p>
+          <div className="flex items-center gap-4">
+            <p className="text-muted-foreground">Mark and track teacher attendance</p>
+            <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-md">
+              <span className="text-sm font-medium text-primary">Total Teachers:</span>
+              <span className="text-sm font-bold text-primary">{teachers?.length || 0}</span>
+            </div>
+          </div>
         </div>
         <div className="flex gap-4 items-center">
           <Popover>
