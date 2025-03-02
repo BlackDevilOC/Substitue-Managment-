@@ -1,4 +1,3 @@
-
 [
   {
     "name": "Sir Bakir Shah",
@@ -183,8 +182,7 @@
     "name": "Sir Jawad-ul-Haq",
     "phone": "+923153122161",
     "variations": [
-      "Sir Jawad-ul-Haq",
-      "sir jawad ul haq"
+      "Sir Jawad-ul-Haq"
     ]
   },
   {
@@ -292,7 +290,21 @@
     ]
   },
   {
-    "name": "Sir Irshad Ahmed",
+    "name": "sir jawad ul haq",
+    "phone": "",
+    "variations": [
+      "sir jawad ul haq"
+    ]
+  },
+  {
+    "name": "sir shabeer ahmedb",
+    "phone": "",
+    "variations": [
+      "sir shabeer ahmedb"
+    ]
+  },
+  {
+    "name": "sir irshad ahmed",
     "phone": "",
     "variations": [
       "sir irshad ahmed"

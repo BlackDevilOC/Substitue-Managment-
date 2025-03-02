@@ -4,11 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
@@ -26,9 +22,7 @@ interface AbsentTeacherData {
 
 export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [localAttendance, setLocalAttendance] = useState<
-    Record<number, string>
-  >({});
+  const [localAttendance, setLocalAttendance] = useState<Record<number, string>>({});
 
   const { data: teachers, isLoading: teachersLoading } = useQuery<Teacher[]>({
     queryKey: ["/api/teachers"],
@@ -36,20 +30,18 @@ export default function AttendancePage() {
 
   // Load attendance from local storage on mount and date change
   useEffect(() => {
-    const storedData = localStorage.getItem(
-      `attendance_${selectedDate.toISOString().split("T")[0]}`,
-    );
+    const storedData = localStorage.getItem(`attendance_${selectedDate.toISOString().split('T')[0]}`);
     if (storedData) {
       setLocalAttendance(JSON.parse(storedData));
     } else {
       const initialAttendance: Record<number, string> = {};
-      teachers?.forEach((teacher) => {
-        initialAttendance[teacher.id] = "present";
+      teachers?.forEach(teacher => {
+        initialAttendance[teacher.id] = 'present';
       });
       setLocalAttendance(initialAttendance);
       localStorage.setItem(
-        `attendance_${selectedDate.toISOString().split("T")[0]}`,
-        JSON.stringify(initialAttendance),
+        `attendance_${selectedDate.toISOString().split('T')[0]}`,
+        JSON.stringify(initialAttendance)
       );
     }
   }, [selectedDate, teachers]);
@@ -83,51 +75,40 @@ export default function AttendancePage() {
   });
 
   // Function to manage absent teachers in JSON file
-  const updateAbsentTeachersFile = async (
-    teacherId: number,
-    status: string,
-  ) => {
+  const updateAbsentTeachersFile = async (teacherId: number, status: string) => {
     try {
-      const dateStr = selectedDate.toISOString().split("T")[0];
+      const dateStr = selectedDate.toISOString().split('T')[0];
 
       // Get existing data from the JSON file
       let absentTeachers: AbsentTeacherData[] = [];
 
       try {
         // Try to load data from the server first
-        const response = await fetch(
-          "/client/src/data/absent_teacher_for_substitute.json",
-        );
+        const response = await fetch('/client/src/data/absent_teacher_for_substitute.json');
         if (response.ok) {
           absentTeachers = await response.json();
         }
       } catch (error) {
-        console.warn(
-          "Could not fetch from server, falling back to localStorage",
-        );
+        console.warn('Could not fetch from server, falling back to localStorage');
         // Fallback to localStorage if server fetch fails
-        const existingData = localStorage.getItem(
-          "absent_teacher_for_substitute",
-        );
+        const existingData = localStorage.getItem('absent_teacher_for_substitute');
         if (existingData) {
           absentTeachers = JSON.parse(existingData);
         }
       }
 
-      if (status === "absent") {
+      if (status === 'absent') {
         // Add teacher to absent list if not already present
-        const teacher = teachers?.find((t) => t.id === teacherId);
+        const teacher = teachers?.find(t => t.id === teacherId);
         if (!teacher) return;
 
         // Check if teacher is already in the list for this date
         const existingIndex = absentTeachers.findIndex(
-          (t) => t.teacherId === teacherId && t.date === dateStr,
+          t => t.teacherId === teacherId && t.date === dateStr
         );
 
         if (existingIndex === -1) {
-          const dayName = selectedDate
-            .toLocaleDateString("en-US", { weekday: "long" })
-            .toLowerCase();
+          const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
           const schedule = teacher.schedule as Record<string, number[]>;
           const periods = schedule[dayName] || [];
 
@@ -138,44 +119,35 @@ export default function AttendancePage() {
             date: dateStr,
             periods: periods.map((period, index) => ({
               period,
-              className: `Class ${index + 1}`,
-            })),
+              className: `Class ${index + 1}`
+            }))
           });
         }
       } else {
         // Remove teacher from absent list
         absentTeachers = absentTeachers.filter(
-          (t) => !(t.teacherId === teacherId && t.date === dateStr),
+          t => !(t.teacherId === teacherId && t.date === dateStr)
         );
       }
 
       // Save updated list to localStorage
-      localStorage.setItem(
-        "absent_teacher_for_substitute",
-        JSON.stringify(absentTeachers, null, 2),
-      );
+      localStorage.setItem('absent_teacher_for_substitute', JSON.stringify(absentTeachers, null, 2));
 
       // Try to update the actual file on the server
       try {
-        await apiRequest("POST", "/api/update-absent-teachers", {
-          absentTeachers,
-        });
+        await apiRequest("POST", "/api/update-absent-teachers", { absentTeachers });
       } catch (error) {
-        console.warn(
-          "Failed to update server file, changes stored locally",
-          error,
-        );
+        console.warn('Failed to update server file, changes stored locally', error);
       }
+
     } catch (error) {
-      console.error("Error updating absent teachers file:", error);
+      console.error('Error updating absent teachers file:', error);
     }
   };
 
   const exportAttendanceToExcel = () => {
     try {
-      const monthName = selectedDate.toLocaleString("default", {
-        month: "long",
-      });
+      const monthName = selectedDate.toLocaleString('default', { month: 'long' });
       const year = selectedDate.getFullYear();
 
       // Create a CSV string
@@ -183,46 +155,38 @@ export default function AttendancePage() {
 
       // Add headers - days of month
       csvContent += "Teacher Name,";
-      const daysInMonth = new Date(
-        selectedDate.getFullYear(),
-        selectedDate.getMonth() + 1,
-        0,
-      ).getDate();
+      const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
       for (let i = 1; i <= daysInMonth; i++) {
         csvContent += `${i},`;
       }
       csvContent += "Total Present,Total Absent\n";
 
       // Add data for each teacher
-      teachers?.forEach((teacher) => {
+      teachers?.forEach(teacher => {
         csvContent += `${teacher.name},`;
 
         let presentCount = 0;
         let absentCount = 0;
 
         for (let i = 1; i <= daysInMonth; i++) {
-          const checkDate = new Date(
-            selectedDate.getFullYear(),
-            selectedDate.getMonth(),
-            i,
-          );
-          const dateStr = checkDate.toISOString().split("T")[0];
+          const checkDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), i);
+          const dateStr = checkDate.toISOString().split('T')[0];
           const storageKey = `attendance_${dateStr}`;
           const attendanceData = localStorage.getItem(storageKey);
 
           if (attendanceData) {
             const attendance = JSON.parse(attendanceData);
-            const status = attendance[teacher.id] || "present";
+            const status = attendance[teacher.id] || 'present';
 
-            if (status === "present") {
-              csvContent += "P,";
+            if (status === 'present') {
+              csvContent += 'P,';
               presentCount++;
             } else {
-              csvContent += "A,";
+              csvContent += 'A,';
               absentCount++;
             }
           } else {
-            csvContent += ","; // No data for this day
+            csvContent += ','; // No data for this day
           }
         }
 
@@ -236,21 +200,20 @@ export default function AttendancePage() {
       console.log(`Attendance exported to ${fileName}`);
 
       // Create a download link (works in browser environment)
-      if (typeof window !== "undefined") {
-        const blob = new Blob([csvContent], {
-          type: "text/csv;charset=utf-8;",
-        });
+      if (typeof window !== 'undefined') {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", fileName);
-        link.style.visibility = "hidden";
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', fileName);
+        link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
       }
+
     } catch (error) {
-      console.error("Error exporting attendance to Excel:", error);
+      console.error('Error exporting attendance to Excel:', error);
     }
   };
 
@@ -268,8 +231,8 @@ export default function AttendancePage() {
         [teacherId]: status,
       };
       localStorage.setItem(
-        `attendance_${selectedDate.toISOString().split("T")[0]}`,
-        JSON.stringify(newLocalAttendance),
+        `attendance_${selectedDate.toISOString().split('T')[0]}`,
+        JSON.stringify(newLocalAttendance)
       );
       setLocalAttendance(newLocalAttendance);
 
@@ -301,7 +264,7 @@ export default function AttendancePage() {
       });
     },
     onError: (error: Error) => {
-      console.error("Error marking attendance:", error);
+      console.error('Error marking attendance:', error);
     },
   });
 
@@ -318,9 +281,7 @@ export default function AttendancePage() {
       <div className="flex items-center justify-between bg-card p-6 rounded-lg shadow-sm">
         <div>
           <h1 className="text-2xl font-bold mb-2">Teacher Attendance</h1>
-          <p className="text-muted-foreground">
-            Mark and track teacher attendance
-          </p>
+          <p className="text-muted-foreground">Mark and track teacher attendance</p>
         </div>
         <div className="flex gap-4 items-center">
           <Popover>
@@ -345,23 +306,23 @@ export default function AttendancePage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {teachers?.map((teacher) => {
-          const status = localAttendance[teacher.id] || "present";
-          const isAbsent = status === "absent";
+          const status = localAttendance[teacher.id] || 'present';
+          const isAbsent = status === 'absent';
           const isPending = markAttendanceMutation.isPending;
 
           return (
             <Card
               key={teacher.id}
               className={`relative cursor-pointer transition-colors ${
-                isPending ? "opacity-50" : ""
+                isPending ? 'opacity-50' : ''
               } ${
-                isAbsent ? "bg-red-50 hover:bg-red-100" : "hover:bg-gray-50"
+                isAbsent ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'
               }`}
               onClick={() => {
                 if (!isPending) {
                   markAttendanceMutation.mutate({
                     teacherId: teacher.id,
-                    status: isAbsent ? "present" : "absent",
+                    status: isAbsent ? 'present' : 'absent',
                   });
                 }
               }}
@@ -376,18 +337,14 @@ export default function AttendancePage() {
                   )}
                 </div>
                 <div className="flex items-center justify-between">
-                  <span
-                    className={`text-sm font-medium ${
-                      isAbsent ? "text-red-600" : "text-green-600"
-                    }`}
-                  >
-                    {isAbsent ? "Absent" : "Present"}
+                  <span className={`text-sm font-medium ${
+                    isAbsent ? 'text-red-600' : 'text-green-600'
+                  }`}>
+                    {isAbsent ? 'Absent' : 'Present'}
                   </span>
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      isAbsent ? "bg-red-500" : "bg-green-500"
-                    }`}
-                  />
+                  <div className={`w-3 h-3 rounded-full ${
+                    isAbsent ? 'bg-red-500' : 'bg-green-500'
+                  }`} />
                 </div>
               </CardContent>
             </Card>
