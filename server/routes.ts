@@ -366,34 +366,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Endpoint to load teachers from total_teacher.json
-  app.get('/api/load-total-teachers', (req, res) => {
-    try {
-      const filePath = path.join(__dirname, '../data/total_teacher.json');
-      
-      // Check if file exists
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: 'Total teacher file not found' });
-      }
-      
-      // Read file
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      const totalTeachers = JSON.parse(fileContent);
-      
-      // Map the teachers to the expected format
-      const teachers = totalTeachers.map((teacher: any, index: number) => ({
-        id: index + 1,
-        name: teacher.name,
-        phoneNumber: teacher.phone || ''
-      }));
-      
-      res.json(teachers);
-    } catch (error) {
-      console.error('Error reading total teacher file:', error);
-      res.status(500).json({ error: 'Failed to read total teacher file' });
-    }
-  });
-
   app.post('/api/update-absent-teachers-file', (req, res) => {
     try {
       const { teacherName, isAbsent } = req.body;
