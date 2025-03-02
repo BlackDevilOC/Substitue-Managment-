@@ -43,22 +43,41 @@ export default function AttendancePage() {
     queryKey: ["/api/teachers"],
   });
 
-  // Load teachers from CSV when component mounts if needed
+  // Load teachers from total_teacher.json when component mounts
   useEffect(() => {
-    const loadTeachersFromCSV = async () => {
+    const loadTeachersFromTotalFile = async () => {
       try {
-        console.log("Loading teachers from CSV files");
-        const response = await fetch("/api/load-teachers-from-csv", {
-          method: "POST",
-        });
+        console.log("Loading teachers from total_teacher.json");
+        const response = await fetch("/api/load-total-teachers");
 
         if (response.ok) {
-          const result = await response.json();
-          console.log(`Loaded ${result.teachers?.length || 0} teachers from CSV files`);
-
-          if (result.success) {
-            // Refresh the teachers list after loading from CSV
-            refetchTeachers();
+          const teachers = await response.json();
+          console.log(`Loaded ${teachers?.length || 0} teachers from total_teacher.json`);
+          
+          // Update teachers in storage
+          await apiRequest("POST", "/api/import/teachers", teachers);
+          
+          // Refresh the teachers list
+          refetchTeachers();
+          
+          toast({
+            title: "Teachers loaded",
+            description: `Successfully loaded ${teachers.length} teachers from total_teacher.json`,
+          });
+        } else {
+          // Fallback to CSV if total_teacher.json fails
+          console.log("Fallback to CSV teachers");
+          const csvResponse = await fetch("/api/load-teachers-from-csv", {
+            method: "POST",
+          });
+          
+          if (csvResponse.ok) {
+            const result = await csvResponse.json();
+            console.log(`Loaded ${result.teachers?.length || 0} teachers from CSV files`);
+            
+            if (result.success) {
+              // Refresh the teachers list after loading from CSV
+              refetchTeachers();
 
             // Reset the attendance for today to account for any new teachers
             const todayKey = new Date().toISOString().split("T")[0];
@@ -70,11 +89,34 @@ export default function AttendancePage() {
       }
     };
 
-    // Check if teachers data is empty before trying to load from CSV
-    if (teachers && teachers.length === 0) {
-      loadTeachersFromCSV();
     }
-  }, [teachers, refetchTeachers]);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load teachers:", error);
+        // Fallback to CSV on error
+        try {
+          const response = await fetch("/api/load-teachers-from-csv", {
+            method: "POST",
+          });
+          
+          if (response.ok) {
+            await refetchTeachers();
+          }
+        } catch (csvError) {
+          console.error("Failed to load teachers from CSV as fallback:", csvError);
+        }
+      }
+    };
+
+    // Always load teachers on mount to ensure we have the latest data
+    loadTeachersFromTotalFile();
+    
+    // Also set up a refresh interval to check for updates
+    const refreshInterval = setInterval(loadTeachersFromTotalFile, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(refreshInterval);
+  }, [refetchTeachers]);
 
   // Load attendance from local storage on mount and date change
   useEffect(() => {
@@ -408,9 +450,25 @@ export default function AttendancePage() {
               try {
                 toast({
                   title: "Loading teachers",
-                  description: "Please wait while teachers are loaded from CSV...",
+                  description: "Please wait while teachers are loaded...",
                 });
 
+                // Try to load from total_teacher.json first
+                const totalResponse = await fetch("/api/load-total-teachers");
+                
+                if (totalResponse.ok) {
+                  const teachers = await totalResponse.json();
+                  await apiRequest("POST", "/api/import/teachers", teachers);
+                  await refetchTeachers();
+                  
+                  toast({
+                    title: "Teachers loaded",
+                    description: `Successfully loaded ${teachers.length} teachers from total_teacher.json`,
+                  });
+                  return;
+                }
+                
+                // Fallback to CSV if total_teacher.json fails
                 const response = await fetch("/api/load-teachers-from-csv", {
                   method: "POST",
                 });
