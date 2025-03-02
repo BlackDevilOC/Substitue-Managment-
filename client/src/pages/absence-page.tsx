@@ -270,35 +270,39 @@ export default function AttendancePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between bg-card p-6 rounded-lg shadow-sm">
-        <div>
-          <h1 className="text-2xl font-bold mb-2">Teacher Attendance</h1>
-          <div className="flex items-center gap-4">
-            <p className="text-muted-foreground">Mark and track teacher attendance</p>
-            <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-md">
-              <span className="text-sm font-medium text-primary">Total Teachers:</span>
-              <span className="text-sm font-bold text-primary">{teachers?.length || 0}</span>
-            </div>
+      <div className="bg-card p-6 rounded-lg shadow-sm space-y-4">
+        <h1 className="text-3xl font-bold text-center">Teacher Attendance</h1>
+
+        <div className="flex justify-center items-center gap-2 py-2">
+          <div className="px-4 py-2 bg-primary/10 rounded-md">
+            <span className="text-sm font-medium text-primary">Total Teachers:</span>
+            <span className="text-sm font-bold text-primary ml-2">{teachers?.length || 0}</span>
           </div>
         </div>
-        <div className="flex gap-4 items-center">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="min-w-[140px]">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {format(selectedDate, "PPP")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-          <Button onClick={exportAttendanceToExcel}>Export to Excel</Button>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-muted-foreground text-center sm:text-left">
+            Mark and track teacher attendance
+          </p>
+          <div className="flex gap-4 items-center">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="min-w-[140px]">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {format(selectedDate, "PPP")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <Button onClick={exportAttendanceToExcel}>Export to Excel</Button>
+          </div>
         </div>
       </div>
 
