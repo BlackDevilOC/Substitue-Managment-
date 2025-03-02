@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Teacher } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,12 +11,11 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { defaultTeachers } from "@/data/teachers";
-import { findTeacherSchedule } from "@/utils/processTeacherData";
 
 interface AbsentTeacherData {
   teacherId: number;
   teacherName: string;
-  phone?: string;
+  phoneNumber?: string;
   date: string;
   periods: Array<{ period: number; className: string }>;
 }
@@ -84,7 +84,7 @@ export default function AttendancePage() {
 
       try {
         // Try to load data from the server first
-        const response = await fetch('/client/src/data/absent_teacher_for_substitute.json');
+        const response = await fetch('/api/absent-teachers');
         if (response.ok) {
           absentTeachers = await response.json();
         }
@@ -109,18 +109,13 @@ export default function AttendancePage() {
 
         if (existingIndex === -1) {
           const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-          const schedule = teacher.schedule as Record<string, number[]>;
-          const periods = schedule[dayName] || [];
 
           absentTeachers.push({
             teacherId: teacher.id,
             teacherName: teacher.name,
-            phone: teacher.phone,
+            phoneNumber: teacher.phoneNumber,
             date: dateStr,
-            periods: periods.map((period, index) => ({
-              period,
-              className: `Class ${index + 1}`
-            }))
+            periods: [] // Will be populated by the backend
           });
         }
       } else {
@@ -197,20 +192,17 @@ export default function AttendancePage() {
       const fileName = `attendance_${monthName}_${year}.csv`;
       localStorage.setItem(`attendance_excel_${monthName}_${year}`, csvContent);
 
-      console.log(`Attendance exported to ${fileName}`);
-
-      // Create a download link (works in browser environment)
-      if (typeof window !== 'undefined') {
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', fileName);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
+      // Create a download link
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', fileName);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
     } catch (error) {
       console.error('Error exporting attendance to Excel:', error);
@@ -330,9 +322,9 @@ export default function AttendancePage() {
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold">{teacher.name}</h3>
-                  {teacher.phone && (
+                  {teacher.phoneNumber && (
                     <span className="text-sm text-muted-foreground">
-                      📱 {teacher.phone}
+                      📱 {teacher.phoneNumber}
                     </span>
                   )}
                 </div>
