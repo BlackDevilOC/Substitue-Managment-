@@ -18,25 +18,14 @@ const upload = multer({
 });
 
 const checkAuth = (req: any, res: any, next: any) => {
-  // List of public paths that don't require authentication
   const publicPaths = [
     '/api/update-absent-teachers-file',
     '/api/get-absent-teachers',
     '/api/update-absent-teachers',
-    '/api/attendance',
-    '/api/teachers',
-    '/api/refresh-teachers',
-    '/api/schedule',
-    '/api/absences',
-    '/api/current-day',
-    '/api/substitute-assignments',
-    '/api/auto-assign-substitutes',
-    '/api/reset-assignments',
-    '/api/period-config'
+    '/api/attendance'
   ];
   
-  // Check if the path starts with any of the public paths
-  if (publicPaths.some(path => req.path === path || req.path.startsWith(`${path}/`))) {
+  if (publicPaths.includes(req.path)) {
     return next();
   }
   
@@ -390,46 +379,3 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   return httpServer;
 }
-
-  app.get('/api/period-config', (req, res) => {
-    try {
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const filePath = path.join(__dirname, '../data/period_config.json');
-
-      if (!fs.existsSync(filePath)) {
-        // Create a default configuration if the file doesn't exist
-        const defaultConfig = [
-          { periodNumber: 1, startTime: "08:00", endTime: "09:00" }
-        ];
-        fs.writeFileSync(filePath, JSON.stringify(defaultConfig, null, 2));
-        return res.json(defaultConfig);
-      }
-
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      const periodConfig = JSON.parse(fileContent);
-      res.json(periodConfig);
-    } catch (error) {
-      console.error('Error reading period configuration file:', error);
-      res.status(500).json({ error: 'Failed to read period configuration file' });
-    }
-  });
-  
-  app.post('/api/period-config', (req, res) => {
-    try {
-      const { periods } = req.body;
-      if (!Array.isArray(periods)) {
-        return res.status(400).json({ error: 'Invalid period configuration format' });
-      }
-      
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const filePath = path.join(__dirname, '../data/period_config.json');
-      
-      fs.writeFileSync(filePath, JSON.stringify(periods, null, 2));
-      res.json({ success: true, message: 'Period configuration saved successfully' });
-    } catch (error) {
-      console.error('Error saving period configuration:', error);
-      res.status(500).json({ error: 'Failed to save period configuration' });
-    }
-  });

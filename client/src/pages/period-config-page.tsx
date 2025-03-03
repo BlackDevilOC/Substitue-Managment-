@@ -18,7 +18,7 @@ export default function PeriodConfigPage() {
   useEffect(() => {
     const loadPeriodConfig = async () => {
       try {
-        // Try to load from the server
+        // Try to load from the server first
         const response = await fetch('/api/period-config');
         if (response.ok) {
           const serverPeriods = await response.json();
@@ -28,7 +28,7 @@ export default function PeriodConfigPage() {
           return;
         }
       } catch (error) {
-        console.warn('Could not fetch from server, falling back to localStorage', error);
+        console.warn('Could not fetch from server, falling back to localStorage');
       }
 
       // Fall back to localStorage if server is unavailable
@@ -45,66 +45,6 @@ export default function PeriodConfigPage() {
 
     loadPeriodConfig();
   }, []);
-  
-  const updatePeriod = (index: number, field: keyof PeriodConfig, value: string | number) => {
-    const newPeriods = [...periods];
-    newPeriods[index] = { ...newPeriods[index], [field]: value };
-    setPeriods(newPeriods);
-    savePeriods(newPeriods);
-  };
-
-  const addPeriod = () => {
-    const newPeriod: PeriodConfig = {
-      periodNumber: periods.length + 1,
-      startTime: "09:00",
-      endTime: "10:00"
-    };
-    const newPeriods = [...periods, newPeriod];
-    setPeriods(newPeriods);
-    savePeriods(newPeriods);
-  };
-
-  const removePeriod = (index: number) => {
-    if (periods.length <= 1) {
-      toast({
-        title: "Cannot remove",
-        description: "You must have at least one period",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const newPeriods = periods.filter((_, i) => i !== index).map((period, i) => ({
-      ...period,
-      periodNumber: i + 1
-    }));
-    
-    setPeriods(newPeriods);
-    savePeriods(newPeriods);
-  };
-
-  const savePeriods = async (periodsToSave: PeriodConfig[]) => {
-    // Save to localStorage first as a backup
-    localStorage.setItem('period_config', JSON.stringify(periodsToSave));
-    
-    // Then try to save to the server
-    try {
-      const response = await fetch('/api/period-config', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ periods: periodsToSave })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to save to server');
-      }
-    } catch (error) {
-      console.error('Error saving to server:', error);
-      // Don't show toast to avoid spamming the user since this happens on every change
-    }
-  };
 
   const addPeriod = () => {
     const lastPeriod = periods[periods.length - 1];
