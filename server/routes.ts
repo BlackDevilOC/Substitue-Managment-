@@ -330,31 +330,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Make data files directly accessible
-  app.get("/data/:filename", (req, res) => {
-    try {
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const filePath = path.join(__dirname, '../data', req.params.filename);
-      
-      if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: "File not found" });
-      }
-      
-      if (req.params.filename.endsWith('.csv')) {
-        res.setHeader('Content-Type', 'text/csv');
-      } else if (req.params.filename.endsWith('.json')) {
-        res.setHeader('Content-Type', 'application/json');
-      }
-      
-      const fileContent = fs.readFileSync(filePath);
-      res.send(fileContent);
-    } catch (error) {
-      console.error('Error accessing file:', error);
-      res.status(500).json({ error: 'Error accessing file' });
-    }
-  });
-
   // File upload endpoints
   app.post("/api/upload/timetable", upload.single('file'), async (req, res) => {
     try {
