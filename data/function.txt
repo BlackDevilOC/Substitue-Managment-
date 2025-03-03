@@ -1,0 +1,111 @@
+function findSubstitute(
+    day: string,
+    period: number,
+    absentTeacher: string,
+    timetable: Map<string, Map<number, string[]>>,
+    substitutes: { name: string, phone: string }[],
+    totalTeachers: { name: string, phone: string, variations: string[], grades: number[] }[], // Added grades
+    busyTeachers: Map<string, number>,
+    classToTeach: string
+): { name: string, phone: string } | null {
+    // Extract class grade (e.g., "6A" → 6)
+    const gradeMatch = classToTeach.match(/^(\d+)/);
+    const classGrade = gradeMatch ? parseInt(gradeMatch[1]) : 0;
+
+    // Step 1: Get period teachers and validate absent teacher
+    const periodTeachers = timetable.get(day)?.get(period) || [];
+    if (!periodTeachers.some(t => t.toLowerCase() === absentTeacher.toLowerCase())) {
+        console.error("Absent teacher is not scheduled for this period.");
+        return null;
+    }
+
+    // Step 2: Get substitutes not teaching in this period
+    const substitutesNotTeaching = substitutes.filter(sub =>
+        !periodTeachers.some(t => t.toLowerCase() === sub.name.toLowerCase())
+    );
+
+    // Step 3: Filter substitutes by busy count (<3)
+    let candidates = substitutesNotTeaching.filter(sub => {
+        const busyCount = busyTeachers.get(sub.name.toLowerCase()) || 0;
+        return busyCount < 3;
+    });
+
+    // Fallback to busy substitutes if no candidates
+    if (candidates.length === 0) {
+        candidates = substitutesNotTeaching;
+    }
+
+    // Step 4: Class grade filtering (6-8)
+    if (classGrade >= 6 && classGrade <= 8) {
+        const allowedSubstitutes = candidates.filter(sub => {
+            const teacher = totalTeachers.find(t => t.name.toLowerCase() === sub.name.toLowerCase());
+            return teacher?.grades.some(g => g >= 6 && g <= 8);
+        });
+        if (allowedSubstitutes.length > 0) candidates = allowedSubstitutes;
+    }
+
+    // Step 5: Select and verify substitute
+    for (const sub of candidates) {
+        if (verifySubstitute(sub, day, period, classToTeach, timetable, totalTeachers, busyTeachers)) {
+            return sub;
+        }
+    }
+
+    console.log("No valid substitutes found.");
+    return null;
+}
+
+// Verification functions
+function verifySubstitute(
+    sub: { name: string, phone: string },
+    day: string,
+    period: number,
+    classToTeach: string,
+    timetable: Map<string, Map<number, string[]>>,
+    totalTeachers: { name: string, grades: number[] }[],
+    busyTeachers: Map<string, number>
+): boolean {
+    // Check 1: Not overbooked (if possible)
+    const busyCount = busyTeachers.get(sub.name.toLowerCase()) || 0;
+    if (busyCount >= 3) {
+        console.log(`Substitute ${sub.name} is busy (${busyCount} periods).`);
+    }
+
+    // Check 2: Can teach the class grade
+    const teacher = totalTeachers.find(t => t.name.toLowerCase() === sub.name.toLowerCase());
+    if (!teacher) {
+        console.log("Teacher not found in records.");
+        return false;
+    }
+    const classGrade = parseInt(classToTeach.match(/^(\d+)/)?.[1] || '0');
+    if (classGrade >= 6 && classGrade <= 8 && !teacher.grades.some(g => g >= 6 && g <= 8)) {
+        console.log(`Substitute ${sub.name} cannot teach 6-8 classes.`);
+        return false;
+    }
+
+    // Check 3: Not in timetable for this period
+    const periodTeachers = timetable.get(day)?.get(period) || [];
+    if (periodTeachers.some(t => t.toLowerCase() === sub.name.toLowerCase())) {
+        console.log(`Substitute ${sub.name} is already teaching this period.`);
+        return false;
+    }
+
+    return true;
+}
+
+// Updated mock data with grades
+const totalTeachers = [
+    { 
+        name: "Sir Bakir Shah", 
+        phone: "+923156103995", 
+        variations: ["Sir Bakir Shah", "sir bakir Shah", "sir bakir shah"],
+        grades: [9, 10] 
+    },
+    { 
+        name: "Sir Mushtaque Ahmed", 
+        phone: "", 
+        variations: ["Sir Mushtaque Ahmed", "sir mushtaque ahmed", "Sir mushtaque ahmed"],
+        grades: [9, 10] 
+    },
+    // Add other teachers with their respective grades
+];
