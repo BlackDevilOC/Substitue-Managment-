@@ -17,10 +17,41 @@ const upload = multer({
   }
 });
 
-// Simplified middleware that allows all requests without authentication
 const checkAuth = (req: any, res: any, next: any) => {
-  // Allow all requests to pass through
-  return next();
+  const publicPaths = [
+    '/api/update-absent-teachers-file',
+    '/api/get-absent-teachers',
+    '/api/update-absent-teachers',
+    '/api/attendance',
+    '/api/upload/timetable',
+    '/api/upload/substitutes'
+  ];
+  
+  if (publicPaths.includes(req.path) || req.replitUser) {
+    return next();
+  }
+  
+  // Check for session-based authentication
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  
+  // Check for Bearer token auth as a fallback
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const token = authHeader.split(' ')[1];
+      const user = JSON.parse(token);
+      if (user.username === 'Rehan') {
+        req.user = user;
+        return next();
+      }
+    } catch (error) {
+      console.error("Auth error:", error);
+    }
+  }
+  
+  return res.status(401).json({ error: "Unauthorized" });
 };
 
 async function processAndSaveTeachers(timetableContent?: string, substituteContent?: string) {
