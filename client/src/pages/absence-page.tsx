@@ -289,20 +289,9 @@ export default function AttendancePage() {
                   description: "Extracting and processing teacher data...",
                 });
                 
-                // Call API to refresh teacher data
-                const response = await fetch("/api/refresh-teachers", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${localStorage.getItem("token")}`
-                  }
-                });
-                
+                // Call API to refresh teacher data using apiRequest helper
+                const response = await apiRequest("POST", "/api/refresh-teachers");
                 const result = await response.json();
-                
-                if (!response.ok) {
-                  throw new Error(result.message || "Failed to refresh teacher data");
-                }
                 
                 // Refresh the data in the UI
                 queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
