@@ -27,12 +27,18 @@ const checkAuth = (req: any, res: any, next: any) => {
     '/api/upload/substitutes'
   ];
   
-  if (publicPaths.includes(req.path) || req.replitUser) {
+  // Always allow these paths regardless of authentication
+  if (publicPaths.includes(req.path)) {
+    return next();
+  }
+
+  // Check for Replit user if available
+  if (req.replitUser) {
     return next();
   }
   
-  // Check for session-based authentication
-  if (req.isAuthenticated()) {
+  // Check for session-based authentication safely
+  if (typeof req.isAuthenticated === 'function' && req.isAuthenticated()) {
     return next();
   }
   
