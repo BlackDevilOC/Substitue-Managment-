@@ -12,7 +12,7 @@ import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
 import { defaultTeachers } from "@/data/teachers";
 import { useAuth } from "@/hooks/use-auth";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 
 interface AbsentTeacherData {
   teacherId: number;
@@ -26,19 +26,19 @@ export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [localAttendance, setLocalAttendance] = useState<Record<number, string>>({});
   const { user, isLoading: authLoading } = useAuth();
-  const [, navigate] = useNavigate();
+  const [, setLocation] = useLocation();
 
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth");
+      setLocation("/auth");
       toast({
         title: "Authentication required",
         description: "Please log in to access this page",
         variant: "destructive",
       });
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, setLocation]);
 
   const { data: teachers, isLoading: teachersLoading } = useQuery<Teacher[]>({
     queryKey: ["/api/teachers"],
@@ -273,7 +273,7 @@ export default function AttendancePage() {
     onError: (error: Error) => {
       console.error('Error marking attendance:', error);
       if (error.message === "Not authenticated") {
-        navigate("/auth");
+        setLocation("/auth");
       }
     },
   });
