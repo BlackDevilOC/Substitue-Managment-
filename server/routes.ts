@@ -153,8 +153,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/schedule/:day", async (req, res) => {
-    const schedule = await storage.getSchedulesByDay(req.params.day);
-    res.json(schedule);
+    try {
+      // First try to get data from storage
+      const schedule = await storage.getSchedulesByDay(req.params.day);
+      
+      if (schedule && schedule.length > 0) {
+        return res.json(schedule);
+      }
+      
+      // If no data in storage or empty, load directly from timetable file
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const timetablePath = path.join(__dirname, '../data/timetable_file.csv');
+      
+      if (!fs.existsSync(timetablePath)) {
+        return res.status(404).json({ error: "Timetable file not found" });
+      }
+      
+      const fileContent = fs.readFileSync(timetablePath, 'utf-8');
+      const records = parse(fileContent, {
+        columns: false,
+        skip_empty_lines: true,
+        trim: true
+      });
+      
+      const normalizedDay = req.params.day.toLowerCase();
+      const daySchedule = [];
+      const teachersList = await storage.getTeachers();
+      
+      // Skip header row
+      const header = records[0];
+      const classes = header.slice(2); // Get class names from header
+      
+      for (let i = 1; i < records.length; i++) {
+        const row = records[i];
+        const rowDay = row[0]?.toLowerCase()?.trim();
+        
+        // Only process rows matching the requested day
+        if (rowDay === normalizedDay) {
+          const period = parseInt(row[1]);
+          
+          if (!isNaN(period)) {
+            // For each class column
+            for (let j = 2; j < row.length; j++) {
+              if (j - 2 < classes.length) {
+                const teacherName = row[j]?.trim();
+                const className = classes[j - 2];
+                
+                if (teacherName && teacherName.toLowerCase() !== 'empty') {
+                  // Find or create a teacher entry
+                  let teacher = teachersList.find(t => 
+                    t.name.toLowerCase() === teacherName.toLowerCase());
+                  
+                  if (!teacher) {
+                    // If teacher not found in our list, create a temporary entry
+                    teacher = { 
+                      id: j * 1000 + i, // Generate a temporary unique ID
+                      name: teacherName,
+                      isSubstitute: false,
+                      phoneNumber: null
+                    };
+                  }
+                  
+                  daySchedule.push({
+                    id: i * 100 + j, // Generate a unique ID for the schedule entry
+                    day: normalizedDay,
+                    period,
+                    teacherId: teacher.id,
+                    className
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      res.json(daySchedule);
+    } catch (error) {
+      console.error('Error loading schedule from file:', error);
+      res.status(500).json({ error: 'Failed to load schedule data' });
+    }
   });
 
   app.post("/api/override-day", async (req, res) => {

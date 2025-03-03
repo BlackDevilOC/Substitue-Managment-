@@ -8,7 +8,7 @@ import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 // Type definitions for better type safety
 interface Teacher {
@@ -65,11 +65,15 @@ export default function HomePage() {
   }, []);
 
   // Queries with proper type definitions and error handling
-  const { data: currentSchedule, isLoading: loadingSchedule } = useQuery({
+  const { data: currentSchedule, isLoading: loadingSchedule, refetch: refetchSchedule } = useQuery({
     queryKey: ["/api/schedule", currentDay],
-    refetchInterval: 30000, // Refetch every 30 seconds
+    enabled: !!currentDay,
     retry: 3,
+    refetchOnMount: "always", // Always refetch when component mounts
+    refetchOnWindowFocus: true, // Refetch when window gets focus
+    staleTime: 0, // Data is considered stale immediately
     queryFn: async () => {
+      if (!currentDay) return [];
       const res = await apiRequest('GET', `/api/schedule/${currentDay}`);
       if (!res.ok) {
         const error = await res.json();
@@ -85,6 +89,11 @@ export default function HomePage() {
       });
     }
   });
+
+  // Effect to refetch data when the component mounts
+  useEffect(() => {
+    refetchSchedule();
+  }, [refetchSchedule]);
 
   const { data: absences, isLoading: loadingAbsences } = useQuery({
     queryKey: ["/api/absences"],
@@ -289,7 +298,7 @@ export default function HomePage() {
     uploadSubstitutesMutation.mutate(file);
   };
 
-  // Rest of the component remains unchanged...
+
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
       {/* Header Section */}
@@ -310,41 +319,6 @@ export default function HomePage() {
         </Button>
       </div>
 
-      {/* Upload Card */}
-      <Card className="col-span-1 sm:col-span-2">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-            <Upload className="h-5 w-5" />
-            Upload Files
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Input
-              type="file"
-              accept=".csv"
-              onChange={handleTimetableUpload}
-              disabled={uploadTimetableMutation.isPending}
-              className="text-sm"
-            />
-            <p className="text-xs text-muted-foreground">
-              Upload timetable CSV
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Input
-              type="file"
-              accept=".csv"
-              onChange={handleSubstitutesUpload}
-              disabled={uploadSubstitutesMutation.isPending}
-              className="text-sm"
-            />
-            <p className="text-xs text-muted-foreground">
-              Upload substitute teachers CSV
-            </p>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
