@@ -22,30 +22,36 @@ const checkAuth = (req: any, res: any, next: any) => {
     '/api/update-absent-teachers-file',
     '/api/get-absent-teachers',
     '/api/update-absent-teachers',
-    '/api/attendance'
+    '/api/attendance',
+    '/api/upload/timetable',
+    '/api/upload/substitutes'
   ];
   
-  if (publicPaths.includes(req.path)) {
+  if (publicPaths.includes(req.path) || req.replitUser) {
     return next();
   }
   
+  // Check for session-based authentication
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  
+  // Check for Bearer token auth as a fallback
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
-  try {
-    const token = authHeader.split(' ')[1];
-    const user = JSON.parse(token);
-    if (user.username === 'Rehan') {
-      req.user = user;
-      next();
-    } else {
-      res.status(401).json({ error: "Unauthorized" });
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const token = authHeader.split(' ')[1];
+      const user = JSON.parse(token);
+      if (user.username === 'Rehan') {
+        req.user = user;
+        return next();
+      }
+    } catch (error) {
+      console.error("Auth error:", error);
     }
-  } catch (error) {
-    res.status(401).json({ error: "Unauthorized" });
   }
+  
+  return res.status(401).json({ error: "Unauthorized" });
 };
 
 async function processAndSaveTeachers(timetableContent?: string, substituteContent?: string) {
@@ -236,6 +242,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Get substitute assignments error:', error);
       res.status(500).json({ message: "Failed to get substitute assignments" });
+    }
+  });
+  
+  // File upload endpoints
+  app.post("/api/upload/timetable", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      
+      const csvString = req.file.buffer.toString('utf8');
+      
+      // Process timetable CSV and update database
+      const { schedules, count } = await processTimetableCSV(csvString);
+      
+      // Save file to disk for future reference
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/timetable_file.csv');
+      fs.writeFileSync(filePath, csvString);
+      
+      // Process and save teachers
+      await processAndSaveTeachers(csvString);
+      
+      res.json({ 
+        message: "Timetable uploaded successfully", 
+        schedulesCreated: count 
+      });
+    } catch (error) {
+      console.error('Error uploading timetable:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  app.post("/api/upload/substitutes", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      
+      const csvString = req.file.buffer.toString('utf8');
+      
+      // Process substitute CSV and update database
+      const { teachers, count } = await processSubstituteCSV(csvString);
+      
+      // Save file to disk for future reference
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/Substitude_file.csv');
+      fs.writeFileSync(filePath, csvString);
+      
+      // Process and save all teachers
+      await processAndSaveTeachers(undefined, csvString);
+      
+      res.json({ 
+        message: "Substitute teachers uploaded successfully", 
+        teachersCreated: count 
+      });
+    } catch (error) {
+      console.error('Error uploading substitutes:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
