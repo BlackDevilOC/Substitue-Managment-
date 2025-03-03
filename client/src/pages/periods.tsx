@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Save, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 interface PeriodConfig {
   periodNumber: number;
@@ -14,6 +15,8 @@ interface PeriodConfig {
 export default function PeriodConfigPage() {
   const [periods, setPeriods] = useState<PeriodConfig[]>([]);
   const { toast } = useToast();
+  const currentTime = new Date();
+  const currentTimeStr = format(currentTime, 'HH:mm');
 
   useEffect(() => {
     const loadPeriodConfig = async () => {
@@ -45,6 +48,15 @@ export default function PeriodConfigPage() {
 
     loadPeriodConfig();
   }, []);
+
+  const getCurrentPeriod = () => {
+    for (let i = 0; i < periods.length; i++) {
+      if (currentTimeStr >= periods[i].startTime && currentTimeStr <= periods[i].endTime) {
+        return i + 1;
+      }
+    }
+    return null;
+  };
 
   const addPeriod = () => {
     const lastPeriod = periods[periods.length - 1];
@@ -84,7 +96,7 @@ export default function PeriodConfigPage() {
     try {
       // Save to localStorage
       localStorage.setItem('period_config', JSON.stringify(periods));
-      
+
       // Try to save to server
       const response = await fetch('/api/period-config', {
         method: 'POST',
@@ -112,44 +124,66 @@ export default function PeriodConfigPage() {
     }
   };
 
+  const currentPeriod = getCurrentPeriod();
+
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto p-4 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Period Configuration</h1>
-        <div className="space-x-2">
-          <Button onClick={addPeriod}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Period
-          </Button>
-          <Button onClick={handleSave}>
-            <Save className="h-4 w-4 mr-2" />
-            Save Changes
-          </Button>
+        <div className="text-sm text-muted-foreground">
+          {format(new Date(), "EEEE, MMMM d")}
         </div>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Current Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-lg font-medium">
+            {currentPeriod 
+              ? `Period ${currentPeriod} is in progress`
+              : "No period is currently active"
+            }
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Current time: {format(currentTime, "HH:mm")}
+          </p>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end space-x-2">
+        <Button onClick={addPeriod}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Period
+        </Button>
+        <Button onClick={handleSave}>
+          <Save className="h-4 w-4 mr-2" />
+          Save Changes
+        </Button>
       </div>
 
       <div className="grid gap-4">
         {periods.map((period, index) => (
-          <Card key={index}>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg">Period {period.periodNumber}</CardTitle>
+          <Card key={index} className={currentPeriod === period.periodNumber ? "border-primary" : ""}>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Period {period.periodNumber}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <label className="text-sm font-medium mb-1 block">
-                    Start Time
-                  </label>
+                <div className="flex-1 space-y-1">
+                  <label className="text-sm font-medium">Start Time</label>
                   <Input
                     type="time"
                     value={period.startTime}
                     onChange={(e) => updatePeriod(index, "startTime", e.target.value)}
                   />
                 </div>
-                <div className="flex-1">
-                  <label className="text-sm font-medium mb-1 block">
-                    End Time
-                  </label>
+                <div className="flex-1 space-y-1">
+                  <label className="text-sm font-medium">End Time</label>
                   <Input
                     type="time"
                     value={period.endTime}
