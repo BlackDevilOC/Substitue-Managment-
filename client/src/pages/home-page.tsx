@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import React, { useState, useEffect, useMemo } from "react";
+import { CSVReader } from 'react-papaparse';
 
 // Type definitions for better type safety
 interface Teacher {
@@ -29,6 +30,12 @@ interface Absence {
   teacherId: number;
   date: string;
   substituteId: number | null;
+}
+
+interface TimetableData {
+  className: string;
+  period: number;
+  teacherName: string;
 }
 
 // Helper functions
@@ -55,6 +62,10 @@ export default function HomePage() {
   const { toast } = useToast();
   const [currentPeriod, setCurrentPeriod] = useState(getCurrentPeriod());
   const currentDay = getDayOfWeek();
+  const [timetableData, setTimetableData] = useState<TimetableData[]>([]);
+  const [absentTeachers, setAbsentTeachers] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
 
   // Auto-update current period every minute
   useEffect(() => {
@@ -64,78 +75,56 @@ export default function HomePage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Queries with proper type definitions and error handling
-  const { data: currentSchedule, isLoading: loadingSchedule, refetch: refetchSchedule } = useQuery({
-    queryKey: ["/api/schedule", currentDay],
-    enabled: !!currentDay,
-    retry: 3,
-    refetchOnMount: "always", // Always refetch when component mounts
-    refetchOnWindowFocus: true, // Refetch when window gets focus
-    staleTime: 0, // Data is considered stale immediately
-    queryFn: async () => {
-      if (!currentDay) return [];
-      const res = await apiRequest('GET', `/api/schedule/${currentDay}`);
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to fetch schedule');
-      }
-      return res.json();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error loading schedule",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Effect to refetch data when the component mounts
   useEffect(() => {
-    refetchSchedule();
-  }, [refetchSchedule]);
+    const loadTimetableData = async () => {
+      try {
+        const response = await fetch('/data/timetable.csv');
+        const data = await response.text();
+        const parsedData = CSVReader.parse(data, {
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+        }).data as TimetableData[];
 
-  const { data: absences, isLoading: loadingAbsences } = useQuery({
-    queryKey: ["/api/absences"],
-    refetchInterval: 30000,
-    retry: 3,
-    queryFn: async () => {
-      const res = await apiRequest('GET', '/api/absences');
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to fetch absences');
+        setTimetableData(parsedData);
+      } catch (error) {
+        console.error("Error loading timetable data:", error);
+        toast({
+          title: "Error loading timetable",
+          description: "Failed to load timetable data.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
-      return res.json();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error loading absences",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
+    };
 
-  const { data: teachers, isLoading: loadingTeachers } = useQuery({
-    queryKey: ["/api/teachers"],
-    refetchInterval: 30000,
-    retry: 3,
-    queryFn: async () => {
-      const res = await apiRequest('GET', '/api/teachers');
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to fetch teachers');
+    const loadAbsentTeachers = async () => {
+      try {
+        const response = await fetch('/data/absent_teachers.csv');
+        const data = await response.text();
+        const parsedData = CSVReader.parse(data, {
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+        }).data.map(item => item.teacherName);
+
+        setAbsentTeachers(parsedData);
+      } catch (error) {
+        console.error("Error loading absent teachers data:", error);
+        toast({
+          title: "Error loading absent teachers",
+          description: "Failed to load absent teachers data.",
+          variant: "destructive",
+        });
       }
-      return res.json();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error loading teachers",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
+    };
+
+    loadTimetableData();
+    loadAbsentTeachers();
+
+  }, []);
+
 
   // Improved mutations with better error handling and type safety
   const uploadTimetableMutation = useMutation({
@@ -198,44 +187,28 @@ export default function HomePage() {
     },
   });
 
-  const isLoading = loadingAbsences || loadingTeachers || loadingSchedule;
 
-  // Improved current teachers calculation with proper typing
+  // Current teacher list based on local timetable data & absent teachers
   const currentTeachers = React.useMemo(() => {
-    if (!currentSchedule || !teachers || !absences) return [];
-    const todayStr = format(new Date(), "yyyy-MM-dd");
+    if (isLoading || !timetableData.length) return [];
 
-    return currentSchedule
-      .filter((s: Schedule) => s.period === currentPeriod)
-      .map((schedule: Schedule) => {
-        const teacher = teachers.find((t: Teacher) => t.id === schedule.teacherId);
-        const isAbsent = absences.some(
-          (a: Absence) => a.teacherId === teacher?.id &&
-          format(new Date(a.date), "yyyy-MM-dd") === todayStr
+    return timetableData
+      .filter(schedule => schedule.period === currentPeriod)
+      .map(schedule => {
+        // Check if teacher is absent
+        const isAbsent = absentTeachers.some(
+          name => name.toLowerCase() === schedule.teacherName.toLowerCase()
         );
-
-        let substituteTeacher = null;
-        if (isAbsent) {
-          const absence = absences.find(
-            (a: Absence) => a.teacherId === teacher?.id &&
-            format(new Date(a.date), "yyyy-MM-dd") === todayStr
-          );
-          if (absence?.substituteId) {
-            substituteTeacher = teachers.find((t: Teacher) => t.id === absence.substituteId);
-          }
-        }
 
         return {
           className: schedule.className,
           teacher: isAbsent
-            ? substituteTeacher
-              ? `${substituteTeacher.name} (Substitute)`
-              : "Teacher Absent"
-            : teacher?.name || "No teacher"
+            ? "Teacher Absent"
+            : schedule.teacherName
         };
       })
       .sort((a, b) => a.className.localeCompare(b.className));
-  }, [currentSchedule, teachers, absences, currentPeriod]);
+  }, [timetableData, absentTeachers, currentPeriod, isLoading]);
 
   // Improved file upload handlers with validation
   const handleTimetableUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -345,7 +318,7 @@ export default function HomePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{absences?.length || 0}</p>
+              <p className="text-2xl font-bold">{absentTeachers.length || 0}</p>
               <p className="text-sm text-muted-foreground">teachers marked absent today</p>
             </CardContent>
           </Card>
@@ -361,7 +334,7 @@ export default function HomePage() {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">
-                {teachers?.filter(t => t.isSubstitute)?.length || 0}
+                {0} {/*Placeholder -  No substitute data loaded locally*/}
               </p>
               <p className="text-sm text-muted-foreground">available substitutes</p>
             </CardContent>
@@ -411,14 +384,12 @@ export default function HomePage() {
                   key={className}
                   className={`p-3 rounded-lg border ${
                     teacher === "Teacher Absent" ? "bg-destructive/5 border-destructive/20" :
-                      teacher.includes("(Substitute)") ? "bg-warning/5 border-warning/20" :
-                        ""
+                      ""
                   }`}
                 >
                   <div className="font-medium">{className.toUpperCase()}</div>
                   <div className={`text-sm ${
                     teacher === "Teacher Absent" ? "text-destructive" :
-                      teacher.includes("(Substitute)") ? "text-warning-foreground" :
                         "text-muted-foreground"
                   }`}>
                     {teacher}
