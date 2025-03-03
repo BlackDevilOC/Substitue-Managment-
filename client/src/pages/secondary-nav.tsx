@@ -39,9 +39,9 @@ export default function SecondaryNavPage() {
       description: "View and manage daily schedules"
     },
     {
-      title: "Period Configuration",
+      title: "Period Times",
       icon: <Clock className="h-5 w-5" />,
-      href: "/period-config",
+      href: "/periods",
       description: "Configure period start and end times"
     },
     {
