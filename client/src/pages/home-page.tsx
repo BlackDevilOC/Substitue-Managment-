@@ -6,11 +6,32 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Calendar, UserCheck, UserMinus, LogOut, Upload, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-// Previous helper functions remain unchanged
+// Type definitions for better type safety
+interface Teacher {
+  id: number;
+  name: string;
+  isSubstitute: boolean;
+  phoneNumber: string | null;
+}
+
+interface Schedule {
+  teacherId: number;
+  period: number;
+  className: string;
+}
+
+interface Absence {
+  id: number;
+  teacherId: number;
+  date: string;
+  substituteId: number | null;
+}
+
+// Helper functions
 function getCurrentPeriod() {
   const now = new Date();
   const hours = now.getHours();
@@ -29,88 +50,101 @@ function getDayOfWeek() {
   return days[new Date().getDay()];
 }
 
-function getInitialPeriod() {
-  return getCurrentPeriod();
-}
-
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
+  const [currentPeriod, setCurrentPeriod] = useState(getCurrentPeriod());
   const currentDay = getDayOfWeek();
-  const [currentPeriod, setCurrentPeriod] = useState(getInitialPeriod());
 
-  // Queries remain unchanged with improved error handling
+  // Auto-update current period every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentPeriod(getCurrentPeriod());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Queries with proper type definitions and error handling
   const { data: currentSchedule, isLoading: loadingSchedule } = useQuery({
     queryKey: ["/api/schedule", currentDay],
+    refetchInterval: 30000, // Refetch every 30 seconds
+    retry: 3,
     queryFn: async () => {
-      const res = await fetch(`/api/schedule/${currentDay}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
-        }
-      });
+      const res = await apiRequest('GET', `/api/schedule/${currentDay}`);
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Failed to fetch schedule');
       }
       return res.json();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error loading schedule",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   });
 
   const { data: absences, isLoading: loadingAbsences } = useQuery({
     queryKey: ["/api/absences"],
+    refetchInterval: 30000,
+    retry: 3,
     queryFn: async () => {
-      const res = await fetch('/api/absences', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
-        }
-      });
+      const res = await apiRequest('GET', '/api/absences');
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Failed to fetch absences');
       }
       return res.json();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error loading absences",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   });
 
   const { data: teachers, isLoading: loadingTeachers } = useQuery({
     queryKey: ["/api/teachers"],
+    refetchInterval: 30000,
+    retry: 3,
     queryFn: async () => {
-      const res = await fetch('/api/teachers', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
-        }
-      });
+      const res = await apiRequest('GET', '/api/teachers');
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Failed to fetch teachers');
       }
       return res.json();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error loading teachers",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   });
 
-  // Updated mutations with proper error handling
+  // Improved mutations with better error handling and type safety
   const uploadTimetableMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const res = await fetch('/api/upload/timetable', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
-        },
-        body: formData,
-      });
-
+      const res = await apiRequest('POST', '/api/upload/timetable', formData);
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Failed to upload timetable');
       }
-
       return res.json();
     },
     onSuccess: (data) => {
+      // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ["/api/schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
       toast({
         title: "Success",
         description: `Timetable uploaded successfully. Created ${data.schedulesCreated} schedule entries.`,
@@ -130,23 +164,17 @@ export default function HomePage() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const res = await fetch('/api/upload/substitutes', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('currentUser')}`
-        },
-        body: formData,
-      });
-
+      const res = await apiRequest('POST', '/api/upload/substitutes', formData);
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || 'Failed to upload substitute teachers');
       }
-
       return res.json();
     },
     onSuccess: (data) => {
+      // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/schedule"] });
       toast({
         title: "Success",
         description: `Substitute teachers uploaded successfully. Added ${data.teachersCreated} teachers.`,
@@ -163,28 +191,28 @@ export default function HomePage() {
 
   const isLoading = loadingAbsences || loadingTeachers || loadingSchedule;
 
-  // Current teachers calculation remains unchanged
+  // Improved current teachers calculation with proper typing
   const currentTeachers = React.useMemo(() => {
     if (!currentSchedule || !teachers || !absences) return [];
     const todayStr = format(new Date(), "yyyy-MM-dd");
 
     return currentSchedule
-      .filter(s => s.period === currentPeriod)
-      .map(schedule => {
-        const teacher = teachers.find(t => t.id === schedule.teacherId);
+      .filter((s: Schedule) => s.period === currentPeriod)
+      .map((schedule: Schedule) => {
+        const teacher = teachers.find((t: Teacher) => t.id === schedule.teacherId);
         const isAbsent = absences.some(
-          a => a.teacherId === teacher?.id &&
+          (a: Absence) => a.teacherId === teacher?.id &&
           format(new Date(a.date), "yyyy-MM-dd") === todayStr
         );
 
         let substituteTeacher = null;
         if (isAbsent) {
           const absence = absences.find(
-            a => a.teacherId === teacher?.id &&
+            (a: Absence) => a.teacherId === teacher?.id &&
             format(new Date(a.date), "yyyy-MM-dd") === todayStr
           );
           if (absence?.substituteId) {
-            substituteTeacher = teachers.find(t => t.id === absence.substituteId);
+            substituteTeacher = teachers.find((t: Teacher) => t.id === absence.substituteId);
           }
         }
 
@@ -200,6 +228,7 @@ export default function HomePage() {
       .sort((a, b) => a.className.localeCompare(b.className));
   }, [currentSchedule, teachers, absences, currentPeriod]);
 
+  // Improved file upload handlers with validation
   const handleTimetableUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -213,9 +242,18 @@ export default function HomePage() {
       return;
     }
 
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      toast({
+        title: "File too large",
+        description: "Please upload a file smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "Uploading timetable",
-      description: "The file will be saved as timetable_file.csv",
+      description: "Please wait while we process your file...",
     });
 
     uploadTimetableMutation.mutate(file);
@@ -234,14 +272,24 @@ export default function HomePage() {
       return;
     }
 
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      toast({
+        title: "File too large",
+        description: "Please upload a file smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "Uploading substitute teachers",
-      description: "The file will be saved as Substitude_file.csv",
+      description: "Please wait while we process your file...",
     });
 
     uploadSubstitutesMutation.mutate(file);
   };
 
+  // Rest of the component remains unchanged...
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
       {/* Header Section */}
@@ -262,45 +310,44 @@ export default function HomePage() {
         </Button>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Upload Card */}
-        <Card className="col-span-1 sm:col-span-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-              <Upload className="h-5 w-5" />
-              Upload Files
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Input
-                type="file"
-                accept=".csv"
-                onChange={handleTimetableUpload}
-                disabled={uploadTimetableMutation.isPending}
-                className="text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                Upload timetable CSV
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Input
-                type="file"
-                accept=".csv"
-                onChange={handleSubstitutesUpload}
-                disabled={uploadSubstitutesMutation.isPending}
-                className="text-sm"
-              />
-              <p className="text-xs text-muted-foreground">
-                Upload substitute teachers CSV
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Upload Card */}
+      <Card className="col-span-1 sm:col-span-2">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+            <Upload className="h-5 w-5" />
+            Upload Files
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Input
+              type="file"
+              accept=".csv"
+              onChange={handleTimetableUpload}
+              disabled={uploadTimetableMutation.isPending}
+              className="text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              Upload timetable CSV
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Input
+              type="file"
+              accept=".csv"
+              onChange={handleSubstitutesUpload}
+              disabled={uploadSubstitutesMutation.isPending}
+              className="text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              Upload substitute teachers CSV
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Quick Stats Cards */}
+      {/* Quick Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Link href="/schedule" className="block">
           <Card className="h-full hover:bg-accent/5 transition-colors">
             <CardHeader className="pb-2">
@@ -379,27 +426,33 @@ export default function HomePage() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-            {currentTeachers.map(({ className, teacher }) => (
-              <div
-                key={className}
-                className={`p-3 rounded-lg border ${
-                  teacher === "Teacher Absent" ? "bg-destructive/5 border-destructive/20" :
-                    teacher.includes("(Substitute)") ? "bg-warning/5 border-warning/20" :
-                      ""
-                }`}
-              >
-                <div className="font-medium">{className.toUpperCase()}</div>
-                <div className={`text-sm ${
-                  teacher === "Teacher Absent" ? "text-destructive" :
-                    teacher.includes("(Substitute)") ? "text-warning-foreground" :
-                      "text-muted-foreground"
-                }`}>
-                  {teacher}
+          {isLoading ? (
+            <div className="flex justify-center items-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              {currentTeachers.map(({ className, teacher }) => (
+                <div
+                  key={className}
+                  className={`p-3 rounded-lg border ${
+                    teacher === "Teacher Absent" ? "bg-destructive/5 border-destructive/20" :
+                      teacher.includes("(Substitute)") ? "bg-warning/5 border-warning/20" :
+                        ""
+                  }`}
+                >
+                  <div className="font-medium">{className.toUpperCase()}</div>
+                  <div className={`text-sm ${
+                    teacher === "Teacher Absent" ? "text-destructive" :
+                      teacher.includes("(Substitute)") ? "text-warning-foreground" :
+                        "text-muted-foreground"
+                  }`}>
+                    {teacher}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
