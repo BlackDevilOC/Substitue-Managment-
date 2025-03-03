@@ -1,101 +1,169 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Clock } from "lucide-react";
-import { format } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Trash2, Save } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
-interface PeriodTime {
-  start: string;
-  end: string;
+interface PeriodConfig {
+  periodNumber: number;
+  startTime: string;
+  endTime: string;
 }
 
-export default function PeriodsPage() {
-  const [periods, setPeriods] = useState<PeriodTime[]>([
-    { start: "08:00", end: "08:45" },
-    { start: "08:45", end: "09:30" },
-    { start: "09:45", end: "10:30" },
-    { start: "10:30", end: "11:15" },
-    { start: "11:30", end: "12:15" },
-    { start: "12:15", end: "13:00" },
-    { start: "13:00", end: "13:45" },
-    { start: "13:45", end: "14:30" },
-  ]);
+export default function PeriodConfigPage() {
+  const [periods, setPeriods] = useState<PeriodConfig[]>([]);
+  const { toast } = useToast();
 
-  const currentDay = format(new Date(), 'EEEE').toLowerCase();
-  const currentTime = new Date();
-  const currentTimeStr = format(currentTime, 'HH:mm');
-
-  const getCurrentPeriod = () => {
-    for (let i = 0; i < periods.length; i++) {
-      if (currentTimeStr >= periods[i].start && currentTimeStr <= periods[i].end) {
-        return i + 1;
+  useEffect(() => {
+    const loadPeriodConfig = async () => {
+      try {
+        // Try to load from the server first
+        const response = await fetch('/api/period-config');
+        if (response.ok) {
+          const serverPeriods = await response.json();
+          setPeriods(serverPeriods);
+          // Update local storage with server data
+          localStorage.setItem('period_config', JSON.stringify(serverPeriods));
+          return;
+        }
+      } catch (error) {
+        console.warn('Could not fetch from server, falling back to localStorage');
       }
-    }
-    return null;
-  };
 
-  const handleTimeChange = (index: number, field: 'start' | 'end', value: string) => {
-    const newPeriods = [...periods];
-    newPeriods[index] = { ...newPeriods[index], [field]: value };
+      // Fall back to localStorage if server is unavailable
+      const savedPeriods = localStorage.getItem('period_config');
+      if (savedPeriods) {
+        setPeriods(JSON.parse(savedPeriods));
+      } else {
+        // Initialize with a default period
+        const defaultPeriod = [{ periodNumber: 1, startTime: "08:00", endTime: "09:00" }];
+        setPeriods(defaultPeriod);
+        localStorage.setItem('period_config', JSON.stringify(defaultPeriod));
+      }
+    };
+
+    loadPeriodConfig();
+  }, []);
+
+  const addPeriod = () => {
+    const lastPeriod = periods[periods.length - 1];
+    const newPeriods = [
+      ...periods,
+      {
+        periodNumber: lastPeriod.periodNumber + 1,
+        startTime: lastPeriod.endTime,
+        endTime: "00:00"
+      }
+    ];
     setPeriods(newPeriods);
+    localStorage.setItem('period_config', JSON.stringify(newPeriods));
   };
 
-  const currentPeriod = getCurrentPeriod();
+  const removePeriod = (index: number) => {
+    const newPeriods = periods.filter((_, i) => i !== index).map((period, i) => ({
+      ...period,
+      periodNumber: i + 1
+    }));
+    setPeriods(newPeriods);
+    localStorage.setItem('period_config', JSON.stringify(newPeriods));
+  };
+
+  const updatePeriod = (index: number, field: keyof PeriodConfig, value: string) => {
+    const updatedPeriods = periods.map((period, i) => {
+      if (i === index) {
+        return { ...period, [field]: value };
+      }
+      return period;
+    });
+    setPeriods(updatedPeriods);
+    localStorage.setItem('period_config', JSON.stringify(updatedPeriods));
+  };
+
+  const handleSave = async () => {
+    try {
+      // Save to localStorage
+      localStorage.setItem('period_config', JSON.stringify(periods));
+      
+      // Try to save to server
+      const response = await fetch('/api/period-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(periods),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save to server');
+      }
+
+      toast({
+        title: "Success",
+        description: "Period configuration saved successfully",
+      });
+    } catch (error) {
+      console.error('Error saving period configuration:', error);
+      toast({
+        title: "Partially saved",
+        description: "Saved locally but failed to sync with server",
+        variant: "default",
+      });
+    }
+  };
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Period Times</h1>
-        <div className="text-sm text-muted-foreground">
-          {format(new Date(), "EEEE, MMMM d")}
+        <h1 className="text-2xl font-bold">Period Configuration</h1>
+        <div className="space-x-2">
+          <Button onClick={addPeriod}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Period
+          </Button>
+          <Button onClick={handleSave}>
+            <Save className="h-4 w-4 mr-2" />
+            Save Changes
+          </Button>
         </div>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Current Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-lg font-medium">
-            {currentPeriod 
-              ? `Period ${currentPeriod} is in progress`
-              : "No period is currently active"
-            }
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Current time: {format(currentTime, "HH:mm")}
-          </p>
-        </CardContent>
-      </Card>
-
       <div className="grid gap-4">
         {periods.map((period, index) => (
-          <Card key={index} className={currentPeriod === index + 1 ? "border-primary" : ""}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Period {index + 1}</CardTitle>
+          <Card key={index}>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg">Period {period.periodNumber}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-4">
-                <div className="flex-1 space-y-1">
-                  <label className="text-sm font-medium">Start Time</label>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <label className="text-sm font-medium mb-1 block">
+                    Start Time
+                  </label>
                   <Input
                     type="time"
-                    value={period.start}
-                    onChange={(e) => handleTimeChange(index, 'start', e.target.value)}
+                    value={period.startTime}
+                    onChange={(e) => updatePeriod(index, "startTime", e.target.value)}
                   />
                 </div>
-                <div className="flex-1 space-y-1">
-                  <label className="text-sm font-medium">End Time</label>
+                <div className="flex-1">
+                  <label className="text-sm font-medium mb-1 block">
+                    End Time
+                  </label>
                   <Input
                     type="time"
-                    value={period.end}
-                    onChange={(e) => handleTimeChange(index, 'end', e.target.value)}
+                    value={period.endTime}
+                    onChange={(e) => updatePeriod(index, "endTime", e.target.value)}
                   />
                 </div>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="mt-6"
+                  onClick={() => removePeriod(index)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>
