@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { 
@@ -39,8 +38,8 @@ export function MobileNav() {
       icon: <Calendar className="h-5 w-5" />
     },
     {
-      href: "/substitutes",
-      label: "Substitutes",
+      href: "/period-config",
+      label: "Periods",
       icon: <ClipboardList className="h-5 w-5" />
     },
     {
@@ -78,13 +77,13 @@ export function MobileNav() {
             <Clock className="h-6 w-6" />
           </Link>
         </Button>
-        
+
         <Button variant="ghost" size="icon" asChild>
           <Link href="/absent-teachers">
             <UserMinus className="h-6 w-6" />
           </Link>
         </Button>
-        
+
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
@@ -119,13 +118,13 @@ export function MobileNav() {
             </nav>
           </SheetContent>
         </Sheet>
-        
+
         <Button variant="ghost" size="icon" asChild>
           <Link href="/schedules">
             <Calendar className="h-6 w-6" />
           </Link>
         </Button>
-        
+
         <Button variant="ghost" size="icon" asChild>
           <Link href="/profile">
             <User className="h-6 w-6" />
