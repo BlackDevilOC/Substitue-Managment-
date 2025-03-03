@@ -14,9 +14,20 @@ interface PeriodTime {
   end: string;
 }
 
+const DEFAULT_PERIODS: PeriodTime[] = [
+  { start: "08:00", end: "08:45" },
+  { start: "08:45", end: "09:30" },
+  { start: "09:45", end: "10:30" },
+  { start: "10:30", end: "11:15" },
+  { start: "11:30", end: "12:15" },
+  { start: "12:15", end: "13:00" },
+  { start: "13:00", end: "13:45" },
+  { start: "13:45", end: "14:30" },
+];
+
 export default function PeriodsPage() {
   const { toast } = useToast();
-  const [periods, setPeriods] = useState<PeriodTime[]>([]);
+  const [periods, setPeriods] = useState<PeriodTime[]>(DEFAULT_PERIODS);
 
   // Query to fetch period times
   const { isLoading, refetch } = useQuery({
@@ -29,27 +40,8 @@ export default function PeriodsPage() {
       return res.json() as Promise<PeriodTime[]>;
     },
     onSuccess: (data) => {
-      setPeriods(data);
-    },
-    onError: () => {
-      // If server fetch fails, load from localStorage
-      const savedPeriods = localStorage.getItem('period_times');
-      if (savedPeriods) {
-        setPeriods(JSON.parse(savedPeriods));
-      } else {
-        // Initialize with default periods
-        const defaultPeriods = [
-          { start: "08:00", end: "08:45" },
-          { start: "08:45", end: "09:30" },
-          { start: "09:45", end: "10:30" },
-          { start: "10:30", end: "11:15" },
-          { start: "11:30", end: "12:15" },
-          { start: "12:15", end: "13:00" },
-          { start: "13:00", end: "13:45" },
-          { start: "13:45", end: "14:30" },
-        ];
-        setPeriods(defaultPeriods);
-        localStorage.setItem('period_times', JSON.stringify(defaultPeriods));
+      if (data && data.length > 0) {
+        setPeriods(data);
       }
     }
   });
