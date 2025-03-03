@@ -39,10 +39,19 @@ export default function PeriodConfigPage() {
       if (savedPeriods) {
         setPeriods(JSON.parse(savedPeriods));
       } else {
-        // Initialize with a default period
-        const defaultPeriod = [{ periodNumber: 1, startTime: "08:00", endTime: "09:00" }];
-        setPeriods(defaultPeriod);
-        localStorage.setItem('period_config', JSON.stringify(defaultPeriod));
+        // Initialize with 8 default periods
+        const defaultPeriods = [
+          { periodNumber: 1, startTime: "08:00", endTime: "08:45" },
+          { periodNumber: 2, startTime: "08:45", endTime: "09:30" },
+          { periodNumber: 3, startTime: "09:45", endTime: "10:30" },
+          { periodNumber: 4, startTime: "10:30", endTime: "11:15" },
+          { periodNumber: 5, startTime: "11:30", endTime: "12:15" },
+          { periodNumber: 6, startTime: "12:15", endTime: "13:00" },
+          { periodNumber: 7, startTime: "13:00", endTime: "13:45" },
+          { periodNumber: 8, startTime: "13:45", endTime: "14:30" }
+        ];
+        setPeriods(defaultPeriods);
+        localStorage.setItem('period_config', JSON.stringify(defaultPeriods));
       }
     };
 
@@ -144,7 +153,7 @@ export default function PeriodConfigPage() {
         </CardHeader>
         <CardContent>
           <p className="text-lg font-medium">
-            {currentPeriod 
+            {currentPeriod
               ? `Period ${currentPeriod} is in progress`
               : "No period is currently active"
             }
