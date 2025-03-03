@@ -6,6 +6,8 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Make sure no passport or session middleware is applied here
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
