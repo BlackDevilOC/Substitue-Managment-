@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Teacher } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, RefreshCw } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
@@ -278,6 +278,20 @@ export default function AttendancePage() {
             <span className="text-sm font-medium text-primary">Total Teachers:</span>
             <span className="text-sm font-bold text-primary ml-2">{teachers?.length || 0}</span>
           </div>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
+              toast({
+                title: "Data refreshed",
+                description: "Teacher list has been reloaded from server.",
+              });
+            }}
+          >
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Refresh
+          </Button>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
