@@ -22,42 +22,30 @@ const checkAuth = (req: any, res: any, next: any) => {
     '/api/update-absent-teachers-file',
     '/api/get-absent-teachers',
     '/api/update-absent-teachers',
-    '/api/attendance',
-    '/api/upload/timetable',
-    '/api/upload/substitutes'
+    '/api/attendance'
   ];
   
-  // Always allow these paths regardless of authentication
   if (publicPaths.includes(req.path)) {
     return next();
   }
-
-  // Check for Replit user if available
-  if (req.replitUser) {
-    return next();
-  }
   
-  // Check for session-based authentication safely
-  if (typeof req.isAuthenticated === 'function' && req.isAuthenticated()) {
-    return next();
-  }
-  
-  // Check for Bearer token auth as a fallback
   const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    try {
-      const token = authHeader.split(' ')[1];
-      const user = JSON.parse(token);
-      if (user.username === 'Rehan') {
-        req.user = user;
-        return next();
-      }
-    } catch (error) {
-      console.error("Auth error:", error);
-    }
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: "Unauthorized" });
   }
-  
-  return res.status(401).json({ error: "Unauthorized" });
+
+  try {
+    const token = authHeader.split(' ')[1];
+    const user = JSON.parse(token);
+    if (user.username === 'Rehan') {
+      req.user = user;
+      next();
+    } else {
+      res.status(401).json({ error: "Unauthorized" });
+    }
+  } catch (error) {
+    res.status(401).json({ error: "Unauthorized" });
+  }
 };
 
 async function processAndSaveTeachers(timetableContent?: string, substituteContent?: string) {
@@ -153,87 +141,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/schedule/:day", async (req, res) => {
-    try {
-      // First try to get data from storage
-      const schedule = await storage.getSchedulesByDay(req.params.day);
-      
-      if (schedule && schedule.length > 0) {
-        return res.json(schedule);
-      }
-      
-      // If no data in storage or empty, load directly from timetable file
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const timetablePath = path.join(__dirname, '../data/timetable_file.csv');
-      
-      if (!fs.existsSync(timetablePath)) {
-        return res.status(404).json({ error: "Timetable file not found" });
-      }
-      
-      const fileContent = fs.readFileSync(timetablePath, 'utf-8');
-      const records = parse(fileContent, {
-        columns: false,
-        skip_empty_lines: true,
-        trim: true
-      });
-      
-      const normalizedDay = req.params.day.toLowerCase();
-      const daySchedule = [];
-      const teachersList = await storage.getTeachers();
-      
-      // Skip header row
-      const header = records[0];
-      const classes = header.slice(2); // Get class names from header
-      
-      for (let i = 1; i < records.length; i++) {
-        const row = records[i];
-        const rowDay = row[0]?.toLowerCase()?.trim();
-        
-        // Only process rows matching the requested day
-        if (rowDay === normalizedDay) {
-          const period = parseInt(row[1]);
-          
-          if (!isNaN(period)) {
-            // For each class column
-            for (let j = 2; j < row.length; j++) {
-              if (j - 2 < classes.length) {
-                const teacherName = row[j]?.trim();
-                const className = classes[j - 2];
-                
-                if (teacherName && teacherName.toLowerCase() !== 'empty') {
-                  // Find or create a teacher entry
-                  let teacher = teachersList.find(t => 
-                    t.name.toLowerCase() === teacherName.toLowerCase());
-                  
-                  if (!teacher) {
-                    // If teacher not found in our list, create a temporary entry
-                    teacher = { 
-                      id: j * 1000 + i, // Generate a temporary unique ID
-                      name: teacherName,
-                      isSubstitute: false,
-                      phoneNumber: null
-                    };
-                  }
-                  
-                  daySchedule.push({
-                    id: i * 100 + j, // Generate a unique ID for the schedule entry
-                    day: normalizedDay,
-                    period,
-                    teacherId: teacher.id,
-                    className
-                  });
-                }
-              }
-            }
-          }
-        }
-      }
-      
-      res.json(daySchedule);
-    } catch (error) {
-      console.error('Error loading schedule from file:', error);
-      res.status(500).json({ error: 'Failed to load schedule data' });
-    }
+    const schedule = await storage.getSchedulesByDay(req.params.day);
+    res.json(schedule);
   });
 
   app.post("/api/override-day", async (req, res) => {
@@ -327,71 +236,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Get substitute assignments error:', error);
       res.status(500).json({ message: "Failed to get substitute assignments" });
-    }
-  });
-  
-  // File upload endpoints
-  app.post("/api/upload/timetable", upload.single('file'), async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
-      }
-      
-      const csvString = req.file.buffer.toString('utf8');
-      
-      // Process timetable CSV and update database
-      const { schedules, count } = await processTimetableCSV(csvString);
-      
-      // Save file to disk for future reference
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const filePath = path.join(__dirname, '../data/timetable_file.csv');
-      fs.writeFileSync(filePath, csvString);
-      
-      // Process and save teachers
-      await processAndSaveTeachers(csvString);
-      
-      res.json({ 
-        message: "Timetable uploaded successfully", 
-        schedulesCreated: count 
-      });
-    } catch (error) {
-      console.error('Error uploading timetable:', error);
-      res.status(500).json({ 
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-  
-  app.post("/api/upload/substitutes", upload.single('file'), async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
-      }
-      
-      const csvString = req.file.buffer.toString('utf8');
-      
-      // Process substitute CSV and update database
-      const { teachers, count } = await processSubstituteCSV(csvString);
-      
-      // Save file to disk for future reference
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const filePath = path.join(__dirname, '../data/Substitude_file.csv');
-      fs.writeFileSync(filePath, csvString);
-      
-      // Process and save all teachers
-      await processAndSaveTeachers(undefined, csvString);
-      
-      res.json({ 
-        message: "Substitute teachers uploaded successfully", 
-        teachersCreated: count 
-      });
-    } catch (error) {
-      console.error('Error uploading substitutes:', error);
-      res.status(500).json({ 
-        error: error instanceof Error ? error.message : String(error)
-      });
     }
   });
 
