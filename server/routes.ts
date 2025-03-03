@@ -163,6 +163,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(201).json(schedule);
   });
 
+
+  app.post("/api/refresh-teachers", async (req, res) => {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const dataFolder = path.join(__dirname, '../data');
+      
+      // Get paths to CSV files
+      const timetablePath = path.join(dataFolder, 'timetable_file.csv');
+      const substitutePath = path.join(dataFolder, 'Substitude_file.csv');
+      
+      // Check if files exist
+      if (!fs.existsSync(timetablePath)) {
+        return res.status(400).json({ error: 'Timetable file not found' });
+      }
+      if (!fs.existsSync(substitutePath)) {
+        return res.status(400).json({ error: 'Substitute file not found' });
+      }
+      
+      // Read file contents
+      const timetableContent = fs.readFileSync(timetablePath, 'utf-8');
+      const substituteContent = fs.readFileSync(substitutePath, 'utf-8');
+      
+      // Process the teacher data
+      const teachers = await processAndSaveTeachers(timetableContent, substituteContent);
+      
+      res.json({ 
+        success: true, 
+        message: 'Teacher data refreshed successfully',
+        teacherCount: teachers?.length || 0
+      });
+    } catch (error) {
+      console.error('Error refreshing teacher data:', error);
+      res.status(500).json({ 
+        error: 'Failed to refresh teacher data',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   app.get("/api/absences", async (req, res) => {
     const absences = await storage.getAbsences();
     res.json(absences);

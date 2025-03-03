@@ -281,12 +281,46 @@ export default function AttendancePage() {
           <Button 
             size="sm" 
             variant="outline" 
-            onClick={() => {
-              queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
-              toast({
-                title: "Data refreshed",
-                description: "Teacher list has been reloaded from server.",
-              });
+            onClick={async () => {
+              try {
+                // Show loading toast
+                toast({
+                  title: "Processing...",
+                  description: "Extracting and processing teacher data...",
+                });
+                
+                // Call API to refresh teacher data
+                const response = await fetch("/api/refresh-teachers", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                  }
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                  throw new Error(result.message || "Failed to refresh teacher data");
+                }
+                
+                // Refresh the data in the UI
+                queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
+                
+                // Show success toast
+                toast({
+                  title: "Success",
+                  description: `Teacher data refreshed. Found ${result.teacherCount} teachers.`,
+                  variant: "success",
+                });
+              } catch (error) {
+                console.error("Error refreshing data:", error);
+                toast({
+                  title: "Error",
+                  description: error instanceof Error ? error.message : "Failed to refresh teacher data",
+                  variant: "destructive",
+                });
+              }
             }}
           >
             <RefreshCw className="h-4 w-4 mr-1" />
