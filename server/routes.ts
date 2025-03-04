@@ -401,6 +401,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/mark-attendance", async (req, res) => {
+    try {
+      const { status, teacherName, phoneNumber } = req.body;
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/absent_teachers.json');
+
+      // Create file if it doesn't exist
+      if (!fs.existsSync(filePath)) {
+        fs.writeFileSync(filePath, JSON.stringify([], null, 2));
+      }
+
+      // Read current absent teachers
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      let absentTeachers = JSON.parse(fileContent);
+
+      if (status === 'absent') {
+        // Add teacher if not already in list
+        if (!absentTeachers.find((t: any) => t.name === teacherName)) {
+          absentTeachers.push({
+            name: teacherName,
+            phoneNumber: phoneNumber,
+            timestamp: new Date().toISOString()
+          });
+        }
+      } else if (status === 'present') {
+        // Remove teacher if in list
+        absentTeachers = absentTeachers.filter((t: any) => t.name !== teacherName);
+      }
+
+      // Write back to file
+      fs.writeFileSync(filePath, JSON.stringify(absentTeachers, null, 2));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error marking attendance:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to mark attendance',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+
   const httpServer = createServer(app);
   return httpServer;
 }

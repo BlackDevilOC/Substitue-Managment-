@@ -83,6 +83,10 @@ export default function Attendees() {
       teacherId: number;
       status: string;
     }) => {
+      const teacher = localTeachers.find(t => t.id === teacherId);
+      if (!teacher) throw new Error('Teacher not found');
+
+      // First update local storage
       const newLocalAttendance = {
         ...localAttendance,
         [teacherId]: status,
@@ -93,6 +97,24 @@ export default function Attendees() {
       );
       setLocalAttendance(newLocalAttendance);
 
+      // Then call the API
+      const response = await fetch('/api/mark-attendance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: status,
+          teacherName: teacher.name,
+          phoneNumber: teacher.phoneNumber || ''
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to mark attendance');
+      }
+
       // Update absent teachers in local storage
       await updateAbsentTeachersFile(teacherId, status);
 
@@ -101,14 +123,14 @@ export default function Attendees() {
     onSuccess: () => {
       toast({
         title: "Attendance marked",
-        description: "Teacher attendance has been updated locally.",
+        description: "Teacher attendance has been updated.",
       });
     },
     onError: (error: Error) => {
       console.error('Error marking attendance:', error);
       toast({
         title: "Error",
-        description: "Failed to mark attendance locally.",
+        description: error.message || "Failed to mark attendance.",
         variant: "destructive"
       });
     },
@@ -158,8 +180,8 @@ export default function Attendees() {
 
       toast({
         title: "Attendance recorded",
-        description: status === 'absent' 
-          ? "Teacher marked as absent and saved to records." 
+        description: status === 'absent'
+          ? "Teacher marked as absent and saved to records."
           : "Teacher marked as present and removed from absent records.",
         variant: "success"
       });
@@ -257,9 +279,9 @@ export default function Attendees() {
             <span className="text-sm font-medium text-primary">Total Teachers:</span>
             <span className="text-sm font-bold text-primary ml-2">{localTeachers?.length || 0}</span>
           </div>
-          <Button 
-            size="sm" 
-            variant="outline" 
+          <Button
+            size="sm"
+            variant="outline"
             onClick={handleRefresh}
             disabled={teachersLoading}
           >
