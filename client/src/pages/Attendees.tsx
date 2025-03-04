@@ -148,7 +148,7 @@ export default function Attendees() {
       setLocalAttendance(JSON.parse(storedData));
     } else {
       const initialAttendance: Record<number, string> = {};
-      teachers?.forEach(teacher => {
+      localTeachers?.forEach(teacher => {
         initialAttendance[teacher.id] = 'present';
       });
       setLocalAttendance(initialAttendance);
@@ -157,7 +157,7 @@ export default function Attendees() {
         JSON.stringify(initialAttendance)
       );
     }
-  }, [selectedDate, teachers]);
+  }, [selectedDate, localTeachers]);
 
   const markAttendanceMutation = useMutation({
     mutationFn: async ({
@@ -269,7 +269,7 @@ export default function Attendees() {
       csvContent += "Total Present,Total Absent\n";
 
       // Add data for each teacher
-      teachers?.forEach(teacher => {
+      displayTeachers?.forEach(teacher => {
         csvContent += `${teacher.name},`;
 
         let presentCount = 0;
