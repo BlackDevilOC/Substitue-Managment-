@@ -7,8 +7,8 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import HomePage from "@/pages/home-page";
 import SchedulePage from "@/pages/schedule-page";
-import Attendees from "@/pages/Attendees";  // Changed import
-import SubstitutesPage from "@/pages/substitutes-page";
+import Attendees from "@/pages/Attendees";
+import FileUploadPage from "@/pages/file-upload";
 import ProfilePage from "@/pages/profile-page";
 import ManageAbsencesPage from "@/pages/manage-absences";
 import SecondaryNavPage from "@/pages/secondary-nav";
@@ -25,8 +25,8 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/schedule" component={SchedulePage} />
-      <ProtectedRoute path="/attendees" component={Attendees} /> {/* Changed route */}
-      <ProtectedRoute path="/substitutes" component={SubstitutesPage} />
+      <ProtectedRoute path="/attendees" component={Attendees} />
+      <ProtectedRoute path="/upload" component={FileUploadPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/manage-absences" component={ManageAbsencesPage} />
       <ProtectedRoute path="/more" component={SecondaryNavPage} />
