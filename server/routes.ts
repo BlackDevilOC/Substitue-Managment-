@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
-import { join, dirname } from 'path';
+import path, { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { createViteDevServer } from './vite';
