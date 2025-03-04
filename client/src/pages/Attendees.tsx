@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
@@ -46,16 +45,16 @@ export default function Attendees() {
         title: "Loading teachers...",
         description: "Loading teachers from local data file.",
       });
-      
+
       // Fetch the JSON file
       const response = await fetch('/data/total_teacher.json');
-      
+
       if (!response.ok) {
         throw new Error(`Failed to load teachers data: ${response.status}`);
       }
-      
+
       const jsonTeachers: TeacherJson[] = await response.json();
-      
+
       // Convert to Teacher format with IDs
       const formattedTeachers: Teacher[] = jsonTeachers.map((teacher, index) => ({
         id: index + 1,
@@ -63,9 +62,9 @@ export default function Attendees() {
         phoneNumber: teacher.phone,
         // Add any other required fields from your Teacher schema
       }));
-      
+
       setLocalTeachers(formattedTeachers);
-      
+
       toast({
         title: "Teachers loaded",
         description: `Successfully loaded ${formattedTeachers.length} teachers from local data.`,
@@ -85,28 +84,23 @@ export default function Attendees() {
   const handleRefresh = async () => {
     try {
       toast({
-        title: "Refreshing data...",
-        description: "Loading fresh teacher data...",
+        title: "Processing...",
+        description: "Extracting and processing teacher data...",
       });
-      
-      // Try API first
-      try {
-        // Call API to refresh teacher data
-        const response = await apiRequest("POST", "/api/refresh-teachers");
-        const result = await response.json();
-        
-        // Refresh the data in the UI
-        queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
-        
-        toast({
-          title: "Success",
-          description: `Teacher data refreshed. Found ${result.teacherCount || 'multiple'} teachers.`,
-          variant: "success",
-        });
-      } catch (error) {
-        console.warn("API refresh failed, loading from JSON instead");
-        await loadTeachersFromJson();
-      }
+
+      // Call API to refresh teacher data
+      const response = await apiRequest("POST", "/api/refresh-teachers");
+      const result = await response.json();
+
+      // Refresh the data in the UI
+      queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
+
+      // Show success toast
+      toast({
+        title: "Success",
+        description: `Teacher data refreshed. Found ${result.teacherCount} teachers.`,
+        variant: "success",
+      });
     } catch (error) {
       console.error("Error refreshing data:", error);
       toast({
@@ -332,36 +326,6 @@ export default function Attendees() {
     }
   };
 
-  const handleRefresh = async () => {
-    try {
-      // Show loading toast
-      toast({
-        title: "Processing...",
-        description: "Extracting and processing teacher data...",
-      });
-      
-      // Call API to refresh teacher data
-      const response = await apiRequest("POST", "/api/refresh-teachers");
-      const result = await response.json();
-      
-      // Refresh the data in the UI
-      queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
-      
-      // Show success toast
-      toast({
-        title: "Success",
-        description: `Teacher data refreshed. Found ${result.teacherCount} teachers.`,
-        variant: "success",
-      });
-    } catch (error) {
-      console.error("Error refreshing data:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to refresh teacher data",
-        variant: "destructive",
-      });
-    }
-  };
 
   if (teachersLoading) {
     return (
