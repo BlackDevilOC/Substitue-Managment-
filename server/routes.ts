@@ -17,37 +17,6 @@ const upload = multer({
   }
 });
 
-const checkAuth = (req: any, res: any, next: any) => {
-  const publicPaths = [
-    '/api/update-absent-teachers-file',
-    '/api/get-absent-teachers',
-    '/api/update-absent-teachers',
-    '/api/attendance'
-  ];
-  
-  if (publicPaths.includes(req.path)) {
-    return next();
-  }
-  
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
-  try {
-    const token = authHeader.split(' ')[1];
-    const user = JSON.parse(token);
-    if (user.username === 'Rehan') {
-      req.user = user;
-      next();
-    } else {
-      res.status(401).json({ error: "Unauthorized" });
-    }
-  } catch (error) {
-    res.status(401).json({ error: "Unauthorized" });
-  }
-};
-
 async function processAndSaveTeachers(timetableContent?: string, substituteContent?: string) {
   try {
     const __filename = fileURLToPath(import.meta.url);
@@ -121,7 +90,6 @@ const readTeachersFromFile = () => {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   await processAndSaveTeachers();
-  app.use('/api', checkAuth);
 
   app.get("/api/teachers", async (req, res) => {
     try {
@@ -136,7 +104,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/teachers", async (req, res) => {
     const parsed = insertTeacherSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    const teacher = await storage.createTeacher(parsed.data);
+    const teacher = await storage.createTeacher({
+      ...parsed.data,
+      isSubstitute: false
+    });
     res.status(201).json(teacher);
   });
 
@@ -163,32 +134,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(201).json(schedule);
   });
 
-
   app.post("/api/refresh-teachers", async (req, res) => {
     try {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const dataFolder = path.join(__dirname, '../data');
-      
-      // Get paths to CSV files
+
       const timetablePath = path.join(dataFolder, 'timetable_file.csv');
       const substitutePath = path.join(dataFolder, 'Substitude_file.csv');
-      
-      // Check if files exist
+
       if (!fs.existsSync(timetablePath)) {
         return res.status(400).json({ error: 'Timetable file not found' });
       }
       if (!fs.existsSync(substitutePath)) {
         return res.status(400).json({ error: 'Substitute file not found' });
       }
-      
-      // Read file contents
+
       const timetableContent = fs.readFileSync(timetablePath, 'utf-8');
       const substituteContent = fs.readFileSync(substitutePath, 'utf-8');
-      
-      // Process the teacher data
+
       const teachers = await processAndSaveTeachers(timetableContent, substituteContent);
-      
+
       res.json({ 
         success: true, 
         message: 'Teacher data refreshed successfully',
@@ -211,7 +177,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/absences", async (req, res) => {
     const parsed = insertAbsenceSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    const absence = await storage.createAbsence(parsed.data);
+    const absence = await storage.createAbsence({
+      ...parsed.data,
+      substituteId: null
+    });
     const teacher = await storage.getTeacher(parsed.data.teacherId);
     if (teacher) {
       const { recordAttendance } = await import('./attendance-tracker.js');
@@ -226,7 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/absences/:id/substitute", async (req, res) => {
     const { substituteId } = req.body;
-    await storage.assignSubstitute(parseInt(req.params.id), substituteId);
+    await storage.assignSubstitute(parseInt(req.params.id), substituteId || null);
     res.sendStatus(200);
   });
 
@@ -307,16 +276,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
-      
+
       const fileContent = req.file.buffer.toString('utf-8');
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const filePath = path.join(__dirname, '../data/timetable_file.csv');
-      
+
       fs.writeFileSync(filePath, fileContent);
       await processTimetableCSV(fileContent);
       await processAndSaveTeachers(fileContent, undefined);
-      
+
       res.json({ 
         success: true, 
         message: 'Timetable file uploaded and processed successfully' 
@@ -335,16 +304,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
-      
+
       const fileContent = req.file.buffer.toString('utf-8');
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const filePath = path.join(__dirname, '../data/Substitude_file.csv');
-      
+
       fs.writeFileSync(filePath, fileContent);
       await processSubstituteCSV(fileContent);
       await processAndSaveTeachers(undefined, fileContent);
-      
+
       res.json({ 
         success: true, 
         message: 'Substitute file uploaded and processed successfully' 
@@ -404,14 +373,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fs.writeFileSync(filePath, JSON.stringify([], null, 2));
       }
 
-      // If absentTeachers array is provided, use it directly
       if (Array.isArray(absentTeachers)) {
         fs.writeFileSync(filePath, JSON.stringify(absentTeachers, null, 2));
         console.log(`Updated absent teachers list with ${absentTeachers.length} teachers`);
         return res.json({ success: true, absentTeachers });
       }
 
-      // Otherwise handle the single teacherName update
       const fileContent = fs.readFileSync(filePath, 'utf8');
       let currentAbsentTeachers = JSON.parse(fileContent);
 
