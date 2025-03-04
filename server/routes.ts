@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTeacherSchema, insertScheduleSchema, insertAbsenceSchema } from "@shared/schema";
 import { processTimetableCSV, processSubstituteCSV } from "./csv-handler";
-import { processTeacherFiles } from "../client/src/utils/teacherExtractor";
+import { processTeacherFiles } from "../utils/teacherExtractor";
 import multer from "multer";
 import { format } from "date-fns";
 import * as path from 'path';
