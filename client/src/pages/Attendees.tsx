@@ -46,30 +46,39 @@ export default function Attendees() {
         description: "Loading teachers from local data file.",
       });
 
-      // Fetch the JSON file
-      const response = await fetch('/data/total_teacher.json');
+      // Fetch the JSON file with the correct path
+      const response = await fetch('./data/total_teacher.json');
 
       if (!response.ok) {
         throw new Error(`Failed to load teachers data: ${response.status}`);
       }
 
-      const jsonTeachers: TeacherJson[] = await response.json();
+      try {
+        const jsonTeachers: TeacherJson[] = await response.json();
 
-      // Convert to Teacher format with IDs
-      const formattedTeachers: Teacher[] = jsonTeachers.map((teacher, index) => ({
-        id: index + 1,
-        name: teacher.name,
-        phoneNumber: teacher.phone,
-        // Add any other required fields from your Teacher schema
-      }));
+        // Convert to Teacher format with IDs
+        const formattedTeachers: Teacher[] = jsonTeachers.map((teacher, index) => ({
+          id: index + 1,
+          name: teacher.name,
+          phoneNumber: teacher.phone,
+          // Add any other required fields from your Teacher schema
+        }));
 
-      setLocalTeachers(formattedTeachers);
+        setLocalTeachers(formattedTeachers);
 
-      toast({
-        title: "Teachers loaded",
-        description: `Successfully loaded ${formattedTeachers.length} teachers from local data.`,
-        variant: "success",
-      });
+        toast({
+          title: "Teachers loaded",
+          description: `Successfully loaded ${formattedTeachers.length} teachers from local data.`,
+          variant: "success",
+        });
+      } catch (error) {
+        console.error("Error parsing JSON:", error);
+        toast({
+          title: "Error loading teachers",
+          description: "Failed to parse teacher data.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Error loading teachers from JSON:", error);
       toast({
