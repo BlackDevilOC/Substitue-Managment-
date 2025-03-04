@@ -2,8 +2,7 @@ import React from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileDown, Wand2, RotateCcw } from "lucide-react";
-import { Link } from "wouter";
+import { Wand2, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -104,20 +103,15 @@ export default function ManageAbsencesPage() {
           <CardContent className="space-y-4">
             {absentTeachers.map((teacher) => (
               <div 
-                key={`${teacher.name}-${teacher.timestamp}`}
+                key={teacher.name}
                 className="p-4 border rounded-lg hover:bg-accent/5 transition-colors bg-destructive/5"
               >
                 <div className="font-semibold text-lg text-primary">{teacher.name}</div>
-                <div className="flex items-center gap-2 mt-1">
-                  {teacher.phoneNumber && (
-                    <span className="text-sm text-muted-foreground">
-                      📱 {teacher.phoneNumber}
-                    </span>
-                  )}
-                  <span className="text-sm text-muted-foreground">
-                    Marked absent: {format(new Date(teacher.timestamp), 'PPp')}
-                  </span>
-                </div>
+                {teacher.phoneNumber && (
+                  <div className="text-sm text-muted-foreground mt-1">
+                    📱 {teacher.phoneNumber}
+                  </div>
+                )}
               </div>
             ))}
             {absentTeachers.length === 0 && (
