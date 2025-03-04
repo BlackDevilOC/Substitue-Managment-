@@ -287,6 +287,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await processTimetableCSV(fileContent);
       await processAndSaveTeachers(fileContent, undefined);
 
+      // Add new function call here
+      await processTeacherTimetables(fileContent);
+
       res.json({ 
         success: true, 
         message: 'Timetable file uploaded and processed successfully' 
