@@ -6,6 +6,7 @@ import { Wand2, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
 interface AbsentTeacher {
   name: string;
@@ -15,6 +16,7 @@ interface AbsentTeacher {
 
 export default function ManageAbsencesPage() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const today = format(new Date(), 'yyyy-MM-dd');
 
   // Fetch absent teachers
@@ -71,6 +73,10 @@ export default function ManageAbsencesPage() {
     },
   });
 
+  const handleTeacherClick = (teacherName: string) => {
+    setLocation(`/teacher-details/${encodeURIComponent(teacherName)}`);
+  };
+
   return (
     <div className="container py-6 space-y-6">
       <div className="flex justify-between items-center flex-wrap gap-4">
@@ -104,7 +110,8 @@ export default function ManageAbsencesPage() {
             {absentTeachers.map((teacher) => (
               <div 
                 key={teacher.name}
-                className="p-4 border rounded-lg hover:bg-accent/5 transition-colors bg-destructive/5"
+                className="p-4 border rounded-lg hover:bg-accent/5 transition-colors bg-destructive/5 cursor-pointer"
+                onClick={() => handleTeacherClick(teacher.name)}
               >
                 <div className="font-semibold text-lg text-primary">{teacher.name}</div>
                 {teacher.phoneNumber && (

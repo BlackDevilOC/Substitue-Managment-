@@ -11,6 +11,7 @@ import Attendees from "@/pages/Attendees";
 import FileUploadPage from "@/pages/file-upload";
 import ProfilePage from "@/pages/profile-page";
 import ManageAbsencesPage from "@/pages/manage-absences";
+import TeacherDetailsPage from "@/pages/teacher-details";
 import SecondaryNavPage from "@/pages/secondary-nav";
 import SMSHistoryPage from "@/pages/sms-history";
 import SettingsPage from "@/pages/settings";
@@ -29,6 +30,7 @@ function Router() {
       <ProtectedRoute path="/upload" component={FileUploadPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/manage-absences" component={ManageAbsencesPage} />
+      <ProtectedRoute path="/teacher-details/:name" component={TeacherDetailsPage} />
       <ProtectedRoute path="/more" component={SecondaryNavPage} />
       <ProtectedRoute path="/sms-history" component={SMSHistoryPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
