@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import * as fs from 'fs';
+import { processTimetables } from "../utils/timetableProcessor";
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -450,6 +451,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+  app.post("/api/process-timetables", async (req, res) => {
+    try {
+      await processTimetables();
+      res.json({ 
+        success: true, 
+        message: 'Timetables processed and organized successfully'
+      });
+    } catch (error) {
+      console.error('Error processing timetables:', error);
+      res.status(500).json({ 
+        error: 'Failed to process timetables',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

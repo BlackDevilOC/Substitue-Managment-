@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast"
 
 export default function FileUploadPage() {
   const [isUploading, setIsUploading] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
   const { toast } = useToast()
 
   const handleFileUpload = async (type: 'timetable' | 'substitute', event: React.ChangeEvent<HTMLInputElement>) => {
@@ -17,9 +18,8 @@ export default function FileUploadPage() {
     formData.append('file', file)
 
     try {
-      // Get authentication token - replace with your actual auth method
       const authToken = localStorage.getItem('authToken') || JSON.stringify({ username: 'Rehan' })
-      
+
       const response = await fetch(`/api/upload/${type}`, {
         method: 'POST',
         credentials: 'include',
@@ -48,8 +48,39 @@ export default function FileUploadPage() {
       })
     } finally {
       setIsUploading(false)
-      // Reset the file input
       event.target.value = ''
+    }
+  }
+
+  const handleProcessTimetables = async () => {
+    setIsProcessing(true)
+    try {
+      const response = await fetch('/api/process-timetables', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to process timetables')
+      }
+
+      toast({
+        title: "Success",
+        description: "Timetables processed and organized successfully",
+      })
+    } catch (error) {
+      console.error('Processing error:', error)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to process timetables. Please try again.",
+      })
+    } finally {
+      setIsProcessing(false)
     }
   }
 
@@ -121,6 +152,14 @@ export default function FileUploadPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Button 
+          onClick={handleProcessTimetables}
+          disabled={isProcessing}
+          className="w-full mt-4"
+        >
+          {isProcessing ? "Processing..." : "Process Timetables"}
+        </Button>
       </div>
     </div>
   )
