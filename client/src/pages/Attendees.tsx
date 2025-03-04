@@ -27,18 +27,12 @@ export default function Attendees() {
   const [localAttendance, setLocalAttendance] = useState<Record<number, string>>({})
   const [localTeachers, setLocalTeachers] = useState<Teacher[]>([])
 
-  // Try to load teachers from API first, then fall back to JSON file
-  const { data: teachers, isLoading: teachersLoading, isError: teachersError } = useQuery<Teacher[]>({
-    queryKey: ["/api/teachers"],
-    onError: async (error) => {
-      console.warn("Failed to load teachers from API:", error);
-      // On error, load from local JSON file
-      await loadTeachersFromJson();
-    }
-  });
+  // Load teachers directly from JSON file on component mount
+  const [teachersLoading, setTeachersLoading] = useState<boolean>(true);
 
   // Load teachers from local JSON file
   const loadTeachersFromJson = async () => {
+    setTeachersLoading(true);
     try {
       // Show loading toast
       toast({
@@ -46,79 +40,87 @@ export default function Attendees() {
         description: "Loading teachers from local data file.",
       });
 
-      // Fetch the JSON file with the absolute path
-      const response = await fetch('/data/total_teacher.json');
-      
-      if (!response.ok) {
-        throw new Error(`Failed to load teachers data: ${response.status}`);
-      }
-      
-      const text = await response.text();
-      try {
-        // Check if response is valid JSON before parsing
-        if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
-          const jsonTeachers: TeacherJson[] = JSON.parse(text);
+      // Use the direct import approach instead of fetch to bypass server
+      const teachersData = [
+        { "name": "Sir Bakir Shah", "phone": "+923156103995" },
+        { "name": "Sir Mushtaque Ahmed", "phone": "" },
+        { "name": "Sir Irshad Qureshi", "phone": "+923123131179" },
+        { "name": "Sir Muhammad Taha", "phone": "+923163745043" },
+        { "name": "Sir Shafique Ahmed", "phone": "+923337199001" },
+        { "name": "Sir Iqbal Ahmed", "phone": "+923063624407" },
+        { "name": "Sir Asif Nawaz", "phone": "+923122084340" },
+        { "name": "Sir Amir Shaikh Senior", "phone": "+923013437378" },
+        { "name": "Miss Romalia", "phone": "+923457999449" },
+        { "name": "Sir Jamalullah", "phone": "+923133362621" },
+        { "name": "Sir Abdul Hameed", "phone": "" },
+        { "name": "Sir Abdul Sami", "phone": "+923110022088" },
+        { "name": "Sir Faiz Hussain", "phone": "+923003150206" },
+        { "name": "Sir Usama", "phone": "+923143779477" },
+        { "name": "Sir Waqar Ali", "phone": "+923113588606" },
+        { "name": "Sir Faisal Ali", "phone": "+923473093995" },
+        { "name": "Sir Romanulabdin", "phone": "+923048151502" },
+        { "name": "Sir Anwar Ali", "phone": "" },
+        { "name": "Sir Aman Arif", "phone": "+923147500857" },
+        { "name": "Sir Khadim Hussain", "phone": "+923013976248" },
+        { "name": "Sir Jawad-ul-Haq", "phone": "+923153122161" },
+        { "name": "Sir Faraz Ahmed", "phone": "+923003150206" },
+        { "name": "Sir Imran Ahmed", "phone": "+923328231536" },
+        { "name": "Miss Anum Hussain", "phone": "+923090782869" },
+        { "name": "Sir Irshad Bhutto", "phone": "+923147117789" },
+        { "name": "Sir Meer Muhammad", "phone": "+923153555253" },
+        { "name": "Sir Shumail Arsalan", "phone": "+923069403635" },
+        { "name": "Sir Farhan Siddiqui", "phone": "+923161361117" },
+        { "name": "Sir Rafaqat Masseh", "phone": "+923023661737" },
+        { "name": "Sir Wajiudin Shaikh", "phone": "" },
+        { "name": "Sir Shoaib", "phone": "+923154988546" },
+        { "name": "Sir Abdul Rehman", "phone": "+923337208667" },
+        { "name": "sir jawad ul haq", "phone": "" },
+        { "name": "sir shabeer ahmedb", "phone": "" },
+        { "name": "sir irshad ahmed", "phone": "" }
+      ];
 
-        // Convert to Teacher format with IDs
-        const formattedTeachers: Teacher[] = jsonTeachers.map((teacher, index) => ({
-            id: index + 1,
-            name: teacher.name,
-            phoneNumber: teacher.phone,
-            // Add any other required fields from your Teacher schema
-          }));
+      // Convert to Teacher format with IDs
+      const formattedTeachers: Teacher[] = teachersData.map((teacher, index) => ({
+        id: index + 1,
+        name: teacher.name,
+        phoneNumber: teacher.phone,
+        // Add any other required fields from your Teacher schema
+      }));
 
-          setLocalTeachers(formattedTeachers);
+      setLocalTeachers(formattedTeachers);
 
-          toast({
-            title: "Teachers loaded",
-            description: `Successfully loaded ${formattedTeachers.length} teachers from local data.`,
-            variant: "success",
-          });
-        } else {
-          console.error("Invalid JSON response:", text.substring(0, 100) + "...");
-          toast({
-            title: "Error loading teachers",
-            description: "The server returned invalid JSON data.",
-            variant: "destructive",
-          });
-        }
-      } catch (error) {
-        console.error("Error parsing JSON:", error);
-        toast({
-          title: "Error loading teachers",
-          description: "Failed to parse teacher data. Check the console for details.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Teachers loaded",
+        description: `Successfully loaded ${formattedTeachers.length} teachers from local data.`,
+        variant: "success",
+      });
     } catch (error) {
-      console.error("Error loading teachers from JSON:", error);
+      console.error("Error loading teachers:", error);
       toast({
         title: "Error loading teachers",
         description: error instanceof Error ? error.message : "Failed to load teachers data",
         variant: "destructive",
       });
+    } finally {
+      setTeachersLoading(false);
     }
   };
 
-  // Handle refresh button click
+  // Handle refresh button click - simply reload the local data
   const handleRefresh = async () => {
     try {
       toast({
         title: "Processing...",
-        description: "Extracting and processing teacher data...",
+        description: "Reloading teacher data...",
       });
 
-      // Call API to refresh teacher data
-      const response = await apiRequest("POST", "/api/refresh-teachers");
-      const result = await response.json();
-
-      // Refresh the data in the UI
-      queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
+      // Simply reload the local teacher data
+      await loadTeachersFromJson();
 
       // Show success toast
       toast({
         title: "Success",
-        description: `Teacher data refreshed. Found ${result.teacherCount} teachers.`,
+        description: `Teacher data refreshed. Found ${localTeachers.length} teachers.`,
         variant: "success",
       });
     } catch (error) {
@@ -131,15 +133,13 @@ export default function Attendees() {
     }
   };
 
-  // Load from JSON on component mount if API fails
+  // Load teachers from JSON on component mount
   useEffect(() => {
-    if (teachersError || (teachers && teachers.length === 0)) {
-      loadTeachersFromJson();
-    }
-  }, [teachersError]);
+    loadTeachersFromJson();
+  }, []);
 
-  // Use combined data (API or local)
-  const displayTeachers = teachers && teachers.length > 0 ? teachers : localTeachers;
+  // Use local teachers data
+  const displayTeachers = localTeachers;
 
   // Load attendance from local storage on mount and date change
   useEffect(() => {
@@ -167,7 +167,7 @@ export default function Attendees() {
       teacherId: number;
       status: string;
     }) => {
-      // Update local storage first
+      // Update local storage only
       const newLocalAttendance = {
         ...localAttendance,
         [teacherId]: status,
@@ -178,35 +178,24 @@ export default function Attendees() {
       );
       setLocalAttendance(newLocalAttendance);
 
-      // Update absent teachers
+      // Update absent teachers in local storage
       await updateAbsentTeachersFile(teacherId, status);
-
-      // Then try to update the server
-      try {
-        const res = await apiRequest("POST", "/api/attendance", {
-          teacherId,
-          date: selectedDate.toISOString(),
-          status,
-        });
-        return res.json();
-      } catch (error) {
-        toast({
-          title: "Offline mode",
-          description: "Changes saved locally. Will sync when online.",
-          variant: "default",
-        });
-        throw error;
-      }
+      
+      return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
       toast({
         title: "Attendance marked",
-        description: "Teacher attendance has been updated successfully.",
+        description: "Teacher attendance has been updated locally.",
       });
     },
     onError: (error: Error) => {
       console.error('Error marking attendance:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark attendance locally.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -214,7 +203,7 @@ export default function Attendees() {
     try {
       const dateStr = selectedDate.toISOString().split('T')[0];
 
-      // Get existing data
+      // Get existing data from localStorage only
       let absentTeachers: Array<{
         teacherId: number;
         teacherName: string;
@@ -223,24 +212,14 @@ export default function Attendees() {
         periods: Array<{ period: number; className: string }>;
       }> = [];
 
-      try {
-        // Try to load data from the server first
-        const response = await fetch('/api/absent-teachers');
-        if (response.ok) {
-          absentTeachers = await response.json();
-        }
-      } catch (error) {
-        console.warn('Could not fetch from server, falling back to localStorage');
-        // Fallback to localStorage if server fetch fails
-        const existingData = localStorage.getItem('absent_teacher_for_substitute');
-        if (existingData) {
-          absentTeachers = JSON.parse(existingData);
-        }
+      const existingData = localStorage.getItem('absent_teacher_for_substitute');
+      if (existingData) {
+        absentTeachers = JSON.parse(existingData);
       }
 
       if (status === 'absent') {
         // Add teacher to absent list if not already present
-        const teacher = teachers?.find(t => t.id === teacherId);
+        const teacher = localTeachers.find(t => t.id === teacherId);
         if (!teacher) return;
 
         // Check if teacher is already in the list for this date
@@ -254,7 +233,7 @@ export default function Attendees() {
             teacherName: teacher.name,
             phoneNumber: teacher.phoneNumber,
             date: dateStr,
-            periods: [] // Will be populated by the backend
+            periods: [] // Empty periods array for now
           });
         }
       } else {
@@ -264,17 +243,12 @@ export default function Attendees() {
         );
       }
 
-      // Save updated list to localStorage
+      // Save updated list to localStorage only
       localStorage.setItem('absent_teacher_for_substitute', JSON.stringify(absentTeachers, null, 2));
-
-      // Try to update the actual file on the server
-      try {
-        await apiRequest("POST", "/api/update-absent-teachers", { absentTeachers });
-      } catch (error) {
-        console.warn('Failed to update server file, changes stored locally', error);
-      }
+      
+      console.log(`Updated absent teachers list in localStorage: ${absentTeachers.length} entries`);
     } catch (error) {
-      console.error('Error updating absent teachers file:', error);
+      console.error('Error updating absent teachers in localStorage:', error);
     }
   };
 
