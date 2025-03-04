@@ -105,8 +105,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const parsed = insertTeacherSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
     const teacher = await storage.createTeacher({
-      ...parsed.data,
-      isSubstitute: false
+      name: parsed.data.name,
+      isSubstitute: false,
+      phoneNumber: parsed.data.phoneNumber || null
     });
     res.status(201).json(teacher);
   });
