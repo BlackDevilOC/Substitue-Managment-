@@ -376,54 +376,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/attendance', async (req, res) => {
-    try {
-      const { teacherId, date, status } = req.body;
-      
-      // Get teacher
-      const teacher = await storage.getTeacher(teacherId);
-      if (!teacher) {
-        return res.status(404).json({ error: 'Teacher not found' });
-      }
-      
-      // Record in attendance tracker
-      const { recordAttendance } = await import('./attendance-tracker.js');
-      const formattedDate = format(new Date(date), 'yyyy-MM-dd');
-      recordAttendance(
-        formattedDate,
-        teacher.name,
-        status === 'present' ? 'Present' : 'Absent'
-      );
-      
-      res.json({ success: true, message: 'Attendance recorded' });
-    } catch (error) {
-      console.error('Error recording attendance:', error);
-      res.status(500).json({ error: 'Failed to record attendance' });
-    }
-  });
-  
-  app.post('/api/import/teachers', async (req, res) => {
-    try {
-      const teachers = req.body;
-      if (!Array.isArray(teachers)) {
-        return res.status(400).json({ error: 'Invalid teacher data' });
-      }
-      
-      for (const teacher of teachers) {
-        await storage.createTeacher({
-          name: teacher.name,
-          isSubstitute: teacher.isSubstitute || false,
-          phoneNumber: teacher.phoneNumber || null
-        });
-      }
-      
-      res.json({ success: true, message: `Imported ${teachers.length} teachers` });
-    } catch (error) {
-      console.error('Error importing teachers:', error);
-      res.status(500).json({ error: 'Failed to import teachers' });
-    }
-  });
-
   const httpServer = createServer(app);
   return httpServer;
 }
