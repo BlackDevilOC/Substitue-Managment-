@@ -1,9 +1,9 @@
 import { createContext, ReactNode, useContext, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient, apiRequest } from "../lib/queryClient";
+import { queryClient } from "../lib/queryClient";
 
-// Define admin credentials (These are likely to be removed in a real-world application)
+// Define admin credentials
 const ADMIN_USERNAME = 'Rehan';
 const ADMIN_PASSWORD = '0315';
 
@@ -31,34 +31,32 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
-  // Load user session
+  // Load user from localStorage on mount
   const {
     data: user,
     error,
     isLoading,
   } = useQuery<User | null>({
     queryKey: ["/api/user"],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest("GET", "/api/user");
-        return response.json();
-      } catch (error) {
-        if (error instanceof Error && error.message.includes("401")) {
-          return null;
-        }
-        throw error;
-      }
+    queryFn: () => {
+      const storedUser = localStorage.getItem('currentUser');
+      return storedUser ? JSON.parse(storedUser) : null;
     },
   });
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      try {
-        const response = await apiRequest("POST", "/api/login", credentials);
-        return response.json();
-      } catch (error) {
-        throw new Error('Invalid credentials');
+      // Check against hardcoded admin credentials
+      if (credentials.username === ADMIN_USERNAME && credentials.password === ADMIN_PASSWORD) {
+        const user = {
+          id: 1,
+          username: ADMIN_USERNAME,
+          isAdmin: true
+        };
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        return user;
       }
+      throw new Error('Invalid credentials');
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -78,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      localStorage.removeItem('currentUser');
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
