@@ -16,13 +16,116 @@ import { Card, CardContent } from "@/components/ui/card"
 import { apiRequest, queryClient } from "@/lib/queryClient"
 import { toast } from "@/hooks/use-toast"
 
+// Define interface for teacher data in JSON file
+interface TeacherJson {
+  name: string;
+  phone: string;
+  variations: string[];
+}
+
 export default function Attendees() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [localAttendance, setLocalAttendance] = useState<Record<number, string>>({})
+  const [localTeachers, setLocalTeachers] = useState<Teacher[]>([])
 
-  const { data: teachers, isLoading: teachersLoading } = useQuery<Teacher[]>({
+  // Try to load teachers from API first, then fall back to JSON file
+  const { data: teachers, isLoading: teachersLoading, isError: teachersError } = useQuery<Teacher[]>({
     queryKey: ["/api/teachers"],
+    onError: async (error) => {
+      console.warn("Failed to load teachers from API:", error);
+      // On error, load from local JSON file
+      await loadTeachersFromJson();
+    }
   });
+
+  // Load teachers from local JSON file
+  const loadTeachersFromJson = async () => {
+    try {
+      // Show loading toast
+      toast({
+        title: "Loading teachers...",
+        description: "Loading teachers from local data file.",
+      });
+      
+      // Fetch the JSON file
+      const response = await fetch('/data/total_teacher.json');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load teachers data: ${response.status}`);
+      }
+      
+      const jsonTeachers: TeacherJson[] = await response.json();
+      
+      // Convert to Teacher format with IDs
+      const formattedTeachers: Teacher[] = jsonTeachers.map((teacher, index) => ({
+        id: index + 1,
+        name: teacher.name,
+        phoneNumber: teacher.phone,
+        // Add any other required fields from your Teacher schema
+      }));
+      
+      setLocalTeachers(formattedTeachers);
+      
+      toast({
+        title: "Teachers loaded",
+        description: `Successfully loaded ${formattedTeachers.length} teachers from local data.`,
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Error loading teachers from JSON:", error);
+      toast({
+        title: "Error loading teachers",
+        description: error instanceof Error ? error.message : "Failed to load teachers data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle refresh button click
+  const handleRefresh = async () => {
+    try {
+      toast({
+        title: "Refreshing data...",
+        description: "Loading fresh teacher data...",
+      });
+      
+      // Try API first
+      try {
+        // Call API to refresh teacher data
+        const response = await apiRequest("POST", "/api/refresh-teachers");
+        const result = await response.json();
+        
+        // Refresh the data in the UI
+        queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
+        
+        toast({
+          title: "Success",
+          description: `Teacher data refreshed. Found ${result.teacherCount || 'multiple'} teachers.`,
+          variant: "success",
+        });
+      } catch (error) {
+        console.warn("API refresh failed, loading from JSON instead");
+        await loadTeachersFromJson();
+      }
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to refresh teacher data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Load from JSON on component mount if API fails
+  useEffect(() => {
+    if (teachersError || (teachers && teachers.length === 0)) {
+      loadTeachersFromJson();
+    }
+  }, [teachersError]);
+
+  // Use combined data (API or local)
+  const displayTeachers = teachers && teachers.length > 0 ? teachers : localTeachers;
 
   // Load attendance from local storage on mount and date change
   useEffect(() => {
@@ -276,7 +379,7 @@ export default function Attendees() {
         <div className="flex justify-center items-center gap-2 py-2">
           <div className="px-4 py-2 bg-primary/10 rounded-md">
             <span className="text-sm font-medium text-primary">Total Teachers:</span>
-            <span className="text-sm font-bold text-primary ml-2">{teachers?.length || 0}</span>
+            <span className="text-sm font-bold text-primary ml-2">{displayTeachers?.length || 0}</span>
           </div>
           <Button 
             size="sm" 
@@ -315,7 +418,7 @@ export default function Attendees() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {teachers?.map((teacher) => {
+        {displayTeachers?.map((teacher) => {
           const status = localAttendance[teacher.id] || 'present';
           const isAbsent = status === 'absent';
           const isPending = markAttendanceMutation.isPending;
