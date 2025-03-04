@@ -19,12 +19,14 @@ export default function FileUploadPage() {
     try {
       const response = await fetch(`/api/upload/${type}`, {
         method: 'POST',
-        body: formData,
-        credentials: 'include' // This ensures cookies are sent with the request
+        credentials: 'include',
+        body: formData
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        throw new Error(`Failed to upload ${type} file`)
+        throw new Error(data.error || `Failed to upload ${type} file`)
       }
 
       toast({
