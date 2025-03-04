@@ -3,12 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Upload } from "lucide-react"
 import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
-import { useAuth } from "@/hooks/use-auth"
 
 export default function FileUploadPage() {
   const [isUploading, setIsUploading] = useState(false)
   const { toast } = useToast()
-  const { token } = useAuth()
 
   const handleFileUpload = async (type: 'timetable' | 'substitute', event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -21,10 +19,8 @@ export default function FileUploadPage() {
     try {
       const response = await fetch(`/api/upload/${type}`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
+        body: formData,
+        credentials: 'include' // This ensures cookies are sent with the request
       })
 
       if (!response.ok) {
