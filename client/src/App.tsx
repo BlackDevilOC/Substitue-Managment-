@@ -18,7 +18,6 @@ import PeriodsPage from "@/pages/periods";
 import { ProtectedRoute } from "./lib/protected-route";
 import BottomNav from "./components/bottom-nav";
 import NotificationsPage from "@/pages/notifications";
-import MorePage from "@/pages/more-page"; // Added import for MorePage
 
 function Router() {
   return (
@@ -30,7 +29,7 @@ function Router() {
       <ProtectedRoute path="/upload" component={FileUploadPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/manage-absences" component={ManageAbsencesPage} />
-      <ProtectedRoute path="/more" component={MorePage} /> {/* Added route for MorePage */}
+      <ProtectedRoute path="/more" component={SecondaryNavPage} />
       <ProtectedRoute path="/sms-history" component={SMSHistoryPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/periods" component={PeriodsPage} />
