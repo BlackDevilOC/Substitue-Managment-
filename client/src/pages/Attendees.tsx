@@ -203,7 +203,7 @@ export default function Attendees() {
     try {
       const dateStr = selectedDate.toISOString().split('T')[0];
 
-      // Get existing data from localStorage
+      // Get existing data from localStorage for UI updates
       let absentTeachers: Array<{
         teacherId: number;
         teacherName: string;
@@ -218,11 +218,12 @@ export default function Attendees() {
         absentTeachers = JSON.parse(existingData);
       }
 
+      // Get the teacher information
+      const teacher = localTeachers.find(t => t.id === teacherId);
+      if (!teacher) return;
+
       if (status === 'absent') {
         // Add teacher to absent list if not already present
-        const teacher = localTeachers.find(t => t.id === teacherId);
-        if (!teacher) return;
-
         // Check if teacher is already in the list for this date
         const existingIndex = absentTeachers.findIndex(
           t => t.teacherId === teacherId && t.date === dateStr
@@ -244,17 +245,32 @@ export default function Attendees() {
         );
       }
 
-      // Save updated list to localStorage 
+      // Save updated list to localStorage for UI state
       localStorage.setItem('absent_teachers', JSON.stringify(absentTeachers, null, 2));
       
-      // Save to a file using an indirect method (since direct file system access isn't available)
+      // Create a simplified array of just teacher names and phone numbers for the JSON file
+      const simpleAbsentTeachers = absentTeachers.map(teacher => ({
+        name: teacher.teacherName,
+        phone: teacher.phoneNumber || ""
+      }));
+      
+      // Send data to server to update the JSON file
       try {
-        // First, save to localStorage with a specific key for our file data
-        localStorage.setItem('absent-teacher', JSON.stringify(absentTeachers, null, 2));
+        // Use fetch API to update the server-side JSON file
+        const response = await fetch('/api/update-absent-teachers-file', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            absentTeachers: simpleAbsentTeachers
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server responded with status: ${response.status}`);
+        }
         
-        // Try to save to server-side file if possible without API calls
-        // This creates an in-memory representation to simulate file saving
-        // The data will persist between page refreshes due to localStorage
         console.log(`Updated absent teachers list in storage: ${absentTeachers.length} entries`);
         
         // Display a success toast
@@ -266,12 +282,12 @@ export default function Attendees() {
           variant: "success"
         });
       } catch (error) {
-        console.error('Error saving absent teachers to storage:', error);
+        console.error('Error saving absent teachers to server file:', error);
         
         // Show error toast
         toast({
-          title: "Error saving data",
-          description: "Failed to save teacher attendance records.",
+          title: "Warning",
+          description: "Changes saved locally but failed to update server file.",
           variant: "destructive"
         });
       }

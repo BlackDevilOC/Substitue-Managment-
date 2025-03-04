@@ -1,378 +1,125 @@
-import type { Express } from "express";
-import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { insertTeacherSchema, insertScheduleSchema, insertAbsenceSchema } from "@shared/schema";
-import { processTimetableCSV, processSubstituteCSV } from "./csv-handler";
-import { processTeacherFiles } from "../utils/teacherExtractor";
-import multer from "multer";
-import { format } from "date-fns";
-import * as path from 'path';
+import express, { Request, Response } from 'express';
+import { createServer } from 'http';
+import cors from 'cors';
+import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import * as fs from 'fs';
+import fs from 'fs';
+import { createViteDevServer } from './vite';
+import { authenticateUser, requireAuth } from './auth';
+import { storage } from './storage';
+import { loadTeachers } from '../utils/teacherLoader';
+import { loadCsvData } from '../utils/csvLoader';
+import { extractTeachers } from '../utils/teacherExtractor';
 
-const upload = multer({ 
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  }
-});
+export async function createServer() {
+  const app = express();
 
-const checkAuth = (req: any, res: any, next: any) => {
-  const publicPaths = [
-    '/api/update-absent-teachers-file',
-    '/api/get-absent-teachers',
-    '/api/update-absent-teachers',
-    '/api/attendance'
-  ];
-  
-  if (publicPaths.includes(req.path)) {
-    return next();
-  }
-  
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: "Unauthorized" });
+  // Set up CORS and JSON parsing
+  app.use(cors());
+  app.use(express.json());
+
+  // Authenticate user for protected routes
+  app.use(authenticateUser);
+
+  // Set up Vite dev server in development mode
+  if (process.env.NODE_ENV !== 'production') {
+    const vite = await createViteDevServer();
+    app.use(vite.middlewares);
   }
 
-  try {
-    const token = authHeader.split(' ')[1];
-    const user = JSON.parse(token);
-    if (user.username === 'Rehan') {
-      req.user = user;
-      next();
-    } else {
-      res.status(401).json({ error: "Unauthorized" });
-    }
-  } catch (error) {
-    res.status(401).json({ error: "Unauthorized" });
-  }
-};
-
-async function processAndSaveTeachers(timetableContent?: string, substituteContent?: string) {
-  try {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const dataFolder = path.join(__dirname, '../data');
-
-    if (!fs.existsSync(dataFolder)) {
-      fs.mkdirSync(dataFolder, { recursive: true });
-    }
-
-    const timetablePath = path.join(dataFolder, 'timetable_file.csv');
-    const substitutePath = path.join(dataFolder, 'Substitude_file.csv');
-    const totalTeacherPath = path.join(dataFolder, 'total_teacher.json');
-
-    const ttContent = timetableContent || fs.existsSync(timetablePath) ? fs.readFileSync(timetablePath, 'utf-8') : '';
-    const subContent = substituteContent || fs.existsSync(substitutePath) ? fs.readFileSync(substitutePath, 'utf-8') : '';
-
-    if (!ttContent && !subContent) {
-      console.error('No data available for teacher extraction');
-      return;
-    }
-
-    const teacherData = await processTeacherFiles(ttContent, subContent);
-    const teachers = teacherData.split('\n')
-      .slice(1) 
-      .filter(line => line.trim())
-      .map(line => {
-        const [name, phone, variations] = line.split(',').map(str => str.replace(/"/g, '').trim());
-        return { name, phone, variations: variations.split('|') };
-      });
-
-    fs.writeFileSync(totalTeacherPath, JSON.stringify(teachers, null, 2));
-    console.log(`Saved ${teachers.length} teachers to total_teacher.json`);
-
-    return teachers;
-  } catch (error) {
-    console.error('Error processing and saving teachers:', error);
-    throw error;
-  }
-}
-
-const readTeachersFromFile = () => {
-  try {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const totalTeacherPath = path.join(__dirname, '../data/total_teacher.json');
-
-    if (fs.existsSync(totalTeacherPath)) {
-      const teachers = JSON.parse(fs.readFileSync(totalTeacherPath, 'utf-8'));
-      const uniqueTeachers = Array.from(new Map(
-        teachers.map((t: any) => [t.name.toLowerCase(), t])
-      ).values());
-
-      const formattedTeachers = uniqueTeachers.map((t: any, index: number) => ({
-        id: index + 1,
-        name: t.name,
-        phoneNumber: t.phone || null,
-        isSubstitute: false
-      }));
-
-      console.log(`Read ${formattedTeachers.length} teachers from total_teacher.json`);
-      return formattedTeachers;
-    }
-    console.warn('total_teacher.json not found');
-    return [];
-  } catch (error) {
-    console.error('Error reading teachers:', error);
-    return [];
-  }
-};
-
-export async function registerRoutes(app: Express): Promise<Server> {
-  await processAndSaveTeachers();
-  app.use('/api', checkAuth);
-
-  app.get("/api/teachers", async (req, res) => {
+  // API routes
+  app.get('/api/teachers', requireAuth, async (req, res) => {
     try {
-      const teachers = readTeachersFromFile();
+      const teachers = await storage.getTeachers();
       res.json(teachers);
     } catch (error) {
-      console.error('Error reading teachers:', error);
-      res.status(500).json({ error: 'Failed to load teachers' });
+      console.error('Error fetching teachers:', error);
+      res.status(500).json({ error: 'Failed to fetch teachers' });
     }
   });
 
-  app.post("/api/teachers", async (req, res) => {
-    const parsed = insertTeacherSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json(parsed.error);
-    const teacher = await storage.createTeacher(parsed.data);
-    res.status(201).json(teacher);
-  });
-
-  app.get("/api/schedule/:day", async (req, res) => {
-    const schedule = await storage.getSchedulesByDay(req.params.day);
-    res.json(schedule);
-  });
-
-  app.post("/api/override-day", async (req, res) => {
-    const { day } = req.body;
-    await storage.setDayOverride(day);
-    res.json({ message: "Day override set successfully" });
-  });
-
-  app.get("/api/current-day", async (req, res) => {
-    const currentDay = await storage.getCurrentDay();
-    res.json({ currentDay });
-  });
-
-  app.post("/api/schedule", async (req, res) => {
-    const parsed = insertScheduleSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json(parsed.error);
-    const schedule = await storage.createSchedule(parsed.data);
-    res.status(201).json(schedule);
-  });
-
-
-  app.post("/api/refresh-teachers", async (req, res) => {
+  app.get('/api/schedule/:day?', requireAuth, async (req, res) => {
     try {
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const dataFolder = path.join(__dirname, '../data');
-      
-      // Get paths to CSV files
-      const timetablePath = path.join(dataFolder, 'timetable_file.csv');
-      const substitutePath = path.join(dataFolder, 'Substitude_file.csv');
-      
-      // Check if files exist
-      if (!fs.existsSync(timetablePath)) {
-        return res.status(400).json({ error: 'Timetable file not found' });
-      }
-      if (!fs.existsSync(substitutePath)) {
-        return res.status(400).json({ error: 'Substitute file not found' });
-      }
-      
-      // Read file contents
-      const timetableContent = fs.readFileSync(timetablePath, 'utf-8');
-      const substituteContent = fs.readFileSync(substitutePath, 'utf-8');
-      
-      // Process the teacher data
-      const teachers = await processAndSaveTeachers(timetableContent, substituteContent);
-      
-      res.json({ 
-        success: true, 
-        message: 'Teacher data refreshed successfully',
-        teacherCount: teachers?.length || 0
-      });
+      const day = req.params.day;
+      const schedule = day
+        ? await storage.getScheduleByDay(day)
+        : await storage.getSchedule();
+      res.json(schedule);
     } catch (error) {
-      console.error('Error refreshing teacher data:', error);
-      res.status(500).json({ 
-        error: 'Failed to refresh teacher data',
-        message: error instanceof Error ? error.message : String(error)
-      });
+      console.error('Error fetching schedule:', error);
+      res.status(500).json({ error: 'Failed to fetch schedule' });
     }
   });
 
-  app.get("/api/absences", async (req, res) => {
-    const absences = await storage.getAbsences();
-    res.json(absences);
-  });
-
-  app.post("/api/absences", async (req, res) => {
-    const parsed = insertAbsenceSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json(parsed.error);
-    const absence = await storage.createAbsence(parsed.data);
-    const teacher = await storage.getTeacher(parsed.data.teacherId);
-    if (teacher) {
-      const { recordAttendance } = await import('./attendance-tracker.js');
-      recordAttendance(
-        parsed.data.date,
-        teacher.name,
-        'Absent'
-      );
-    }
-    res.status(201).json(absence);
-  });
-
-  app.post("/api/absences/:id/substitute", async (req, res) => {
-    const { substituteId } = req.body;
-    await storage.assignSubstitute(parseInt(req.params.id), substituteId);
-    res.sendStatus(200);
-  });
-
-  app.post("/api/auto-assign-substitutes", async (req, res) => {
-    const date = format(new Date(), "yyyy-MM-dd");
+  app.get('/api/absences', requireAuth, async (req, res) => {
     try {
-      const { SubstituteManager } = await import('./substitute-manager.js');
-      const manager = new SubstituteManager();
-      await manager.loadData();
-
-      const assignments = await storage.autoAssignSubstitutes(date);
-      const substituteAssignments = await storage.getSubstituteAssignments(date);
-
-      res.json({
-        message: "Substitutes assigned successfully",
-        assignmentsCount: assignments.size,
-        assignments: substituteAssignments
-      });
+      const absences = await storage.getAbsences();
+      res.json(absences);
     } catch (error) {
-      console.error('Auto-assign substitutes error:', error);
-      res.status(500).json({ 
-        message: "Failed to assign substitutes", 
-        error: error instanceof Error ? error.message : String(error) 
-      });
+      console.error('Error fetching absences:', error);
+      res.status(500).json({ error: 'Failed to fetch absences' });
     }
   });
 
-  app.get("/api/sms-history", async (req, res) => {
-    const history = await storage.getSmsHistory();
-    const enrichedHistory = await Promise.all(
-      history.map(async (sms) => {
-        const teacher = await storage.getTeacher(sms.teacherId);
-        return {
-          ...sms,
-          teacherName: teacher?.name || 'Unknown'
-        };
-      })
-    );
-    res.json(enrichedHistory);
-  });
-
-  app.get("/api/substitute-assignments", async (req, res) => {
-    const date = format(new Date(), "yyyy-MM-dd");
+  app.get('/api/substitute-assignments', requireAuth, async (req, res) => {
     try {
-      const assignments = await storage.getSubstituteAssignments(date);
+      const assignments = await storage.getSubstituteAssignments();
       res.json(assignments);
     } catch (error) {
-      console.error('Get substitute assignments error:', error);
-      res.status(500).json({ message: "Failed to get substitute assignments" });
+      console.error('Error fetching substitute assignments:', error);
+      res.status(500).json({ error: 'Failed to fetch substitute assignments' });
     }
   });
 
-  app.post("/api/reset-assignments", async (req, res) => {
+  app.post('/api/upload/timetable', async (req, res) => {
     try {
-      const today = format(new Date(), "yyyy-MM-dd");
-      const absences = await storage.getAbsences();
+      const timetablePath = join(dirname(fileURLToPath(import.meta.url)), '../data/timetable_file.csv');
+      await loadCsvData(timetablePath, 'timetable');
 
-      for (const absence of absences) {
-        if (absence.date === today && absence.substituteId) {
-          await storage.assignSubstitute(absence.id, null);
-        }
-      }
+      // Extract teachers from both files and save to JSON
+      await extractTeachers();
 
-      const { SubstituteManager } = await import('./substitute-manager.js');
-      const manager = new SubstituteManager();
-      manager.clearAssignments();
-
-      res.json({ message: "Assignments reset successfully" });
-    } catch (error) {
-      console.error('Reset assignments error:', error);
-      res.status(500).json({ message: "Failed to reset assignments" });
-    }
-  });
-
-  // File upload endpoints
-  app.post("/api/upload/timetable", upload.single('file'), async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-      
-      const fileContent = req.file.buffer.toString('utf-8');
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const filePath = path.join(__dirname, '../data/timetable_file.csv');
-      
-      fs.writeFileSync(filePath, fileContent);
-      await processTimetableCSV(fileContent);
-      await processAndSaveTeachers(fileContent, undefined);
-      
       res.json({ 
         success: true, 
-        message: 'Timetable file uploaded and processed successfully' 
+        message: 'Timetable data uploaded successfully' 
       });
     } catch (error) {
-      console.error('Timetable upload error:', error);
-      res.status(500).json({ 
-        error: 'Failed to process timetable file',
-        message: error instanceof Error ? error.message : String(error)
-      });
+      console.error('Error uploading timetable data:', error);
+      res.status(500).json({ error: 'Failed to upload timetable data' });
     }
   });
 
-  app.post("/api/upload/substitute", upload.single('file'), async (req, res) => {
+  app.post('/api/upload/substitute', async (req, res) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-      
-      const fileContent = req.file.buffer.toString('utf-8');
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const filePath = path.join(__dirname, '../data/Substitude_file.csv');
-      
-      fs.writeFileSync(filePath, fileContent);
-      await processSubstituteCSV(fileContent);
-      await processAndSaveTeachers(undefined, fileContent);
-      
+      const substitutePath = join(dirname(fileURLToPath(import.meta.url)), '../data/Substitude_file.csv');
+      await loadCsvData(substitutePath, 'substitute');
+
+      // Extract teachers from both files and save to JSON
+      await extractTeachers();
+
       res.json({ 
         success: true, 
-        message: 'Substitute file uploaded and processed successfully' 
+        message: 'Substitute data uploaded successfully' 
       });
     } catch (error) {
-      console.error('Substitute upload error:', error);
-      res.status(500).json({ 
-        error: 'Failed to process substitute file',
-        message: error instanceof Error ? error.message : String(error)
-      });
+      console.error('Error uploading substitute data:', error);
+      res.status(500).json({ error: 'Failed to upload substitute data' });
     }
   });
 
-  app.post('/api/update-absent-teachers', async (req, res) => {
+  app.post('/api/import/teachers', requireAuth, async (req, res) => {
     try {
-      const { absentTeachers } = req.body;
-      fs.writeFileSync(
-        path.join(__dirname, '../client/src/data/absent_teacher_for_substitute.json'),
-        JSON.stringify(absentTeachers, null, 2)
-      );
-      res.json({ success: true });
+      const teachers = req.body;
+      await storage.importTeachers(teachers);
+      res.json({ success: true, message: 'Teachers imported successfully' });
     } catch (error) {
-      console.error('Error updating absent teachers:', error);
-      res.status(500).json({ error: 'Failed to update absent teachers' });
+      console.error('Error importing teachers:', error);
+      res.status(500).json({ error: 'Failed to import teachers' });
     }
   });
 
-  app.get('/api/get-absent-teachers', (req, res) => {
+  // Add routes for updating absent teachers JSON file
+  app.get('/api/get-absent-teachers', async (req, res) => {
     try {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
@@ -393,40 +140,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/update-absent-teachers-file', (req, res) => {
+  // Update the absent teachers JSON file
+  app.post('/api/update-absent-teachers-file', async (req, res) => {
     try {
-      const { teacherName, isAbsent, absentTeachers } = req.body;
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const filePath = path.join(__dirname, '../data/absent_teachers.json');
+      // Get the absent teachers from the request body
+      const { absentTeachers } = req.body;
 
+      // Get the file path
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = dirname(__filename);
+      const filePath = join(__dirname, '../data/absent_teachers.json');
+
+      // Create the file if it doesn't exist
       if (!fs.existsSync(filePath)) {
         fs.writeFileSync(filePath, JSON.stringify([], null, 2));
       }
 
-      // If absentTeachers array is provided, use it directly
-      if (Array.isArray(absentTeachers)) {
-        fs.writeFileSync(filePath, JSON.stringify(absentTeachers, null, 2));
-        console.log(`Updated absent teachers list with ${absentTeachers.length} teachers`);
-        return res.json({ success: true, absentTeachers });
-      }
+      // Write the absent teachers to the file
+      fs.writeFileSync(filePath, JSON.stringify(absentTeachers, null, 2));
+      console.log(`Updated absent teachers file with ${absentTeachers.length} entries`);
 
-      // Otherwise handle the single teacherName update
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      let currentAbsentTeachers = JSON.parse(fileContent);
-
-      if (isAbsent) {
-        if (!currentAbsentTeachers.includes(teacherName)) {
-          currentAbsentTeachers.push(teacherName);
-          console.log(`Added ${teacherName} to absent teachers list`);
-        }
-      } else {
-        currentAbsentTeachers = currentAbsentTeachers.filter((name: string) => name !== teacherName);
-        console.log(`Removed ${teacherName} from absent teachers list`);
-      }
-
-      fs.writeFileSync(filePath, JSON.stringify(currentAbsentTeachers, null, 2));
-      res.json({ success: true, absentTeachers: currentAbsentTeachers });
+      res.json({ 
+        success: true, 
+        message: 'Absent teachers updated successfully',
+        count: absentTeachers.length
+      });
     } catch (error) {
       console.error('Error updating absent teachers file:', error);
       res.status(500).json({ error: 'Failed to update absent teachers file' });
