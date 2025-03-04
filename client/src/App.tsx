@@ -18,6 +18,7 @@ import PeriodsPage from "@/pages/periods";
 import { ProtectedRoute } from "./lib/protected-route";
 import BottomNav from "./components/bottom-nav";
 import NotificationsPage from "@/pages/notifications";
+import AbsencePage from "./pages/absence-page"; // Added import for AbsencePage
 
 function Router() {
   return (
@@ -34,6 +35,7 @@ function Router() {
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/periods" component={PeriodsPage} />
       <Route path="/notifications" component={NotificationsPage} />
+      <Route path="/absence" component={AbsencePage} /> {/* Added route for AbsencePage */}
       <Route component={NotFound} />
     </Switch>
   );
