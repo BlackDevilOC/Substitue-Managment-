@@ -26,46 +26,47 @@ export default function Attendees() {
 
   return (
     <div className="p-4 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Teacher Attendance</h1>
-      
-      <div className="flex items-center gap-4 mb-6">
-        <div className="bg-blue-50 p-3 rounded-md">
-          <span className="text-blue-600">Total Teachers: </span>
-          <span className="font-bold">{totalTeachers}</span>
-        </div>
-        
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Teacher Attendance</h1>
         <Button variant="outline" size="icon" onClick={handleRefresh}>
           <RotateCcw className="h-4 w-4" />
         </Button>
       </div>
 
-      <p className="text-gray-600 mb-6">Mark and track teacher attendance</p>
+      <div className="flex flex-col items-center mb-8">
+        <div className="bg-blue-50 p-3 rounded-md mb-4 w-fit">
+          <span className="text-blue-600">Total Teachers: </span>
+          <span className="font-bold">{totalTeachers}</span>
+        </div>
 
-      <div className="flex gap-4 mb-6">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant={"outline"}
-              className={cn(
-                "justify-start text-left font-normal",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, "MMMM do, yyyy") : <span>Pick a date</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={(newDate) => newDate && setDate(newDate)}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
+        <p className="text-gray-600 mb-6">Mark and track teacher attendance</p>
 
-        <Button onClick={handleExportToExcel}>Export to Excel</Button>
+        <div className="flex gap-4 w-full justify-center">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "justify-start text-left font-normal",
+                  !date && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date ? format(date, "MMMM do, yyyy") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(newDate) => newDate && setDate(newDate)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+
+          <Button onClick={handleExportToExcel}>Export to Excel</Button>
+        </div>
       </div>
 
       {/* Teacher list will be added here */}
