@@ -34,7 +34,7 @@ export default function AttendancePage() {
                 />
               </PopoverContent>
             </Popover>
-            <Button>Export to Excel</Button>
+            <Button>Export to csv</Button>
           </div>
         </div>
       </div>
