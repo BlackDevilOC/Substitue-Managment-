@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Clock } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,8 +19,8 @@ interface TeacherVariation {
 }
 
 export default function TeacherDetailsPage() {
-  const [, params] = useLocation();
-  const teacherName = decodeURIComponent(params.split("/").pop() || "");
+  const params = useParams<{ name: string }>();
+  const teacherName = decodeURIComponent(params.name || "");
   const { toast } = useToast();
   const [selectedVariation, setSelectedVariation] = useState<string>(teacherName);
   const [showVariations, setShowVariations] = useState(false);
@@ -55,7 +55,7 @@ export default function TeacherDetailsPage() {
   // Filter schedule for the selected teacher
   const teacherSchedule = React.useMemo(() => {
     if (!schedule || !selectedVariation) return [];
-    
+
     return schedule
       .filter((s: any) => {
         const teacher = teacherData?.find((t: any) => t.name === selectedVariation);
@@ -74,7 +74,7 @@ export default function TeacherDetailsPage() {
       const foundTeacher = teacherData.find((t: any) => 
         t.name.toLowerCase() === selectedVariation.toLowerCase()
       );
-      
+
       if (!foundTeacher) {
         setShowVariations(true);
         toast({
@@ -140,7 +140,7 @@ export default function TeacherDetailsPage() {
                   <div className="font-semibold">{item.className}</div>
                 </div>
               ))}
-              
+
               {teacherSchedule.length === 0 && !scheduleLoading && (
                 <div className="text-center py-8 text-muted-foreground">
                   No classes scheduled for today
