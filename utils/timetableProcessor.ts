@@ -35,7 +35,8 @@ export async function processTimetables(): Promise<void> {
     const records = parse(fileContent, {
       columns: false,
       skip_empty_lines: true,
-      trim: true
+      trim: true,
+      relax_column_count: true // Allow for inconsistent column counts
     });
 
     // Initialize data structures
