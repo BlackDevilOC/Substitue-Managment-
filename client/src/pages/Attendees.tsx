@@ -65,7 +65,7 @@ export default function Attendees() {
             </PopoverContent>
           </Popover>
 
-          <Button onClick={handleExportToExcel}>Export to Excel</Button>
+          <Button onClick={handleExportToExcel}>Export to csv</Button>
         </div>
       </div>
 
