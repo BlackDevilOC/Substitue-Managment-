@@ -42,7 +42,7 @@ export default function Attendees() {
 
       // Use the direct import approach instead of fetch to bypass server
       const teachersData = [
-        { "name": "Sir Bakir Shah", "phone": "+923156103995" },
+        { "name": "Sar Bakir Shah", "phone": "+923156103995" },
         { "name": "Sir Mushtaque Ahmed", "phone": "" },
         { "name": "Sir Irshad Qureshi", "phone": "+923123131179" },
         { "name": "Sir Muhammad Taha", "phone": "+923163745043" },
@@ -379,7 +379,7 @@ export default function Attendees() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-muted-foreground text-center sm:text-left">
-            Mark and track teacher attendance
+             and track teacher attendance
           </p>
           <div className="flex gap-4 items-center">
             <Popover>
