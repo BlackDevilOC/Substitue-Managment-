@@ -46,7 +46,7 @@ const Toast = React.forwardRef<
   return (
     <ToastPrimitives.Root
       ref={ref}
-      className={cn(toastVariants({ variant }), "opacity-95", className)}
+      className={cn(toastVariants({ variant }), className)}
       {...props}
     />
   )
@@ -92,7 +92,7 @@ const ToastTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Title
     ref={ref}
-    className={cn("text-sm font-bold", className)}
+    className={cn("text-sm font-semibold", className)}
     {...props}
   />
 ))
@@ -104,18 +104,11 @@ const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn("text-sm font-medium opacity-100", className)}
+    className={cn("text-sm opacity-90", className)}
     {...props}
   />
 ))
 ToastDescription.displayName = ToastPrimitives.Description.displayName
-
-const variantStyles = {
-  default: "bg-background text-foreground border-2 border-primary",
-  destructive:
-    "destructive group border-2 border-destructive bg-destructive text-destructive-foreground",
-  success: "success group border-2 border-green-500 bg-green-500 text-white",
-}
 
 type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
 
