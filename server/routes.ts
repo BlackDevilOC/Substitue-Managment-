@@ -356,7 +356,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileContent = fs.readFileSync(filePath, 'utf8');
       const absentTeachers = JSON.parse(fileContent);
 
-      res.json(absentTeachers);
+      // Sort by timestamp to get latest entries first
+      const sortedTeachers = absentTeachers.sort((a: any, b: any) => {
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      });
+
+      res.json(sortedTeachers);
     } catch (error) {
       console.error('Error reading absent teachers file:', error);
       res.status(500).json({ error: 'Failed to read absent teachers file' });
