@@ -301,6 +301,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // File upload endpoints
+  app.post("/api/upload/timetable", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+      
+      const fileContent = req.file.buffer.toString('utf-8');
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/timetable_file.csv');
+      
+      fs.writeFileSync(filePath, fileContent);
+      await processTimetableCSV(fileContent);
+      await processAndSaveTeachers(fileContent, undefined);
+      
+      res.json({ 
+        success: true, 
+        message: 'Timetable file uploaded and processed successfully' 
+      });
+    } catch (error) {
+      console.error('Timetable upload error:', error);
+      res.status(500).json({ 
+        error: 'Failed to process timetable file',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  app.post("/api/upload/substitute", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+      
+      const fileContent = req.file.buffer.toString('utf-8');
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/Substitude_file.csv');
+      
+      fs.writeFileSync(filePath, fileContent);
+      await processSubstituteCSV(fileContent);
+      await processAndSaveTeachers(undefined, fileContent);
+      
+      res.json({ 
+        success: true, 
+        message: 'Substitute file uploaded and processed successfully' 
+      });
+    } catch (error) {
+      console.error('Substitute upload error:', error);
+      res.status(500).json({ 
+        error: 'Failed to process substitute file',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   app.post('/api/update-absent-teachers', async (req, res) => {
     try {
       const { absentTeachers } = req.body;

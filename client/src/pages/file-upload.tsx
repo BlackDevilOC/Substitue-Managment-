@@ -17,9 +17,15 @@ export default function FileUploadPage() {
     formData.append('file', file)
 
     try {
+      // Get authentication token - replace with your actual auth method
+      const authToken = localStorage.getItem('authToken') || JSON.stringify({ username: 'Rehan' })
+      
       const response = await fetch(`/api/upload/${type}`, {
         method: 'POST',
         credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        },
         body: formData
       })
 
