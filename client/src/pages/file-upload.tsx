@@ -2,9 +2,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload } from "lucide-react"
 import { useState } from "react"
+import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function FileUploadPage() {
   const [isUploading, setIsUploading] = useState(false)
+  const { toast } = useToast()
+  const { token } = useAuth()
 
   const handleFileUpload = async (type: 'timetable' | 'substitute', event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -13,30 +17,42 @@ export default function FileUploadPage() {
     setIsUploading(true)
     const formData = new FormData()
     formData.append('file', file)
-    
+
     try {
       const response = await fetch(`/api/upload/${type}`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData
       })
-      
+
       if (!response.ok) {
         throw new Error(`Failed to upload ${type} file`)
       }
-      
-      // File uploaded successfully
-      console.log(`${type} file uploaded successfully`)
+
+      toast({
+        title: "Success",
+        description: `${type.charAt(0).toUpperCase() + type.slice(1)} file uploaded successfully`,
+      })
     } catch (error) {
       console.error('Upload error:', error)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to upload ${type} file. Please try again.`,
+      })
     } finally {
       setIsUploading(false)
+      // Reset the file input
+      event.target.value = ''
     }
   }
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <h1 className="text-2xl font-bold mb-6 text-center">Upload Files</h1>
-      
+
       <div className="grid gap-4">
         <Card>
           <CardHeader>
