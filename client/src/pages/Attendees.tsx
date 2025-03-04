@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon, Loader2, RotateCcw } from "lucide-react"
-import { cn } from "@/lib/utils"
 import {
   Popover,
   PopoverContent,
@@ -12,101 +11,28 @@ import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { Teacher } from "@shared/schema"
 import { Card, CardContent } from "@/components/ui/card"
-import { apiRequest, queryClient } from "@/lib/queryClient"
-import { toast } from "@/hooks/use-toast"
-
-// Define interface for teacher data in JSON file
-interface TeacherJson {
-  name: string;
-  phone: string;
-  variations: string[];
-}
+import { queryClient } from "@/lib/queryClient"
+import { useToast } from "@/hooks/use-toast"
 
 export default function Attendees() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [localAttendance, setLocalAttendance] = useState<Record<number, string>>({})
-  const [localTeachers, setLocalTeachers] = useState<Teacher[]>([])
 
-  // Load teachers directly from JSON file on component mount
-  const [teachersLoading, setTeachersLoading] = useState<boolean>(true);
+  const { toast } = useToast();
 
-  // Load teachers from local JSON file
-  const loadTeachersFromJson = async () => {
-    setTeachersLoading(true);
-    try {
-      // Show loading toast
-      toast({
-        title: "Loading teachers...",
-        description: "Loading teachers from local data file.",
-      });
-
-      // Use the direct import approach instead of fetch to bypass server
-      const teachersData = [
-        { "name": "Sar Bakir Shah", "phone": "+923156103995" },
-        { "name": "Sir Mushtaque Ahmed", "phone": "" },
-        { "name": "Sir Irshad Qureshi", "phone": "+923123131179" },
-        { "name": "Sir Muhammad Taha", "phone": "+923163745043" },
-        { "name": "Sir Shafique Ahmed", "phone": "+923337199001" },
-        { "name": "Sir Iqbal Ahmed", "phone": "+923063624407" },
-        { "name": "Sir Asif Nawaz", "phone": "+923122084340" },
-        { "name": "Sir Amir Shaikh Senior", "phone": "+923013437378" },
-        { "name": "Miss Romalia", "phone": "+923457999449" },
-        { "name": "Sir Jamalullah", "phone": "+923133362621" },
-        { "name": "Sir Abdul Hameed", "phone": "" },
-        { "name": "Sir Abdul Sami", "phone": "+923110022088" },
-        { "name": "Sir Faiz Hussain", "phone": "+923003150206" },
-        { "name": "Sir Usama", "phone": "+923143779477" },
-        { "name": "Sir Waqar Ali", "phone": "+923113588606" },
-        { "name": "Sir Faisal Ali", "phone": "+923473093995" },
-        { "name": "Sir Romanulabdin", "phone": "+923048151502" },
-        { "name": "Sir Anwar Ali", "phone": "" },
-        { "name": "Sir Aman Arif", "phone": "+923147500857" },
-        { "name": "Sir Khadim Hussain", "phone": "+923013976248" },
-        { "name": "Sir Jawad-ul-Haq", "phone": "+923153122161" },
-        { "name": "Sir Faraz Ahmed", "phone": "+923003150206" },
-        { "name": "Sir Imran Ahmed", "phone": "+923328231536" },
-        { "name": "Miss Anum Hussain", "phone": "+923090782869" },
-        { "name": "Sir Irshad Bhutto", "phone": "+923147117789" },
-        { "name": "Sir Meer Muhammad", "phone": "+923153555253" },
-        { "name": "Sir Shumail Arsalan", "phone": "+923069403635" },
-        { "name": "Sir Farhan Siddiqui", "phone": "+923161361117" },
-        { "name": "Sir Rafaqat Masseh", "phone": "+923023661737" },
-        { "name": "Sir Wajiudin Shaikh", "phone": "" },
-        { "name": "Sir Shoaib", "phone": "+923154988546" },
-        { "name": "Sir Abdul Rehman", "phone": "+923337208667" },
-        { "name": "sir jawad ul haq", "phone": "" },
-        { "name": "sir shabeer ahmedb", "phone": "" },
-        { "name": "sir irshad ahmed", "phone": "" }
-      ];
-
-      // Convert to Teacher format with IDs
-      const formattedTeachers: Teacher[] = teachersData.map((teacher, index) => ({
-        id: index + 1,
-        name: teacher.name,
-        phoneNumber: teacher.phone,
-        // Add any other required fields from your Teacher schema
-      }));
-
-      setLocalTeachers(formattedTeachers);
-
-      toast({
-        title: "Teachers loaded",
-        description: `Successfully loaded ${formattedTeachers.length} teachers from local data.`,
-        variant: "success",
-      });
-    } catch (error) {
-      console.error("Error loading teachers:", error);
-      toast({
-        title: "Error loading teachers",
-        description: error instanceof Error ? error.message : "Failed to load teachers data",
-        variant: "destructive",
-      });
-    } finally {
-      setTeachersLoading(false);
+  // Fetch teachers using React Query
+  const { data: localTeachers = [], isLoading: teachersLoading, refetch: refetchTeachers } = useQuery({
+    queryKey: ["/api/teachers"],
+    queryFn: async () => {
+      const response = await fetch("/api/teachers");
+      if (!response.ok) {
+        throw new Error("Failed to fetch teachers");
+      }
+      return response.json();
     }
-  };
+  });
 
-  // Handle refresh button click - simply reload the local data
+  // Handle refresh button click
   const handleRefresh = async () => {
     try {
       toast({
@@ -114,10 +40,8 @@ export default function Attendees() {
         description: "Reloading teacher data...",
       });
 
-      // Simply reload the local teacher data
-      await loadTeachersFromJson();
+      await refetchTeachers();
 
-      // Show success toast
       toast({
         title: "Success",
         description: `Teacher data refreshed. Found ${localTeachers.length} teachers.`,
@@ -128,18 +52,10 @@ export default function Attendees() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to refresh teacher data",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
-  // Load teachers from JSON on component mount
-  useEffect(() => {
-    loadTeachersFromJson();
-  }, []);
-
-  // Use local teachers data
-  const displayTeachers = localTeachers;
 
   // Load attendance from local storage on mount and date change
   useEffect(() => {
@@ -167,7 +83,6 @@ export default function Attendees() {
       teacherId: number;
       status: string;
     }) => {
-      // Update local storage only
       const newLocalAttendance = {
         ...localAttendance,
         [teacherId]: status,
@@ -180,7 +95,7 @@ export default function Attendees() {
 
       // Update absent teachers in local storage
       await updateAbsentTeachersFile(teacherId, status);
-      
+
       return { success: true };
     },
     onSuccess: () => {
@@ -194,7 +109,7 @@ export default function Attendees() {
       toast({
         title: "Error",
         description: "Failed to mark attendance locally.",
-        variant: "destructive",
+        variant: "destructive"
       });
     },
   });
@@ -203,7 +118,6 @@ export default function Attendees() {
     try {
       const dateStr = selectedDate.toISOString().split('T')[0];
 
-      // Get existing data from localStorage
       let absentTeachers: Array<{
         teacherId: number;
         teacherName: string;
@@ -212,18 +126,15 @@ export default function Attendees() {
         periods: Array<{ period: number; className: string }>;
       }> = [];
 
-      // Try to get existing data from localStorage
       const existingData = localStorage.getItem('absent_teachers');
       if (existingData) {
         absentTeachers = JSON.parse(existingData);
       }
 
       if (status === 'absent') {
-        // Add teacher to absent list if not already present
         const teacher = localTeachers.find(t => t.id === teacherId);
         if (!teacher) return;
 
-        // Check if teacher is already in the list for this date
         const existingIndex = absentTeachers.findIndex(
           t => t.teacherId === teacherId && t.date === dateStr
         );
@@ -232,51 +143,33 @@ export default function Attendees() {
           absentTeachers.push({
             teacherId: teacher.id,
             teacherName: teacher.name,
-            phoneNumber: teacher.phoneNumber,
+            phoneNumber: teacher.phoneNumber || undefined,
             date: dateStr,
-            periods: [] // Empty periods array for now
+            periods: []
           });
         }
       } else {
-        // Remove teacher from absent list
         absentTeachers = absentTeachers.filter(
           t => !(t.teacherId === teacherId && t.date === dateStr)
         );
       }
 
-      // Save updated list to localStorage 
       localStorage.setItem('absent_teachers', JSON.stringify(absentTeachers, null, 2));
-      
-      // Save to a file using an indirect method (since direct file system access isn't available)
-      try {
-        // First, save to localStorage with a specific key for our file data
-        localStorage.setItem('absent-teacher', JSON.stringify(absentTeachers, null, 2));
-        
-        // Try to save to server-side file if possible without API calls
-        // This creates an in-memory representation to simulate file saving
-        // The data will persist between page refreshes due to localStorage
-        console.log(`Updated absent teachers list in storage: ${absentTeachers.length} entries`);
-        
-        // Display a success toast
-        toast({
-          title: "Attendance recorded",
-          description: status === 'absent' 
-            ? "Teacher marked as absent and saved to records." 
-            : "Teacher marked as present and removed from absent records.",
-          variant: "success"
-        });
-      } catch (error) {
-        console.error('Error saving absent teachers to storage:', error);
-        
-        // Show error toast
-        toast({
-          title: "Error saving data",
-          description: "Failed to save teacher attendance records.",
-          variant: "destructive"
-        });
-      }
+
+      toast({
+        title: "Attendance recorded",
+        description: status === 'absent' 
+          ? "Teacher marked as absent and saved to records." 
+          : "Teacher marked as present and removed from absent records.",
+        variant: "success"
+      });
     } catch (error) {
       console.error('Error updating absent teachers in storage:', error);
+      toast({
+        title: "Error saving data",
+        description: "Failed to save teacher attendance records.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -285,19 +178,16 @@ export default function Attendees() {
       const monthName = selectedDate.toLocaleString('default', { month: 'long' });
       const year = selectedDate.getFullYear();
 
-      // Create a CSV string
       let csvContent = `Teacher Attendance - ${monthName} ${year}\n\n`;
-
-      // Add headers - days of month
       csvContent += "Teacher Name,";
+
       const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
       for (let i = 1; i <= daysInMonth; i++) {
         csvContent += `${i},`;
       }
       csvContent += "Total Present,Total Absent\n";
 
-      // Add data for each teacher
-      displayTeachers?.forEach(teacher => {
+      localTeachers?.forEach(teacher => {
         csvContent += `${teacher.name},`;
 
         let presentCount = 0;
@@ -321,18 +211,14 @@ export default function Attendees() {
               absentCount++;
             }
           } else {
-            csvContent += ','; // No data for this day
+            csvContent += ',';
           }
         }
 
         csvContent += `${presentCount},${absentCount}\n`;
       });
 
-      // Save the CSV file
       const fileName = `attendance_${monthName}_${year}.csv`;
-      localStorage.setItem(`attendance_excel_${monthName}_${year}`, csvContent);
-
-      // Create a download link
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -345,9 +231,13 @@ export default function Attendees() {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting attendance to Excel:', error);
+      toast({
+        title: "Export Error",
+        description: "Failed to export attendance data",
+        variant: "destructive"
+      });
     }
   };
-
 
   if (teachersLoading) {
     return (
@@ -365,12 +255,13 @@ export default function Attendees() {
         <div className="flex justify-center items-center gap-2 py-2">
           <div className="px-4 py-2 bg-primary/10 rounded-md">
             <span className="text-sm font-medium text-primary">Total Teachers:</span>
-            <span className="text-sm font-bold text-primary ml-2">{displayTeachers?.length || 0}</span>
+            <span className="text-sm font-bold text-primary ml-2">{localTeachers?.length || 0}</span>
           </div>
           <Button 
             size="sm" 
             variant="outline" 
             onClick={handleRefresh}
+            disabled={teachersLoading}
           >
             <RotateCcw className="h-4 w-4 mr-1" />
             Refresh
@@ -379,7 +270,7 @@ export default function Attendees() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-muted-foreground text-center sm:text-left">
-             and track teacher attendance
+            Mark and track teacher attendance
           </p>
           <div className="flex gap-4 items-center">
             <Popover>
@@ -404,7 +295,7 @@ export default function Attendees() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {displayTeachers?.map((teacher) => {
+        {localTeachers?.map((teacher) => {
           const status = localAttendance[teacher.id] || 'present';
           const isAbsent = status === 'absent';
           const isPending = markAttendanceMutation.isPending;
