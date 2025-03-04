@@ -7,7 +7,7 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import HomePage from "@/pages/home-page";
 import SchedulePage from "@/pages/schedule-page";
-import AbsencePage from "@/pages/absence-page";
+import Attendees from "@/pages/Attendees";  // Changed import
 import SubstitutesPage from "@/pages/substitutes-page";
 import ProfilePage from "@/pages/profile-page";
 import ManageAbsencesPage from "@/pages/manage-absences";
@@ -17,7 +17,6 @@ import SettingsPage from "@/pages/settings";
 import PeriodsPage from "@/pages/periods";
 import { ProtectedRoute } from "./lib/protected-route";
 import BottomNav from "./components/bottom-nav";
-// Added import for the new component
 import NotificationsPage from "@/pages/notifications";
 
 function Router() {
@@ -26,7 +25,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/schedule" component={SchedulePage} />
-      <ProtectedRoute path="/absences" component={AbsencePage} />
+      <ProtectedRoute path="/attendees" component={Attendees} /> {/* Changed route */}
       <ProtectedRoute path="/substitutes" component={SubstitutesPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/manage-absences" component={ManageAbsencesPage} />
@@ -34,8 +33,7 @@ function Router() {
       <ProtectedRoute path="/sms-history" component={SMSHistoryPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/periods" component={PeriodsPage} />
-      <Route path="/notifications" component={NotificationsPage} />{" "}
-      {/* Added Notifications route */}
+      <Route path="/notifications" component={NotificationsPage} />
       <Route component={NotFound} />
     </Switch>
   );
