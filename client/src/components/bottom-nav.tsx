@@ -6,7 +6,7 @@ export default function BottomNav() {
 
   const items = [
     { icon: Home, label: "Home", href: "/" },
-    { icon: UserMinus, label: "Attendee", href: "/absences" },
+    { icon: UserMinus, label: "Attendee", href: "/attendees" },
     { icon: Users, label: "Substitutes", href: "/substitutes" },
     { icon: ClipboardList, label: "Class", href: "/manage-absences" },
     { icon: MoreHorizontal, label: "More", href: "/more" },
