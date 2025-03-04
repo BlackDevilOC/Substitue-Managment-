@@ -46,36 +46,47 @@ export default function Attendees() {
         description: "Loading teachers from local data file.",
       });
 
-      // Fetch the JSON file with the correct path
-      const response = await fetch('./data/total_teacher.json');
-
+      // Fetch the JSON file with the absolute path
+      const response = await fetch('/data/total_teacher.json');
+      
       if (!response.ok) {
         throw new Error(`Failed to load teachers data: ${response.status}`);
       }
-
+      
+      const text = await response.text();
       try {
-        const jsonTeachers: TeacherJson[] = await response.json();
+        // Check if response is valid JSON before parsing
+        if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+          const jsonTeachers: TeacherJson[] = JSON.parse(text);
 
         // Convert to Teacher format with IDs
         const formattedTeachers: Teacher[] = jsonTeachers.map((teacher, index) => ({
-          id: index + 1,
-          name: teacher.name,
-          phoneNumber: teacher.phone,
-          // Add any other required fields from your Teacher schema
-        }));
+            id: index + 1,
+            name: teacher.name,
+            phoneNumber: teacher.phone,
+            // Add any other required fields from your Teacher schema
+          }));
 
-        setLocalTeachers(formattedTeachers);
+          setLocalTeachers(formattedTeachers);
 
-        toast({
-          title: "Teachers loaded",
-          description: `Successfully loaded ${formattedTeachers.length} teachers from local data.`,
-          variant: "success",
-        });
+          toast({
+            title: "Teachers loaded",
+            description: `Successfully loaded ${formattedTeachers.length} teachers from local data.`,
+            variant: "success",
+          });
+        } else {
+          console.error("Invalid JSON response:", text.substring(0, 100) + "...");
+          toast({
+            title: "Error loading teachers",
+            description: "The server returned invalid JSON data.",
+            variant: "destructive",
+          });
+        }
       } catch (error) {
         console.error("Error parsing JSON:", error);
         toast({
           title: "Error loading teachers",
-          description: "Failed to parse teacher data.",
+          description: "Failed to parse teacher data. Check the console for details.",
           variant: "destructive",
         });
       }
