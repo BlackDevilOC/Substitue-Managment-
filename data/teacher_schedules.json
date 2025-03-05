@@ -1,16 +1,4 @@
 {
-  "4": [
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_15"
-    },
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_31"
-    }
-  ],
   "sir bakir shah": [
     {
       "day": "monday",
@@ -447,16 +435,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_17"
-    },
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_33"
-    },
-    {
-      "day": "monday",
       "period": 5,
       "className": "10B"
     },
@@ -472,6 +450,11 @@
     },
     {
       "day": "tuesday",
+      "period": 4,
+      "className": "10B"
+    },
+    {
+      "day": "tuesday",
       "period": 6,
       "className": "10A"
     },
@@ -484,6 +467,11 @@
       "day": "wednesday",
       "period": 2,
       "className": "9B"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "10B"
     },
     {
       "day": "wednesday",
@@ -564,16 +552,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_18"
-    },
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_34"
-    },
-    {
-      "day": "monday",
       "period": 5,
       "className": "9C"
     },
@@ -589,6 +567,11 @@
     },
     {
       "day": "tuesday",
+      "period": 4,
+      "className": "10C"
+    },
+    {
+      "day": "tuesday",
       "period": 5,
       "className": "9C"
     },
@@ -601,6 +584,11 @@
       "day": "wednesday",
       "period": 2,
       "className": "9C"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "10C"
     },
     {
       "day": "wednesday",
@@ -681,16 +669,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_20"
-    },
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_36"
-    },
-    {
-      "day": "monday",
       "period": 5,
       "className": "8B"
     },
@@ -711,6 +689,11 @@
     },
     {
       "day": "tuesday",
+      "period": 4,
+      "className": "9B"
+    },
+    {
+      "day": "tuesday",
       "period": 5,
       "className": "8B"
     },
@@ -723,6 +706,11 @@
       "day": "wednesday",
       "period": 2,
       "className": "8A"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "9B"
     },
     {
       "day": "wednesday",
@@ -813,16 +801,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_29"
-    },
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_45"
-    },
-    {
-      "day": "monday",
       "period": 8,
       "className": "9B"
     },
@@ -835,6 +813,11 @@
       "day": "tuesday",
       "period": 2,
       "className": "8B"
+    },
+    {
+      "day": "tuesday",
+      "period": 4,
+      "className": "6B"
     },
     {
       "day": "tuesday",
@@ -854,6 +837,11 @@
     {
       "day": "wednesday",
       "period": 3,
+      "className": "6B"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
       "className": "6B"
     },
     {
@@ -932,6 +920,11 @@
       "day": "tuesday",
       "period": 2,
       "className": "8C"
+    },
+    {
+      "day": "tuesday",
+      "period": 4,
+      "className": "6C"
     },
     {
       "day": "tuesday",
@@ -1256,48 +1249,48 @@
     },
     {
       "day": "monday",
+      "period": 5,
+      "className": "10C"
+    },
+    {
+      "day": "monday",
+      "period": 6,
+      "className": "9C"
+    },
+    {
+      "day": "tuesday",
+      "period": 1,
+      "className": "7C"
+    },
+    {
+      "day": "tuesday",
+      "period": 2,
+      "className": "7C"
+    },
+    {
+      "day": "tuesday",
+      "period": 5,
+      "className": "10C"
+    },
+    {
+      "day": "tuesday",
+      "period": 6,
+      "className": "9C"
+    },
+    {
+      "day": "wednesday",
+      "period": 1,
+      "className": "7C"
+    },
+    {
+      "day": "wednesday",
+      "period": 2,
+      "className": "7C"
+    },
+    {
+      "day": "wednesday",
       "period": 4,
-      "className": "UnknownClass_37"
-    },
-    {
-      "day": "monday",
-      "period": 5,
-      "className": "10C"
-    },
-    {
-      "day": "monday",
-      "period": 6,
       "className": "9C"
-    },
-    {
-      "day": "tuesday",
-      "period": 1,
-      "className": "7C"
-    },
-    {
-      "day": "tuesday",
-      "period": 2,
-      "className": "7C"
-    },
-    {
-      "day": "tuesday",
-      "period": 5,
-      "className": "10C"
-    },
-    {
-      "day": "tuesday",
-      "period": 6,
-      "className": "9C"
-    },
-    {
-      "day": "wednesday",
-      "period": 1,
-      "className": "7C"
-    },
-    {
-      "day": "wednesday",
-      "period": 2,
-      "className": "7C"
     },
     {
       "day": "wednesday",
@@ -1378,11 +1371,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_22"
-    },
-    {
-      "day": "monday",
       "period": 6,
       "className": "7A"
     },
@@ -1395,6 +1383,11 @@
       "day": "tuesday",
       "period": 2,
       "className": "6A"
+    },
+    {
+      "day": "tuesday",
+      "period": 4,
+      "className": "8A"
     },
     {
       "day": "tuesday",
@@ -1592,11 +1585,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_40"
-    },
-    {
-      "day": "monday",
       "period": 5,
       "className": "6C"
     },
@@ -1644,6 +1632,11 @@
       "day": "wednesday",
       "period": 3,
       "className": "6C"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "8C"
     },
     {
       "day": "wednesday",
@@ -1908,16 +1901,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_16"
-    },
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_35"
-    },
-    {
-      "day": "monday",
       "period": 6,
       "className": "10C"
     },
@@ -1933,6 +1916,11 @@
     },
     {
       "day": "tuesday",
+      "period": 4,
+      "className": "10A"
+    },
+    {
+      "day": "tuesday",
       "period": 6,
       "className": "10C"
     },
@@ -1945,6 +1933,11 @@
       "day": "wednesday",
       "period": 3,
       "className": "10A"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "9A"
     },
     {
       "day": "wednesday",
@@ -2147,16 +2140,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_24"
-    },
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_32"
-    },
-    {
-      "day": "monday",
       "period": 6,
       "className": "10A"
     },
@@ -2172,6 +2155,11 @@
     },
     {
       "day": "tuesday",
+      "period": 4,
+      "className": "8C"
+    },
+    {
+      "day": "tuesday",
       "period": 5,
       "className": "10B"
     },
@@ -2184,6 +2172,11 @@
       "day": "tuesday",
       "period": 8,
       "className": "9C"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "10A"
     },
     {
       "day": "wednesday",
@@ -2254,11 +2247,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_26"
-    },
-    {
-      "day": "monday",
       "period": 5,
       "className": "7C"
     },
@@ -2271,6 +2259,11 @@
       "day": "tuesday",
       "period": 3,
       "className": "7A"
+    },
+    {
+      "day": "tuesday",
+      "period": 4,
+      "className": "7B"
     },
     {
       "day": "tuesday",
@@ -2438,16 +2431,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_23"
-    },
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_38"
-    },
-    {
-      "day": "monday",
       "period": 5,
       "className": "8A"
     },
@@ -2473,6 +2456,11 @@
     },
     {
       "day": "tuesday",
+      "period": 4,
+      "className": "8B"
+    },
+    {
+      "day": "tuesday",
       "period": 5,
       "className": "6B"
     },
@@ -2480,6 +2468,11 @@
       "day": "tuesday",
       "period": 7,
       "className": "6A"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "8A"
     },
     {
       "day": "wednesday",
@@ -2547,6 +2540,11 @@
       "day": "monday",
       "period": 3,
       "className": "7C"
+    },
+    {
+      "day": "monday",
+      "period": 4,
+      "className": "6C"
     },
     {
       "day": "monday",
@@ -2657,16 +2655,6 @@
   "sir abdul rehman": [
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_28"
-    },
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_46"
-    },
-    {
-      "day": "monday",
       "period": 6,
       "className": "6C"
     },
@@ -2677,6 +2665,11 @@
     },
     {
       "day": "tuesday",
+      "period": 4,
+      "className": "6A"
+    },
+    {
+      "day": "tuesday",
       "period": 5,
       "className": "6C"
     },
@@ -2684,6 +2677,11 @@
       "day": "tuesday",
       "period": 8,
       "className": "10C"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "6C"
     },
     {
       "day": "wednesday",
@@ -2743,18 +2741,13 @@
       "className": "9C"
     },
     {
-      "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_21"
-    },
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_44"
+      "day": "tuesday",
+      "period": 3,
+      "className": "9C"
     },
     {
       "day": "tuesday",
-      "period": 3,
+      "period": 4,
       "className": "9C"
     },
     {
@@ -2766,6 +2759,11 @@
       "day": "wednesday",
       "period": 3,
       "className": "9C"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "6A"
     },
     {
       "day": "wednesday",
@@ -2836,11 +2834,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_19"
-    },
-    {
-      "day": "monday",
       "period": 5,
       "className": "9A"
     },
@@ -2853,6 +2846,11 @@
       "day": "tuesday",
       "period": 3,
       "className": "8A"
+    },
+    {
+      "day": "tuesday",
+      "period": 4,
+      "className": "9A"
     },
     {
       "day": "tuesday",
@@ -2933,11 +2931,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_41"
-    },
-    {
-      "day": "monday",
       "period": 5,
       "className": "8C"
     },
@@ -2965,6 +2958,11 @@
       "day": "wednesday",
       "period": 3,
       "className": "8B"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "7A"
     },
     {
       "day": "wednesday",
@@ -3025,11 +3023,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_42"
-    },
-    {
-      "day": "monday",
       "period": 6,
       "className": "8C"
     },
@@ -3051,6 +3044,11 @@
     {
       "day": "wednesday",
       "period": 3,
+      "className": "7B"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
       "className": "7B"
     },
     {
@@ -3117,11 +3115,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_39"
-    },
-    {
-      "day": "monday",
       "period": 6,
       "className": "8B"
     },
@@ -3134,6 +3127,11 @@
       "day": "tuesday",
       "period": 5,
       "className": "8A"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "8B"
     },
     {
       "day": "wednesday",
@@ -3228,11 +3226,6 @@
     },
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_27"
-    },
-    {
-      "day": "monday",
       "period": 6,
       "className": "6B"
     },
@@ -3245,6 +3238,11 @@
       "day": "monday",
       "period": 8,
       "className": "7B"
+    },
+    {
+      "day": "tuesday",
+      "period": 4,
+      "className": "7C"
     },
     {
       "day": "tuesday",
@@ -3310,11 +3308,6 @@
   "sir farhan siddiqui": [
     {
       "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_43"
-    },
-    {
-      "day": "monday",
       "period": 6,
       "className": "6A"
     },
@@ -3342,6 +3335,11 @@
       "day": "tuesday",
       "period": 8,
       "className": "8C"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "7C"
     },
     {
       "day": "wednesday",
@@ -3424,20 +3422,6 @@
       "day": "saturday",
       "period": 8,
       "className": "7A"
-    }
-  ],
-  "miss anum hussain\ntuesday": [
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "6C"
-    }
-  ],
-  "miss romalia\nwednesday": [
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "UnknownClass_30"
     }
   ],
   "sir irshad ahmed": [
