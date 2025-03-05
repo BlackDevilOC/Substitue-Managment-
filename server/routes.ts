@@ -139,65 +139,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const schedulePath = path.join(__dirname, '../data/teacher_schedules.json');
-      const totalTeacherPath = path.join(__dirname, '../data/total_teacher.json');
 
       if (!fs.existsSync(schedulePath)) {
         return res.status(404).json({ error: 'Teacher schedules file not found' });
       }
-      
-      if (!fs.existsSync(totalTeacherPath)) {
-        return res.status(404).json({ error: 'Total teacher file not found' });
-      }
 
       const schedules = JSON.parse(fs.readFileSync(schedulePath, 'utf-8'));
-      const totalTeachers = JSON.parse(fs.readFileSync(totalTeacherPath, 'utf-8'));
       
-      // Find the teacher in total_teacher.json to get all name variations
-      const teacherInfo = totalTeachers.find((t: any) => {
-        return t.name.toLowerCase() === teacherName || 
-               (t.variations && t.variations.some((v: string) => v.toLowerCase() === teacherName));
-      });
+      // Find the teacher schedule (try exact match first)
+      let teacherSchedule = schedules[teacherName];
       
-      if (!teacherInfo) {
-        return res.status(404).json({ error: 'Teacher not found in records' });
-      }
-      
-      // Try to find schedule using all name variations
-      let teacherSchedule = null;
-      const variations = [...(teacherInfo.variations || []), teacherInfo.name.toLowerCase()];
-      
-      // Try each variation to find the schedule
-      for (const variant of variations) {
-        const variantLower = variant.toLowerCase();
-        // Try exact match
-        if (schedules[variantLower]) {
-          teacherSchedule = schedules[variantLower];
-          break;
-        }
-        
-        // Try partial match
+      // If not found, try to find by partial match
+      if (!teacherSchedule) {
+        // Find keys that are close to the provided name
         const possibleMatches = Object.keys(schedules).filter(key => 
-          key.includes(variantLower) || variantLower.includes(key)
+          key.includes(teacherName) || teacherName.includes(key)
         );
         
         if (possibleMatches.length > 0) {
           teacherSchedule = schedules[possibleMatches[0]];
-          break;
         }
       }
 
       if (!teacherSchedule) {
-        return res.status(404).json({ 
-          error: 'Teacher schedule not found',
-          teacherInfo: teacherInfo
-        });
+        return res.status(404).json({ error: 'Teacher schedule not found' });
       }
 
-      // Return both the schedule and the teacher info
-      res.json({
-        teacherSchedule, 
-        teacherInfo
-      });
+      res.json(teacherSchedule);
     } catch (error) {
       console.error('Error fetching teacher schedule:', error);
       res.status(500).json({ 
@@ -546,94 +514,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
-  app.get("/api/teacher-day-schedule", async (req, res) => {
-    try {
-      const teacherName = req.query.name?.toString().toLowerCase();
-      const day = req.query.day?.toString().toLowerCase() || getCurrentDay();
-      
-      if (!teacherName) {
-        return res.status(400).json({ error: 'Teacher name is required' });
-      }
-
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const schedulePath = path.join(__dirname, '../data/teacher_schedules.json');
-      const totalTeacherPath = path.join(__dirname, '../data/total_teacher.json');
-
-      if (!fs.existsSync(schedulePath) || !fs.existsSync(totalTeacherPath)) {
-        return res.status(404).json({ error: 'Required data files not found' });
-      }
-
-      const schedules = JSON.parse(fs.readFileSync(schedulePath, 'utf-8'));
-      const totalTeachers = JSON.parse(fs.readFileSync(totalTeacherPath, 'utf-8'));
-      
-      // Find the teacher in total_teacher.json to get all name variations
-      const teacherInfo = totalTeachers.find((t: any) => {
-        return t.name.toLowerCase() === teacherName || 
-               (t.variations && t.variations.some((v: string) => v.toLowerCase() === teacherName));
-      });
-      
-      if (!teacherInfo) {
-        return res.status(404).json({ error: 'Teacher not found in records' });
-      }
-      
-      // Try to find schedule using all name variations
-      let teacherSchedule = null;
-      const variations = [...(teacherInfo.variations || []), teacherInfo.name.toLowerCase()];
-      
-      // Try each variation to find the schedule
-      for (const variant of variations) {
-        const variantLower = variant.toLowerCase();
-        // Try exact match
-        if (schedules[variantLower]) {
-          teacherSchedule = schedules[variantLower];
-          break;
-        }
-        
-        // Try partial match
-        const possibleMatches = Object.keys(schedules).filter(key => 
-          key.includes(variantLower) || variantLower.includes(key)
-        );
-        
-        if (possibleMatches.length > 0) {
-          teacherSchedule = schedules[possibleMatches[0]];
-          break;
-        }
-      }
-
-      if (!teacherSchedule) {
-        return res.status(404).json({ 
-          error: 'Teacher schedule not found',
-          teacherInfo: teacherInfo
-        });
-      }
-
-      // Filter only the specific day's schedule and sort by period
-      const daySchedule = teacherSchedule
-        .filter((entry: any) => entry.day === day)
-        .sort((a: any, b: any) => a.period - b.period);
-
-      // Return the day's schedule and teacher info
-      res.json({
-        teacherName: teacherInfo.name,
-        day,
-        schedule: daySchedule,
-        teacherInfo
-      });
-    } catch (error) {
-      console.error('Error fetching teacher day schedule:', error);
-      res.status(500).json({ 
-        error: 'Failed to fetch teacher day schedule',
-        details: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-
-  // Helper function to get current day
-  function getCurrentDay() {
-    return new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-  }
 
   const httpServer = createServer(app);
   return httpServer;
