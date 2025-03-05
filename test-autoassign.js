@@ -14,6 +14,24 @@ async function testAutoassign() {
     
     if (data.success) {
       console.log(`✅ Successfully assigned ${data.assignmentsCount} substitutes`);
+      
+      // Print details of assignments
+      if (data.assignments && data.assignments.length > 0) {
+        console.log("\nAssignment Details:");
+        data.assignments.forEach((assignment, index) => {
+          console.log(`\n[${index + 1}] ${assignment.originalTeacher} → ${assignment.substitute}`);
+          console.log(`   Class: ${assignment.className}, Period: ${assignment.period}`);
+          console.log(`   Substitute Phone: ${assignment.substitutePhone}`);
+        });
+      }
+      
+      // Print any warnings
+      if (data.warnings && data.warnings.length > 0) {
+        console.log("\nWarnings:");
+        data.warnings.forEach((warning, index) => {
+          console.log(`   ⚠️ ${warning}`);
+        });
+      }
     } else {
       console.log(`❌ Error: ${data.message}`);
     }
@@ -22,4 +40,4 @@ async function testAutoassign() {
   }
 }
 
-testAutoassign();
+testAutoassign();n();
