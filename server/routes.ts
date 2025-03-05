@@ -129,6 +129,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ currentDay });
   });
 
+  app.get("/api/teacher-schedule", async (req, res) => {
+    try {
+      const teacherName = req.query.name?.toString().toLowerCase();
+      if (!teacherName) {
+        return res.status(400).json({ error: 'Teacher name is required' });
+      }
+
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const schedulePath = path.join(__dirname, '../data/teacher_schedules.json');
+
+      if (!fs.existsSync(schedulePath)) {
+        return res.status(404).json({ error: 'Teacher schedules file not found' });
+      }
+
+      const schedules = JSON.parse(fs.readFileSync(schedulePath, 'utf-8'));
+      
+      // Find the teacher schedule (try exact match first)
+      let teacherSchedule = schedules[teacherName];
+      
+      // If not found, try to find by partial match
+      if (!teacherSchedule) {
+        // Find keys that are close to the provided name
+        const possibleMatches = Object.keys(schedules).filter(key => 
+          key.includes(teacherName) || teacherName.includes(key)
+        );
+        
+        if (possibleMatches.length > 0) {
+          teacherSchedule = schedules[possibleMatches[0]];
+        }
+      }
+
+      if (!teacherSchedule) {
+        return res.status(404).json({ error: 'Teacher schedule not found' });
+      }
+
+      res.json(teacherSchedule);
+    } catch (error) {
+      console.error('Error fetching teacher schedule:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch teacher schedule',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   app.post("/api/schedule", async (req, res) => {
     const parsed = insertScheduleSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
