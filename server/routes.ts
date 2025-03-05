@@ -10,10 +10,6 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import * as fs from 'fs';
 import { processTimetables } from "../utils/timetableProcessor";
-import express from 'express';
-import { z } from 'zod';
-import { markAttendance, sendAbsenceAlert } from './attendance-handler';
-import { findSubstitutes, assignSubstitutes } from './substitute-manager';
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -93,214 +89,91 @@ const readTeachersFromFile = () => {
   }
 };
 
-const router = express.Router();
-
-router.get('/api/teachers', async (_req, res) => {
-  try {
-    const teachersPath = path.join(__dirname, '../data/total_teacher.json');
-    const teachersData = fs.readFileSync(teachersPath, 'utf8');
-    const teachers = JSON.parse(teachersData);
-
-    const formattedTeachers = teachers.map((teacher: any, index: number) => ({
-      id: index + 1,
-      name: teacher.name,
-      phoneNumber: teacher.phone || ''
-    }));
-
-    console.log(`Read ${teachers.length} teachers from total_teacher.json`);
-
-    res.json(formattedTeachers);
-  } catch (error) {
-    console.error('Error fetching teachers:', error);
-    res.status(500).json({ error: 'Failed to fetch teachers' });
-  }
-});
-
-router.post('/api/mark-attendance', async (req, res) => {
-  try {
-    const schema = z.object({
-      teacherName: z.string(),
-      status: z.enum(['present', 'absent']),
-      phoneNumber: z.string().optional()
-    });
-
-    const { teacherName, status, phoneNumber } = schema.parse(req.body);
-
-    await markAttendance(teacherName, status, phoneNumber);
-
-    if (status === 'absent') {
-      await sendAbsenceAlert(teacherName, phoneNumber);
-    }
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error marking attendance:', error);
-    res.status(500).json({ error: 'Failed to mark attendance' });
-  }
-});
-
-router.get('/api/teacher-schedule/:teacherName', (req, res) => {
-  try {
-    const { teacherName } = req.params;
-    const scheduleDataPath = path.join(__dirname, '../data/teacher_schedules.json');
-    const schedulesData = fs.readFileSync(scheduleDataPath, 'utf8');
-    const schedules = JSON.parse(schedulesData);
-
-    const teacherSchedule = schedules[teacherName.toLowerCase()] || [];
-
-    res.json(teacherSchedule);
-  } catch (error) {
-    console.error('Error fetching teacher schedule:', error);
-    res.status(500).json({ error: 'Failed to fetch teacher schedule' });
-  }
-});
-
-router.get('/api/get-absent-teachers', (req, res) => {
-  try {
-    const absentTeachersPath = path.join(__dirname, '../data/absent_teachers.json');
-
-    if (!fs.existsSync(absentTeachersPath)) {
-      return res.json([]);
-    }
-
-    const data = fs.readFileSync(absentTeachersPath, 'utf8');
-    const absentTeachers = JSON.parse(data);
-
-    const today = new Date().toISOString().split('T')[0];
-
-    const todaysAbsentTeachers = absentTeachers
-      .filter((teacher: any) => teacher.date === today)
-      .map((teacher: any) => ({
-        name: teacher.teacherName,
-        phoneNumber: teacher.phoneNumber || '',
-        date: teacher.date
-      }));
-
-    res.json(todaysAbsentTeachers);
-  } catch (error) {
-    console.error('Error fetching absent teachers:', error);
-    res.status(500).json({ error: 'Failed to fetch absent teachers' });
-  }
-});
-
-router.post('/api/remove-absence', (req, res) => {
-  try {
-    const { teacherName } = req.body;
-
-    if (!teacherName) {
-      return res.status(400).json({ error: 'Teacher name is required' });
-    }
-
-    const absentTeachersPath = path.join(__dirname, '../data/absent_teachers.json');
-
-    if (!fs.existsSync(absentTeachersPath)) {
-      return res.status(404).json({ error: 'No absent teachers found' });
-    }
-
-    const data = fs.readFileSync(absentTeachersPath, 'utf8');
-    let absentTeachers = JSON.parse(data);
-
-    const today = new Date().toISOString().split('T')[0];
-
-    absentTeachers = absentTeachers.filter(
-      (teacher: any) => !(teacher.teacherName === teacherName && teacher.date === today)
-    );
-
-    fs.writeFileSync(absentTeachersPath, JSON.stringify(absentTeachers, null, 2));
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error removing absence:', error);
-    res.status(500).json({ error: 'Failed to remove absence' });
-  }
-});
-
-router.get('/api/schedule/:day', (req, res) => {
-  try {
-    const { day } = req.params;
-    const daySchedulePath = path.join(__dirname, '../data/day_schedules.json');
-    const daySchedulesData = fs.readFileSync(daySchedulePath, 'utf8');
-    const daySchedules = JSON.parse(daySchedulesData);
-
-    if (!daySchedules[day.toLowerCase()]) {
-      return res.status(404).json({ error: `No schedule found for ${day}` });
-    }
-
-    res.json(daySchedules[day.toLowerCase()]);
-  } catch (error) {
-    console.error(`Error fetching schedule for ${req.params.day}:`, error);
-    res.status(500).json({ error: 'Failed to fetch schedule' });
-  }
-});
-
-router.post('/api/find-substitutes', async (req, res) => {
-  try {
-    const schema = z.object({
-      teacherName: z.string(),
-      date: z.string().optional()
-    });
-
-    const { teacherName, date } = schema.parse(req.body);
-    const today = date || new Date().toISOString().split('T')[0];
-    const day = new Date(today).toLocaleDateString('en-US', { weekday: 'lowercase' });
-
-    const substitutes = await findSubstitutes(teacherName, day);
-
-    res.json(substitutes);
-  } catch (error) {
-    console.error('Error finding substitutes:', error);
-    res.status(500).json({ error: 'Failed to find substitutes' });
-  }
-});
-
-router.post('/api/assign-substitutes', async (req, res) => {
-  try {
-    const schema = z.object({
-      absentTeacher: z.string(),
-      assignments: z.array(z.object({
-        period: z.number(),
-        className: z.string(),
-        substituteTeacher: z.string()
-      })),
-      date: z.string().optional()
-    });
-
-    const { absentTeacher, assignments, date } = schema.parse(req.body);
-    const today = date || new Date().toISOString().split('T')[0];
-
-    await assignSubstitutes(absentTeacher, assignments, today);
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error assigning substitutes:', error);
-    res.status(500).json({ error: 'Failed to assign substitutes' });
-  }
-});
-
-router.get('/api/absences', (_req, res) => {
-  try {
-    const absentTeachersPath = path.join(__dirname, '../data/absent_teachers.json');
-
-    if (!fs.existsSync(absentTeachersPath)) {
-      return res.json([]);
-    }
-
-    const data = fs.readFileSync(absentTeachersPath, 'utf8');
-    const absentTeachers = JSON.parse(data);
-
-    res.json(absentTeachers);
-  } catch (error) {
-    console.error('Error fetching all absences:', error);
-    res.status(500).json({ error: 'Failed to fetch absences' });
-  }
-});
-
-
 export async function registerRoutes(app: Express): Promise<Server> {
   await processAndSaveTeachers();
 
-  app.use('/api', router);
+  app.get("/api/teachers", async (req, res) => {
+    try {
+      const teachers = readTeachersFromFile();
+      res.json(teachers);
+    } catch (error) {
+      console.error('Error reading teachers:', error);
+      res.status(500).json({ error: 'Failed to load teachers' });
+    }
+  });
 
+  app.post("/api/teachers", async (req, res) => {
+    const parsed = insertTeacherSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json(parsed.error);
+    const teacher = await storage.createTeacher({
+      name: parsed.data.name,
+      isSubstitute: false,
+      phoneNumber: parsed.data.phoneNumber || null
+    });
+    res.status(201).json(teacher);
+  });
+
+  app.get("/api/schedule/:day", async (req, res) => {
+    const schedule = await storage.getSchedulesByDay(req.params.day);
+    res.json(schedule);
+  });
+
+  app.post("/api/override-day", async (req, res) => {
+    const { day } = req.body;
+    await storage.setDayOverride(day);
+    res.json({ message: "Day override set successfully" });
+  });
+
+  app.get("/api/current-day", async (req, res) => {
+    const currentDay = await storage.getCurrentDay();
+    res.json({ currentDay });
+  });
+
+  app.get("/api/teacher-schedule", async (req, res) => {
+    try {
+      const teacherName = req.query.name?.toString().toLowerCase();
+      if (!teacherName) {
+        return res.status(400).json({ error: 'Teacher name is required' });
+      }
+
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const schedulePath = path.join(__dirname, '../data/teacher_schedules.json');
+
+      if (!fs.existsSync(schedulePath)) {
+        return res.status(404).json({ error: 'Teacher schedules file not found' });
+      }
+
+      const schedules = JSON.parse(fs.readFileSync(schedulePath, 'utf-8'));
+      
+      // Find the teacher schedule (try exact match first)
+      let teacherSchedule = schedules[teacherName];
+      
+      // If not found, try to find by partial match
+      if (!teacherSchedule) {
+        // Find keys that are close to the provided name
+        const possibleMatches = Object.keys(schedules).filter(key => 
+          key.includes(teacherName) || teacherName.includes(key)
+        );
+        
+        if (possibleMatches.length > 0) {
+          teacherSchedule = schedules[possibleMatches[0]];
+        }
+      }
+
+      if (!teacherSchedule) {
+        return res.status(404).json({ error: 'Teacher schedule not found' });
+      }
+
+      res.json(teacherSchedule);
+    } catch (error) {
+      console.error('Error fetching teacher schedule:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch teacher schedule',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
 
   app.post("/api/schedule", async (req, res) => {
     const parsed = insertScheduleSchema.safeParse(req.body);
@@ -342,6 +215,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: error instanceof Error ? error.message : String(error)
       });
     }
+  });
+
+  app.get("/api/absences", async (req, res) => {
+    const absences = await storage.getAbsences();
+    res.json(absences);
   });
 
   app.post("/api/absences", async (req, res) => {
@@ -440,40 +318,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/process-timetables", async (req, res) => {
+  // Teacher schedule endpoint
+  app.get("/api/teacher-schedule/:teacherName", (req, res) => {
     try {
-      console.log("API: Processing timetables only for schedule data extraction...");
-      await processTimetables();
-      res.json({ 
-        success: true, 
-        message: 'Timetables processed and organized successfully'
-      });
+      const teacherName = req.params.teacherName?.toLowerCase();
+      if (!teacherName) {
+        return res.status(400).json({ error: 'Teacher name is required' });
+      }
+
+      // Read the teacher_schedules.json file
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/teacher_schedules.json');
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Teacher schedules file not found' });
+      }
+
+      const scheduleData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      
+      // Find the teacher's schedule (with case insensitive matching)
+      const teacherSchedule = scheduleData[teacherName] || [];
+      
+      res.json(teacherSchedule);
     } catch (error) {
-      console.error('Error processing timetables:', error);
-      res.status(500).json({ 
-        error: 'Failed to process timetables',
-        message: error instanceof Error ? error.message : String(error)
-      });
+      console.error('Error fetching teacher schedule:', error);
+      res.status(500).json({ error: 'Failed to fetch teacher schedule' });
     }
   });
 
-  app.get("/api/schedule/:day", async (req, res) => {
-    const schedule = await storage.getSchedulesByDay(req.params.day);
-    res.json(schedule);
-  });
-
-  app.post("/api/override-day", async (req, res) => {
-    const { day } = req.body;
-    await storage.setDayOverride(day);
-    res.json({ message: "Day override set successfully" });
-  });
-
-  app.get("/api/current-day", async (req, res) => {
-    const currentDay = await storage.getCurrentDay();
-    res.json({ currentDay });
-  });
-
-
+  // File upload endpoints
   app.post("/api/upload/timetable", upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
@@ -544,7 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-    app.get('/api/get-absent-teachers', (req, res) => {
+  app.get('/api/get-absent-teachers', (req, res) => {
     try {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
@@ -558,6 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileContent = fs.readFileSync(filePath, 'utf8');
       const absentTeachers = JSON.parse(fileContent);
 
+      // Sort by timestamp to get latest entries first
       const sortedTeachers = absentTeachers.sort((a: any, b: any) => {
         return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
       });
@@ -614,14 +489,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const __dirname = path.dirname(__filename);
       const filePath = path.join(__dirname, '../data/absent_teachers.json');
 
+      // Create file if it doesn't exist
       if (!fs.existsSync(filePath)) {
         fs.writeFileSync(filePath, JSON.stringify([], null, 2));
       }
 
+      // Read current absent teachers
       const fileContent = fs.readFileSync(filePath, 'utf8');
       let absentTeachers = JSON.parse(fileContent);
 
       if (status === 'absent') {
+        // Add teacher if not already in list
         if (!absentTeachers.find((t: any) => t.name === teacherName)) {
           absentTeachers.push({
             name: teacherName,
@@ -630,9 +508,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       } else if (status === 'present') {
+        // Remove teacher if in list
         absentTeachers = absentTeachers.filter((t: any) => t.name !== teacherName);
       }
 
+      // Write back to file
       fs.writeFileSync(filePath, JSON.stringify(absentTeachers, null, 2));
 
       res.json({ success: true });
@@ -642,6 +522,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false, 
         error: 'Failed to mark attendance',
         details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+
+  app.post("/api/process-timetables", async (req, res) => {
+    try {
+      console.log("API: Processing timetables only for schedule data extraction...");
+      await processTimetables();
+      res.json({ 
+        success: true, 
+        message: 'Timetables processed and organized successfully'
+      });
+    } catch (error) {
+      console.error('Error processing timetables:', error);
+      res.status(500).json({ 
+        error: 'Failed to process timetables',
+        message: error instanceof Error ? error.message : String(error)
       });
     }
   });
