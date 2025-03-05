@@ -6,8 +6,8 @@ import { format } from "date-fns";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CalendarX, RefreshCcw, UserCheck } from "lucide-react";
-import TeacherTimetable from "@/components/ui/teacher-timetable";
+import { Loader2, CalendarX, RefreshCcw, UserCheck, ChevronDown, ChevronUp } from "lucide-react";
+//import TeacherTimetable from "@/components/ui/teacher-timetable"; // Removed as per the intention
 
 interface AbsentTeacher {
   name: string;
@@ -39,11 +39,18 @@ const mockAssignments: AssignmentData = {
       substitutePhone: "+923113588606"
     },
     {
-      originalTeacher: "Sir Ahmed Khan",
+      originalTeacher: "Sir Bakir Shah",
       period: 2,
       className: "9B",
       substitute: "Sir Fahad Malik",
       substitutePhone: "+923156103995"
+    },
+    {
+      originalTeacher: "Sir Ahmed Khan",
+      period: 3,
+      className: "8A",
+      substitute: "Sir Waqar Ali",
+      substitutePhone: "+923113588606"
     }
   ],
   warnings: []
@@ -54,7 +61,7 @@ export default function ManageAbsencesPage() {
   const [, setLocation] = useLocation();
   const today = format(new Date(), 'yyyy-MM-dd');
   const [selectedTeacher, setSelectedTeacher] = useState<string | null>(null);
-  const [selectedAssignment, setSelectedAssignment] = useState<string | null>(null);
+  const [expandedAssignment, setExpandedAssignment] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Fetch absent teachers
@@ -65,8 +72,20 @@ export default function ManageAbsencesPage() {
   // Fetch assigned teachers (mock data for now)
   const { data: assignedTeachers = mockAssignments, isLoading: isLoadingAssignments } = useQuery<AssignmentData>({
     queryKey: ["/api/assigned-teachers"],
-    initialData: mockAssignments, // Using mock data until the API is ready
+    initialData: mockAssignments,
   });
+
+  // Group assignments by original teacher
+  const groupedAssignments = React.useMemo(() => {
+    const groups: { [key: string]: Assignment[] } = {};
+    assignedTeachers.assignments.forEach(assignment => {
+      if (!groups[assignment.originalTeacher]) {
+        groups[assignment.originalTeacher] = [];
+      }
+      groups[assignment.originalTeacher].push(assignment);
+    });
+    return groups;
+  }, [assignedTeachers.assignments]);
 
   // Handle refresh function
   const handleRefresh = async () => {
@@ -118,11 +137,11 @@ export default function ManageAbsencesPage() {
     }
   };
 
-  const handleAssignmentClick = (teacherName: string) => {
-    if (selectedAssignment === teacherName) {
-      setSelectedAssignment(null);
+  const toggleAssignment = (teacherName: string) => {
+    if (expandedAssignment === teacherName) {
+      setExpandedAssignment(null);
     } else {
-      setSelectedAssignment(teacherName);
+      setExpandedAssignment(teacherName);
     }
   };
 
@@ -214,13 +233,7 @@ export default function ManageAbsencesPage() {
                     </div>
                   </div>
 
-                  {selectedTeacher === teacher.name && (
-                    <TeacherTimetable 
-                      teacherName={teacher.name}
-                      isOpen={selectedTeacher === teacher.name}
-                      onClose={() => setSelectedTeacher(null)}
-                    />
-                  )}
+                  {/* Removed TeacherTimetable component */}
                 </div>
               ))}
             </div>
@@ -234,7 +247,7 @@ export default function ManageAbsencesPage() {
           <CardTitle>Assigned Substitutes - {format(new Date(today), 'MMMM d, yyyy')}</CardTitle>
         </CardHeader>
         <CardContent>
-          {assignedTeachers.assignments.length === 0 ? (
+          {Object.keys(groupedAssignments).length === 0 ? (
             <div className="flex flex-col items-center justify-center py-6 text-center">
               <UserCheck className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium">No assignments made</h3>
@@ -244,32 +257,40 @@ export default function ManageAbsencesPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {assignedTeachers.assignments.map((assignment, index) => (
-                <div key={index} className="relative p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+              {Object.entries(groupedAssignments).map(([teacher, assignments]) => (
+                <div key={teacher} className="border rounded-lg overflow-hidden">
                   <div 
-                    className="flex justify-between items-center cursor-pointer"
-                    onClick={() => handleAssignmentClick(assignment.originalTeacher)}
+                    className="p-4 bg-accent/5 flex justify-between items-center cursor-pointer"
+                    onClick={() => toggleAssignment(teacher)}
                   >
-                    <div>
-                      <h3 className="font-medium">{assignment.originalTeacher}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Period {assignment.period} - Class {assignment.className}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-sm">Substitute: {assignment.substitute}</p>
-                      <p className="text-sm text-muted-foreground">
-                        📱 {assignment.substitutePhone}
-                      </p>
-                    </div>
+                    <h3 className="font-medium">{teacher}</h3>
+                    {expandedAssignment === teacher ? (
+                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    )}
                   </div>
 
-                  {selectedAssignment === assignment.originalTeacher && (
-                    <TeacherTimetable 
-                      teacherName={assignment.originalTeacher}
-                      isOpen={selectedAssignment === assignment.originalTeacher}
-                      onClose={() => setSelectedAssignment(null)}
-                    />
+                  {expandedAssignment === teacher && (
+                    <div className="p-4 space-y-3 bg-muted/5">
+                      {assignments.map((assignment, idx) => (
+                        <div key={idx} className="pl-4 border-l-2 border-primary/20">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="text-sm font-medium">
+                                Period {assignment.period} - Class {assignment.className}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Substitute: {assignment.substitute}
+                              </p>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              📱 {assignment.substitutePhone}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               ))}
