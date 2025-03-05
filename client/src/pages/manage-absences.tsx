@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CalendarX, RefreshCcw } from "lucide-react";
+import { Loader2, CalendarX, RefreshCcw, Clock, UserCheck, School } from "lucide-react";
 import TeacherTimetable from "@/components/ui/teacher-timetable";
 
 interface AbsentTeacher {
@@ -126,10 +126,9 @@ export default function ManageAbsencesPage() {
   return (
     <div className="p-4 max-w-6xl mx-auto space-y-6">
       <div className="w-full mb-8">
-        {/* Top section with title and refresh button */}
         <div className="flex justify-between items-center mb-4">
           <div className="w-10"></div>
-          <h1 className="text-3xl font-bold">Manage Absences</h1>
+          <h1 className="text-3xl font-bold text-primary">Manage Absences</h1>
           <Button 
             onClick={handleRefresh}
             variant="outline"
@@ -146,7 +145,6 @@ export default function ManageAbsencesPage() {
           </Button>
         </div>
 
-        {/* Reset button below top section, aligned to right */}
         <div className="flex justify-end mb-4">
           <Button 
             onClick={() => resetMutation.mutate()}
@@ -169,9 +167,12 @@ export default function ManageAbsencesPage() {
       </div>
 
       {/* Absent Teachers Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Absent Teachers - {format(new Date(today), 'MMMM d, yyyy')}</CardTitle>
+      <Card className="shadow-md">
+        <CardHeader className="bg-muted/50">
+          <CardTitle className="flex items-center gap-2">
+            <UserCheck className="h-5 w-5 text-primary" />
+            Absent Teachers - {format(new Date(today), 'MMMM d, yyyy')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {absentTeachers.length === 0 ? (
@@ -185,7 +186,7 @@ export default function ManageAbsencesPage() {
           ) : (
             <div className="space-y-4">
               {absentTeachers.map((teacher, index) => (
-                <div key={index} className="relative p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                <div key={index} className="relative p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                   <div 
                     className="flex justify-between items-center cursor-pointer"
                     onClick={() => handleTeacherClick(teacher.name)}
@@ -198,7 +199,8 @@ export default function ManageAbsencesPage() {
                         </p>
                       )}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
                       {new Date(teacher.timestamp).toLocaleTimeString()}
                     </div>
                   </div>
@@ -218,9 +220,12 @@ export default function ManageAbsencesPage() {
       </Card>
 
       {/* Assigned Teachers Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Assigned Teachers - {format(new Date(today), 'MMMM d, yyyy')}</CardTitle>
+      <Card className="shadow-md">
+        <CardHeader className="bg-muted/50">
+          <CardTitle className="flex items-center gap-2">
+            <School className="h-5 w-5 text-primary" />
+            Substitute Assignments - {format(new Date(today), 'MMMM d, yyyy')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {Object.keys(groupedAssignments).length === 0 ? (
@@ -234,42 +239,43 @@ export default function ManageAbsencesPage() {
           ) : (
             <div className="space-y-4">
               {Object.entries(groupedAssignments).map(([teacherName, assignments]) => (
-                <div key={teacherName} className="relative p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                <div key={teacherName} className="relative p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                   <div 
                     className="flex justify-between items-center cursor-pointer"
                     onClick={() => handleAssignmentTeacherClick(teacherName)}
                   >
                     <div>
-                      <h3 className="font-medium">{teacherName}</h3>
+                      <h3 className="font-medium text-primary">{teacherName}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {assignments.length} periods assigned
+                        {assignments.length} {assignments.length === 1 ? 'period' : 'periods'} assigned
                       </p>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      🔄 Assignments
-                    </div>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground">
+                      {selectedAssignmentTeacher === teacherName ? 'Hide Details' : 'View Details'}
+                    </Button>
                   </div>
 
                   {selectedAssignmentTeacher === teacherName && (
-                    <div className="mt-4 space-y-2 pl-4 border-l-2 border-gray-200">
+                    <div className="mt-4 space-y-3 pl-4 border-l-2 border-primary/20">
                       {assignments.map((assignment, idx) => (
-                        <div key={idx} className="text-sm">
-                          <p>Period {assignment.period} - Class {assignment.className}</p>
-                          <p className="text-muted-foreground">
-                            Substitute: {assignment.substitute}
-                            {assignment.substitutePhone && (
-                              <span className="ml-2">📱 {assignment.substitutePhone}</span>
-                            )}
-                          </p>
+                        <div key={idx} className="bg-muted/30 p-3 rounded-md">
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-1">
+                              <p className="font-medium">
+                                Period {assignment.period} - Class {assignment.className}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Substitute: {assignment.substitute}
+                              </p>
+                              {assignment.substitutePhone && (
+                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                  📱 {assignment.substitutePhone}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       ))}
-                      {assignmentsData?.warnings?.length > 0 && (
-                        <div className="mt-2 text-sm text-yellow-600 dark:text-yellow-400">
-                          {assignmentsData.warnings.map((warning, idx) => (
-                            <p key={idx}>⚠️ {warning}</p>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
