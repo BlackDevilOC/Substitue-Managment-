@@ -287,60 +287,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/substitute-assignments", async (req, res) => {
     try {
-      // Mock data for testing UI
-      const mockData = {
-        assignments: [
-          {
-            originalTeacher: "Sir Bakir Shah",
-            period: 1,
-            className: "10A",
-            substitute: "Sir Waqar Ali",
-            substitutePhone: "+923113588606"
-          },
-          {
-            originalTeacher: "Sir Bakir Shah",
-            period: 2,
-            className: "10A",
-            substitute: "Sir Waqar Ali",
-            substitutePhone: "+923113588606"
-          },
-          {
-            originalTeacher: "Sir Bakir Shah",
-            period: 7,
-            className: "10A",
-            substitute: "Sir Waqar Ali",
-            substitutePhone: "+923113588606"
-          },
-          {
-            originalTeacher: "Sir Mushtaque Ahmed",
-            period: 1,
-            className: "10B",
-            substitute: "Sir Faisal Ali",
-            substitutePhone: "+923473093995"
-          },
-          {
-            originalTeacher: "Sir Mushtaque Ahmed",
-            period: 2,
-            className: "10B",
-            substitute: "Sir Faisal Ali",
-            substitutePhone: "+923473093995"
-          },
-          {
-            originalTeacher: "Sir Mushtaque Ahmed",
-            period: 8,
-            className: "10B",
-            substitute: "Sir Faisal Ali",
-            substitutePhone: "+923473093995"
-          }
-        ],
-        warnings: [
-          "Sir Waqar Ali exceeded maximum workload (6/6)",
-          "Sir Faisal Ali exceeded maximum workload (6/6)"
-        ]
-      };
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/assigned_teacher.json');
 
-      console.log('Sending mock data:', mockData);
-      res.json(mockData);
+      // Create file with empty data if it doesn't exist
+      if (!fs.existsSync(filePath)) {
+        const emptyData = {
+          assignments: [],
+          warnings: []
+        };
+        fs.writeFileSync(filePath, JSON.stringify(emptyData, null, 2));
+      }
+
+      // Read assignments from file
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      const assignmentsData = JSON.parse(fileContent);
+
+      console.log('Sending assignments data:', assignmentsData);
+      res.json(assignmentsData);
     } catch (error) {
       console.error('Get substitute assignments error:', error);
       console.error('Error details:', error instanceof Error ? error.stack : String(error));
@@ -580,7 +545,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
 
 
   app.post("/api/process-timetables", async (req, res) => {
