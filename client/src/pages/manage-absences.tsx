@@ -89,26 +89,31 @@ export default function ManageAbsencesPage() {
 
   return (
     <div className="p-4 max-w-6xl mx-auto space-y-6">
-      <div className="w-full mb-8">
+      <div className="w-full mb-8 relative">
         {/* Top center title */}
         <div className="flex justify-center mb-4">
           <h1 className="text-3xl font-bold">Manage Absences</h1>
         </div>
         
-        {/* Top right refresh button */}
-        <div className="flex flex-col items-end">
+        {/* Top right buttons */}
+        <div className="absolute top-0 right-0 flex flex-col">
           <Button 
             onClick={handleRefresh}
             variant="outline"
-            size="icon"
-            className="h-10 w-10 mb-2"
+            size="sm"
+            className="mb-2 flex items-center"
             disabled={isRefreshing || isLoading}
-            title="Refresh Data"
           >
             {isRefreshing ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Refreshing...
+              </>
             ) : (
-              <RefreshCcw className="h-5 w-5" />
+              <>
+                <RefreshCcw className="h-4 w-4 mr-2" />
+                Refresh Data
+              </>
             )}
           </Button>
           
