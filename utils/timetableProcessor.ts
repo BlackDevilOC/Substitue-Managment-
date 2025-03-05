@@ -31,6 +31,7 @@ export async function processTimetables(): Promise<void> {
       throw new Error('Timetable file not found');
     }
 
+    console.log("Processing timetable file only for schedule information...");
     const fileContent = fs.readFileSync(timetablePath, 'utf-8');
     const records = parse(fileContent, {
       columns: false,

@@ -454,6 +454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/process-timetables", async (req, res) => {
     try {
+      console.log("API: Processing timetables only for schedule data extraction...");
       await processTimetables();
       res.json({ 
         success: true, 

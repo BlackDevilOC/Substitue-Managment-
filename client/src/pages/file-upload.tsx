@@ -67,8 +67,8 @@ export default function FileUploadPage() {
       const response = await fetch("/api/process-timetables", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-        },
+          'Content-Type': 'application/json'
+        }
       });
 
       const data = await response.json();
@@ -76,22 +76,18 @@ export default function FileUploadPage() {
       if (response.ok) {
         toast({
           title: "Processing successful",
-          description: data.message || "Timetables processed successfully",
+          description: "Timetable file processed and schedule data organized successfully",
           variant: "success"
         });
       } else {
-        toast({
-          title: "Processing failed",
-          description: data.error || "Failed to process timetables",
-          variant: "destructive"
-        });
+        throw new Error(data.error || 'Failed to process timetable file');
       }
     } catch (error) {
-      console.log("Processing error:", error);
+      console.error('Processing error:', error);
       toast({
-        title: "Processing error",
-        description: "An error occurred while processing timetables",
-        variant: "destructive"
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to process timetable file. Please try again.",
       });
     } finally {
       setIsProcessing(false);
