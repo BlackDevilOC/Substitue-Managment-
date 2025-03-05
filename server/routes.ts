@@ -291,15 +291,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const __dirname = path.dirname(__filename);
       const filePath = path.join(__dirname, '../data/assigned_teacher.json');
 
+      console.log('Reading assignments from:', filePath);
+
       if (!fs.existsSync(filePath)) {
+        console.log('File does not exist:', filePath);
         return res.json({ assignments: [], warnings: [] });
       }
 
-      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-      res.json(data);
+      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      console.log('Raw file content:', fileContent);
+
+      // Ensure the content matches the expected structure
+      const data = JSON.parse(fileContent);
+
+      // Validate and transform the data structure if needed
+      const response = {
+        assignments: Array.isArray(data.assignments) ? data.assignments : [],
+        warnings: Array.isArray(data.warnings) ? data.warnings : []
+      };
+
+      console.log('Processed assignments:', response);
+      res.json(response);
     } catch (error) {
       console.error('Get substitute assignments error:', error);
-      res.status(500).json({ message: "Failed to get substitute assignments" });
+      console.error('Error details:', error instanceof Error ? error.stack : String(error));
+      res.status(500).json({ 
+        message: "Failed to get substitute assignments",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
