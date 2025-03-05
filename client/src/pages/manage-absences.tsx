@@ -21,11 +21,33 @@ export default function ManageAbsencesPage() {
   const [, setLocation] = useLocation();
   const today = format(new Date(), 'yyyy-MM-dd');
   const [selectedTeacher, setSelectedTeacher] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Fetch absent teachers
-  const { data: absentTeachers = [], isLoading } = useQuery<AbsentTeacher[]>({
+  const { data: absentTeachers = [], isLoading, refetch: refetchAbsentTeachers } = useQuery<AbsentTeacher[]>({
     queryKey: ["/api/get-absent-teachers"],
   });
+  
+  // Handle refresh function
+  const handleRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      await refetchAbsentTeachers();
+      toast({
+        title: "Data Refreshed",
+        description: "The absent teachers list has been updated.",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh Failed",
+        description: error instanceof Error ? error.message : "Failed to refresh data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const resetMutation = useMutation({
     mutationFn: async () => {
@@ -69,23 +91,42 @@ export default function ManageAbsencesPage() {
     <div className="p-4 max-w-6xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Manage Absences</h1>
-        <Button 
-          onClick={() => resetMutation.mutate()}
-          variant="outline"
-          disabled={resetMutation.isPending}
-        >
-          {resetMutation.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Resetting...
-            </>
-          ) : (
-            <>
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              Reset Assignments
-            </>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleRefresh}
+            variant="outline"
+            disabled={isRefreshing || isLoading}
+          >
+            {isRefreshing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Refreshing...
+              </>
+            ) : (
+              <>
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                Refresh Data
+              </>
+            )}
+          </Button>
+          <Button 
+            onClick={() => resetMutation.mutate()}
+            variant="outline"
+            disabled={resetMutation.isPending}
+          >
+            {resetMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Resetting...
+              </>
+            ) : (
+              <>
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                Reset Assignments
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       <Card>
