@@ -286,10 +286,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/substitute-assignments", async (req, res) => {
-    const date = format(new Date(), "yyyy-MM-dd");
     try {
-      const assignments = await storage.getSubstituteAssignments(date);
-      res.json(assignments);
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/assigned_teacher.json');
+
+      if (!fs.existsSync(filePath)) {
+        return res.json({ assignments: [], warnings: [] });
+      }
+
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      res.json(data);
     } catch (error) {
       console.error('Get substitute assignments error:', error);
       res.status(500).json({ message: "Failed to get substitute assignments" });
@@ -525,6 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
 
 
   app.post("/api/process-timetables", async (req, res) => {
