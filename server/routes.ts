@@ -278,13 +278,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // New endpoint to auto-assign substitutes directly from absent_teachers.json file
+  app.post("/api/mark-attendance", async (req, res) => {
+    try {
+      const { status, teacherName, phoneNumber } = req.body;
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/absent_teachers.json');
+      const assignedTeachersPath = path.join(__dirname, '../data/assigned_teacher.json');
+
+      // Create file if it doesn't exist
+      if (!fs.existsSync(filePath)) {
+        fs.writeFileSync(filePath, JSON.stringify([], null, 2));
+      }
+
+      // Read current absent teachers
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      let absentTeachers = JSON.parse(fileContent);
+
+      if (status === 'absent') {
+        // Add teacher if not already in list
+        if (!absentTeachers.find((t: any) => t.name === teacherName)) {
+          absentTeachers.push({
+            name: teacherName,
+            phoneNumber: phoneNumber,
+            timestamp: new Date().toISOString(),
+            assignedSubstitute: false
+          });
+        }
+      } else if (status === 'present') {
+        // Check if teacher had substitutes assigned
+        const teacher = absentTeachers.find((t: any) => t.name === teacherName);
+        if (teacher?.assignedSubstitute) {
+          // Remove assignments for this teacher
+          if (fs.existsSync(assignedTeachersPath)) {
+            const assignedContent = fs.readFileSync(assignedTeachersPath, 'utf8');
+            let assignedData = JSON.parse(assignedContent);
+
+            // Filter out assignments for this teacher
+            assignedData.assignments = assignedData.assignments.filter(
+              (a: any) => a.originalTeacher !== teacherName
+            );
+
+            // Save updated assignments
+            fs.writeFileSync(assignedTeachersPath, JSON.stringify(assignedData, null, 2));
+          }
+        }
+
+        // Remove teacher from absent list
+        absentTeachers = absentTeachers.filter((t: any) => t.name !== teacherName);
+      }
+
+      // Write back to file
+      fs.writeFileSync(filePath, JSON.stringify(absentTeachers, null, 2));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error marking attendance:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to mark attendance',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   app.get("/api/autoassign", async (req, res) => {
     try {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const absentTeachersPath = path.join(__dirname, '../data/absent_teachers.json');
-      
+
       // Check if absent_teachers.json exists
       if (!fs.existsSync(absentTeachersPath)) {
         return res.status(404).json({ 
@@ -292,11 +355,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Absent teachers file not found" 
         });
       }
-      
+
       // Read absent teachers file
       const absentTeachersContent = fs.readFileSync(absentTeachersPath, 'utf-8');
       const absentTeachers = JSON.parse(absentTeachersContent);
-      
+
       if (!absentTeachers || absentTeachers.length === 0) {
         return res.status(200).json({ 
           success: true, 
@@ -304,24 +367,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
           assignments: []
         });
       }
-      
-      // Extract teacher names
-      const teacherNames = absentTeachers.map((teacher: any) => teacher.name);
-      console.log(`Found ${teacherNames.length} absent teachers: ${teacherNames.join(', ')}`);
-      
+
+      // Filter teachers that don't have substitutes assigned
+      const unassignedTeachers = absentTeachers.filter((t: any) => !t.assignedSubstitute);
+      const teacherNames = unassignedTeachers.map((teacher: any) => teacher.name);
+
+      if (teacherNames.length === 0) {
+        return res.status(200).json({
+          success: true,
+          message: "All absent teachers already have substitutes assigned",
+          assignments: []
+        });
+      }
+
+      console.log(`Found ${teacherNames.length} unassigned teachers: ${teacherNames.join(', ')}`);
+
       // Get current date
       const today = format(new Date(), "yyyy-MM-dd");
-      
+
       // Run auto-assign functionality
       const { SubstituteManager } = await import('./substitute-manager.js');
       const manager = new SubstituteManager();
       await manager.loadData();
-      
+
       // Pass the teacher names to autoAssignSubstitutes 
       const { assignments, warnings } = await manager.autoAssignSubstitutes(today, teacherNames);
-      
+
+      // Update absent teachers file to mark teachers as assigned
+      if (assignments.length > 0) {
+        const updatedAbsentTeachers = absentTeachers.map((teacher: any) => {
+          if (teacherNames.includes(teacher.name)) {
+            return { ...teacher, assignedSubstitute: true };
+          }
+          return teacher;
+        });
+        fs.writeFileSync(absentTeachersPath, JSON.stringify(updatedAbsentTeachers, null, 2));
+      }
+
       console.log(`Auto-assigned ${assignments.length} substitutes for absent teachers`);
-      
+
       res.json({ 
         success: true, 
         message: "Auto-assignment completed successfully",
@@ -336,6 +420,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to auto-assign substitutes", 
         error: error instanceof Error ? error.message : String(error) 
       });
+    }
+  });
+
+  app.get("/api/get-absent-teachers", (req, res) => {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/absent_teachers.json');
+
+      if (!fs.existsSync(filePath)) {
+        fs.writeFileSync(filePath, JSON.stringify([], null, 2));
+        return res.json([]);
+      }
+
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      const absentTeachers = JSON.parse(fileContent);
+
+      // Filter out teachers that already have substitutes assigned
+      const unassignedTeachers = absentTeachers.filter((t: any) => !t.assignedSubstitute);
+
+      // Sort by timestamp to get latest entries first
+      const sortedTeachers = unassignedTeachers.sort((a: any, b: any) => {
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      });
+
+      res.json(sortedTeachers);
+    } catch (error) {
+      console.error('Error reading absent teachers file:', error);
+      res.status(500).json({ error: 'Failed to read absent teachers file' });
     }
   });
 
@@ -592,51 +705,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to update absent teachers file' });
     }
   });
-
-  app.post("/api/mark-attendance", async (req, res) => {
-    try {
-      const { status, teacherName, phoneNumber } = req.body;
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const filePath = path.join(__dirname, '../data/absent_teachers.json');
-
-      // Create file if it doesn't exist
-      if (!fs.existsSync(filePath)) {
-        fs.writeFileSync(filePath, JSON.stringify([], null, 2));
-      }
-
-      // Read current absent teachers
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      let absentTeachers = JSON.parse(fileContent);
-
-      if (status === 'absent') {
-        // Add teacher if not already in list
-        if (!absentTeachers.find((t: any) => t.name === teacherName)) {
-          absentTeachers.push({
-            name: teacherName,
-            phoneNumber: phoneNumber,
-            timestamp: new Date().toISOString()
-          });
-        }
-      } else if (status === 'present') {
-        // Remove teacher if in list
-        absentTeachers = absentTeachers.filter((t: any) => t.name !== teacherName);
-      }
-
-      // Write back to file
-      fs.writeFileSync(filePath, JSON.stringify(absentTeachers, null, 2));
-
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Error marking attendance:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Failed to mark attendance',
-        details: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-
 
   app.post("/api/process-timetables", async (req, res) => {
     try {
