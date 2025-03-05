@@ -7,108 +7,115 @@ import { format } from "date-fns";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CalendarX, RefreshCcw } from "lucide-react";
+import { Loader2, CalendarX, RefreshCcw, ChevronDown, ChevronUp } from "lucide-react";
 import TeacherTimetable from "@/components/ui/teacher-timetable";
 
-interface AbsentTeacher {
-  name: string;
-  phoneNumber: string;
-  timestamp: string;
-}
-
-export default function ManageAbsencesPage() {
+export default function ManageAbsences() {
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
-  const today = format(new Date(), 'yyyy-MM-dd');
   const [selectedTeacher, setSelectedTeacher] = useState<string | null>(null);
-
-  // Fetch absent teachers
-  const { data: absentTeachers = [], isLoading } = useQuery<AbsentTeacher[]>({
-    queryKey: ["/api/get-absent-teachers"],
+  
+  const today = format(new Date(), 'yyyy-MM-dd');
+  
+  const { data: absentTeachers = [], isLoading, refetch } = useQuery({
+    queryKey: ['/api/get-absent-teachers'],
+    queryFn: async () => {
+      const response = await fetch('/api/get-absent-teachers');
+      if (!response.ok) {
+        throw new Error("Failed to fetch absent teachers");
+      }
+      return response.json();
+    }
   });
-
-  const resetMutation = useMutation({
-    mutationFn: async () => {
-      localStorage.removeItem('assignments');
-      localStorage.removeItem('teacherWorkloads');
-      return await fetch("/api/reset-assignments", { method: "POST" });
+  
+  const removeAbsenceMutation = useMutation({
+    mutationFn: async (teacher: string) => {
+      const response = await fetch('/api/remove-absence', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ teacherName: teacher }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to remove absence');
+      }
+      
+      return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/substitute-assignments"] });
       toast({
-        title: "Reset Complete",
-        description: "All assignments have been cleared.",
+        title: "Absence removed",
+        description: "Teacher has been marked as present.",
       });
+      queryClient.invalidateQueries({ queryKey: ['/api/get-absent-teachers'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/schedule'] });
     },
     onError: (error: Error) => {
+      console.error('Error removing absence:', error);
       toast({
         title: "Error",
-        description: error.message,
-        variant: "destructive",
+        description: error.message || "Failed to remove absence.",
+        variant: "destructive"
       });
     },
   });
-
-  const handleTeacherClick = (teacherName: string) => {
-    if (selectedTeacher === teacherName) {
-      setSelectedTeacher(null);
-    } else {
-      setSelectedTeacher(teacherName);
-    }
+  
+  const handleRefresh = () => {
+    refetch();
+    toast({
+      title: "Refreshed",
+      description: "Absent teacher list updated.",
+    });
+  };
+  
+  const handleRemoveAbsence = (teacher: string) => {
+    removeAbsenceMutation.mutate(teacher);
+  };
+  
+  const toggleTeacherTimetable = (teacherName: string) => {
+    setSelectedTeacher(prevSelected => 
+      prevSelected === teacherName ? null : teacherName
+    );
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
-    <div className="p-4 max-w-6xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Manage Absences</h1>
-        <Button 
-          onClick={() => resetMutation.mutate()}
-          variant="outline"
-          disabled={resetMutation.isPending}
-        >
-          {resetMutation.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Resetting...
-            </>
-          ) : (
-            <>
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              Reset Assignments
-            </>
-          )}
-        </Button>
-      </div>
-
+    <div className="p-6 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">Manage Absences</h1>
+      
       <Card>
-        <CardHeader>
-          <CardTitle>Absent Teachers - {format(new Date(today), 'MMMM d, yyyy')}</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-xl">Absent Teachers</CardTitle>
+          <Button 
+            onClick={handleRefresh}
+            variant="outline"
+            size="sm"
+            disabled={isLoading}
+          >
+            <RefreshCcw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </CardHeader>
         <CardContent>
-          {absentTeachers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <CalendarX className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium">No absent teachers</h3>
-              <p className="text-muted-foreground mt-2">
-                All teachers are present today.
-              </p>
+          {isLoading ? (
+            <div className="flex justify-center items-center p-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : absentTeachers.length === 0 ? (
+            <div className="text-center py-8">
+              <CalendarX className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No absent teachers for today</p>
             </div>
           ) : (
             <div className="space-y-4">
               {absentTeachers.map((teacher, index) => (
-                <div key={index} className="relative p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <div 
-                    className="flex justify-between items-center cursor-pointer"
-                    onClick={() => handleTeacherClick(teacher.name)}
-                  >
+                <div 
+                  key={index}
+                  className="border rounded-lg p-4 transition-all"
+                >
+                  <div className="flex justify-between items-center">
                     <div>
                       <h3 className="font-medium">{teacher.name}</h3>
                       {teacher.phoneNumber && (
@@ -117,8 +124,30 @@ export default function ManageAbsencesPage() {
                         </p>
                       )}
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {new Date(teacher.timestamp).toLocaleTimeString()}
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleTeacherTimetable(teacher.name)}
+                      >
+                        Schedule
+                        {selectedTeacher === teacher.name ? 
+                          <ChevronUp className="ml-1 h-4 w-4" /> : 
+                          <ChevronDown className="ml-1 h-4 w-4" />
+                        }
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleRemoveAbsence(teacher.name)}
+                        disabled={removeAbsenceMutation.isPending}
+                      >
+                        {removeAbsenceMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Remove"
+                        )}
+                      </Button>
                     </div>
                   </div>
                   
@@ -126,7 +155,7 @@ export default function ManageAbsencesPage() {
                     <TeacherTimetable 
                       teacherName={teacher.name}
                       isOpen={selectedTeacher === teacher.name}
-                      onClose={() => setSelectedTeacher(null)}
+                      onToggle={() => toggleTeacherTimetable(teacher.name)}
                     />
                   )}
                 </div>
