@@ -45,8 +45,15 @@ async function processAndSaveTeachers(timetableContent?: string, substituteConte
       .slice(1) 
       .filter(line => line.trim())
       .map(line => {
-        const [name, phone, variations] = line.split(',').map(str => str.replace(/"/g, '').trim());
-        return { name, phone, variations: variations.split('|') };
+        const parts = line.split(',').map(str => str.replace(/"/g, '').trim());
+        const name = parts[0] || '';
+        const phone = parts[1] || '';
+        const variations = parts[2] || '';
+        return { 
+          name, 
+          phone, 
+          variations: variations ? variations.split('|') : [] 
+        };
       });
 
     fs.writeFileSync(totalTeacherPath, JSON.stringify(teachers, null, 2));

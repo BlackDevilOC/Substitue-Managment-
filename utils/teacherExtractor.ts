@@ -170,10 +170,15 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
     const timetableTeachers = new Set<string>();
     ttRecords.slice(1).forEach((row: any) => {
       if (!Array.isArray(row)) return;
+      // Safely process each cell in the row
       row.slice(2).forEach((name: any) => {
         if (name && typeof name === 'string' && name.toLowerCase() !== 'empty') {
-          if (registerTeacher(name)) {
-            timetableTeachers.add(name.toLowerCase().trim());
+          try {
+            if (registerTeacher(name)) {
+              timetableTeachers.add(name.toLowerCase().trim());
+            }
+          } catch (err) {
+            console.warn(`Error processing teacher name "${name}": ${err}`);
           }
         }
       });

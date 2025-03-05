@@ -1,4 +1,3 @@
-
 import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from 'csv-parse/sync';
@@ -30,94 +29,159 @@ export class SubstituteManager {
 
   constructor() {}
 
-  async loadData(timetablePath?: string, substitutesPath?: string): Promise<void> {
-    // Default paths if none provided
-    const actualTimetablePath = timetablePath || DEFAULT_TIMETABLE_PATH;
-    const actualSubstitutePath = substitutesPath || DEFAULT_SUBSTITUTES_PATH;
-    
-    // Reset data structures
-    this.schedule = new Map();
-    this.substitutes = new Map();
-    this.teacherClasses = new Map();
-    this.substituteAssignments = new Map();
-    this.teacherWorkload = new Map();
-    this.allAssignments = [];
+  async loadData(timetablePath = DEFAULT_TIMETABLE_PATH, substitutesPath = DEFAULT_SUBSTITUTES_PATH): Promise<void> {
+    try {
+      console.log('Loading data from:', { timetablePath, substitutesPath });
 
-    // Load substitutes
-    if (fs.existsSync(actualSubstitutePath)) {
-      const subData = fs.readFileSync(actualSubstitutePath, 'utf-8');
-      try {
-        // Parse with relaxed settings
-        const rows = parse(subData, {
-          columns: false,
-          skip_empty_lines: true,
-          trim: true,
-          relax_column_count: true
-        });
-        
-        rows.forEach(row => {
-          const name = row[0]?.trim();
-          const phone = row[1]?.trim() || "";  // Default to empty string if phone is missing
-          if (name) this.substitutes.set(this.normalizeName(name), phone);
-        });
-        
-        console.log(`Loaded ${this.substitutes.size} substitutes`);
-      } catch (error) {
-        console.error("Raw substitute data:", subData.slice(0, 200) + "...");
-        throw new Error(`Error parsing substitute file: ${error}`);
+      // Load the timetable
+      if (!fs.existsSync(timetablePath)) {
+        throw new Error(`Timetable file not found at: ${timetablePath}`);
       }
-    } else {
-      throw new Error(`Substitute file not found: ${actualSubstitutePath}`);
-    }
+      const timetableContent = fs.readFileSync(timetablePath, 'utf-8');
 
-    // Load timetable
-    if (fs.existsSync(actualTimetablePath)) {
-      const timetableData = fs.readFileSync(actualTimetablePath, 'utf-8');
       try {
-        const rows = parse(timetableData, {
-          columns: false,
-          skip_empty_lines: true,
-          trim: true
-        });
-        
-        const classes = ['10A', '10B', '10C', '9A', '9B', '9C', '8A', '8B', '8C', '7A', '7B', '7C', '6A', '6B', '6C'];
-        
-        // Skip header row
-        for (let i = 1; i < rows.length; i++) {
-          const cols = rows[i];
-          if (!cols || cols.length < 2) continue;
+        this.parseTimetable(timetableContent);
+      } catch (parseError) {
+        console.error('Error parsing timetable:', parseError);
 
-          const day = this.normalizeDay(cols[0]);
-          const period = parseInt(cols[1].trim());
-          if (isNaN(period)) continue;
-          
-          const teachers = cols.slice(2).map(t => t && t.trim().toLowerCase() !== 'empty' ? this.normalizeName(t) : null)
-                                .filter(t => t !== null) as string[];
+        // Try to fix common timetable format issues
+        const fixedContent = this.fixCSVContent(timetableContent);
 
-          if (!this.schedule.has(day)) this.schedule.set(day, new Map());
-          this.schedule.get(day)!.set(period, teachers);
+        if (fixedContent !== timetableContent) {
+          const backupPath = `${timetablePath}.bak`;
+          fs.writeFileSync(backupPath, timetableContent);
+          fs.writeFileSync(timetablePath, fixedContent);
+          console.log(`Fixed and saved timetable. Original backed up to ${backupPath}`);
 
-          teachers.forEach((teacher, idx) => {
-            if (idx < classes.length) {
-              const className = classes[idx];
-              if (!this.teacherClasses.has(teacher)) this.teacherClasses.set(teacher, []);
-              this.teacherClasses.get(teacher)!.push({ 
-                day, 
-                period, 
-                className, 
-                originalTeacher: teacher, 
-                substitute: '' 
-              } as any);
-            }
-          });
+          // Try parsing again with fixed content
+          this.parseTimetable(fixedContent);
+        } else {
+          throw new Error(`Error parsing timetable file: ${parseError}`);
         }
-      } catch (error) {
-        throw new Error(`Error parsing timetable file: ${error}`);
       }
-    } else {
-      throw new Error(`Timetable file not found: ${actualTimetablePath}`);
+
+      // Load the substitute teachers
+      if (!fs.existsSync(substitutesPath)) {
+        throw new Error(`Substitute file not found at: ${substitutesPath}`);
+      }
+
+      const substitutesContent = fs.readFileSync(substitutesPath, 'utf-8');
+
+      try {
+        this.parseSubstitutes(substitutesContent);
+      } catch (parseError) {
+        console.error('Error parsing substitutes:', parseError);
+
+        // Try to fix common substitutes format issues
+        const fixedContent = this.fixCSVContent(substitutesContent);
+
+        if (fixedContent !== substitutesContent) {
+          const backupPath = `${substitutesPath}.bak`;
+          fs.writeFileSync(backupPath, substitutesContent);
+          fs.writeFileSync(substitutesPath, fixedContent);
+          console.log(`Fixed and saved substitutes. Original backed up to ${backupPath}`);
+
+          // Try parsing again with fixed content
+          this.parseSubstitutes(fixedContent);
+        } else {
+          throw new Error(`Error parsing substitute file: ${parseError}`);
+        }
+      }
+
+      console.log(`Loaded ${this.substitutes.size} substitutes`);
+
+    } catch (error) {
+      throw new Error(`Error loading data: ${error}`);
     }
   }
+
+  // Helper method to fix common CSV format issues
+  private fixCSVContent(content: string): string {
+    const lines = content.split('\n');
+    const fixedLines = lines.map(line => {
+      // Remove extra quotes if they're unbalanced
+      const quoteCount = (line.match(/"/g) || []).length;
+      if (quoteCount % 2 !== 0) {
+        line = line.replace(/"/g, '');
+      }
+
+      // Ensure each line ends with the right number of commas
+      const expectedColumns = line.startsWith('Day,Period') ? 17 : 3; // For timetable or substitutes
+      const commaCount = (line.match(/,/g) || []).length;
+
+      if (commaCount > expectedColumns - 1) {
+        // Too many commas, trim excess
+        let parts = line.split(',');
+        parts = parts.slice(0, expectedColumns);
+        return parts.join(',');
+      } else if (commaCount < expectedColumns - 1 && line.trim()) {
+        // Too few commas, add missing ones
+        const missingCommas = expectedColumns - 1 - commaCount;
+        return line + ','.repeat(missingCommas);
+      }
+
+      return line;
+    });
+
+    return fixedLines.join('\n');
+  }
+
+  private parseTimetable(content: string): void {
+    const rows = parse(content, {
+      columns: false,
+      skip_empty_lines: true,
+      trim: true,
+      relax_column_count: true
+    });
+
+    const classes = ['10A', '10B', '10C', '9A', '9B', '9C', '8A', '8B', '8C', '7A', '7B', '7C', '6A', '6B', '6C'];
+
+    // Skip header row
+    for (let i = 1; i < rows.length; i++) {
+      const cols = rows[i];
+      if (!cols || cols.length < 2) continue;
+
+      const day = this.normalizeDay(cols[0]);
+      const period = parseInt(cols[1].trim());
+      if (isNaN(period)) continue;
+
+      const teachers = cols.slice(2).map(t => t && t.trim().toLowerCase() !== 'empty' ? this.normalizeName(t) : null)
+                            .filter(t => t !== null) as string[];
+
+      if (!this.schedule.has(day)) this.schedule.set(day, new Map());
+      this.schedule.get(day)!.set(period, teachers);
+
+      teachers.forEach((teacher, idx) => {
+        if (idx < classes.length) {
+          const className = classes[idx];
+          if (!this.teacherClasses.has(teacher)) this.teacherClasses.set(teacher, []);
+          this.teacherClasses.get(teacher)!.push({ 
+            day, 
+            period, 
+            className, 
+            originalTeacher: teacher, 
+            substitute: '' 
+          } as any);
+        }
+      });
+    }
+  }
+
+  private parseSubstitutes(content: string): void {
+    const rows = parse(content, {
+      columns: false,
+      skip_empty_lines: true,
+      trim: true,
+      relax_column_count: true
+    });
+
+    rows.forEach(row => {
+      const name = row[0]?.trim();
+      const phone = row[1]?.trim() || "";  // Default to empty string if phone is missing
+      if (name) this.substitutes.set(this.normalizeName(name), phone);
+    });
+  }
+
 
   async autoAssignSubstitutes(
     date: string,
@@ -181,7 +245,7 @@ export class SubstituteManager {
     // Process each absent teacher
     for (const teacher of absentTeachers) {
       const affectedPeriods = this.getAffectedPeriods(teacher.name, day, teacherMap, warnings);
-      
+
       for (const { period, className } of affectedPeriods) {
         const { candidates, warnings: subWarnings } = this.findSuitableSubstitutes({
           className,
@@ -204,7 +268,7 @@ export class SubstituteManager {
         // Reset workload tracking for each period to ensure fair distribution
         const freshWorkloadMap = new Map(workloadMap);
         const selected = this.selectBestCandidate(candidates, freshWorkloadMap);
-        
+
         // Record assignment
         assignments.push({
           originalTeacher: teacher.name,
@@ -249,7 +313,7 @@ export class SubstituteManager {
     for (const teacher of teachers) {
       // Add by main name
       map.set(teacher.name.toLowerCase().trim(), teacher);
-      
+
       // Add by variations if available
       if (teacher.variations) {
         for (const variation of teacher.variations) {
@@ -267,7 +331,7 @@ export class SubstituteManager {
     warnings: string[]
   ): Teacher[] {
     const resolvedTeachers: Teacher[] = [];
-    
+
     for (const name of names) {
       const normalized = name.toLowerCase().trim();
       const teacher = teacherMap.get(normalized);
@@ -277,7 +341,7 @@ export class SubstituteManager {
       }
       resolvedTeachers.push(teacher);
     }
-    
+
     return resolvedTeachers;
   }
 
@@ -293,7 +357,7 @@ export class SubstituteManager {
       warnings.push(`No schedule found for ${teacherName} on ${day}`);
       return [];
     }
-    
+
     return classes
       .filter(cls => cls.day.toLowerCase() === day.toLowerCase())
       .map(cls => ({
@@ -314,30 +378,30 @@ export class SubstituteManager {
   }): { candidates: Teacher[]; warnings: string[] } {
     const warnings: string[] = [];
     const targetGrade = parseInt(params.className.replace(/\D/g, '')) || 0;
-    
+
     // Check if already teaching during this period
     const availableSubstitutes = params.substitutes.filter(sub => {
       // Check if already assigned to this period
       if (params.assignedPeriodsMap.get(sub.phone)?.has(params.period)) {
         return false;
       }
-      
+
       // Check workload
       const currentWorkload = params.currentWorkload.get(sub.phone) || 0;
       if (currentWorkload >= MAX_DAILY_WORKLOAD) {
         warnings.push(`${sub.name} exceeded maximum workload (${currentWorkload}/${MAX_DAILY_WORKLOAD})`);
         return false;
       }
-      
+
       return true;
     });
-    
+
     // If no substitutes are available at all, return empty
     if (availableSubstitutes.length === 0) {
       warnings.push(`No available substitutes for period ${params.period}`);
       return { candidates: [], warnings };
     }
-    
+
     // Sort by workload (ascending)
     return {
       candidates: availableSubstitutes,
@@ -349,7 +413,7 @@ export class SubstituteManager {
     return candidates.sort((a, b) => {
       const aWorkload = workloadMap.get(a.phone) || 0;
       const bWorkload = workloadMap.get(b.phone) || 0;
-      
+
       // First prioritize by workload
       return aWorkload - bWorkload;
     })[0];
@@ -362,7 +426,7 @@ export class SubstituteManager {
     maxWorkload: number;
   }): { valid: boolean; warnings: string[] } {
     const warnings: string[] = [];
-    
+
     // Check for overloaded teachers
     for (const [phone, workload] of params.workloadMap.entries()) {
       if (workload > params.maxWorkload) {
@@ -373,7 +437,7 @@ export class SubstituteManager {
         }
       }
     }
-    
+
     return { valid: warnings.length === 0, warnings };
   }
 
@@ -387,11 +451,11 @@ export class SubstituteManager {
     if (!fs.existsSync(path)) {
       return [];
     }
-    
+
     try {
       const data = fs.readFileSync(path, 'utf-8');
       const teachers = JSON.parse(data);
-      
+
       // Add default grade levels if missing
       return teachers.map((teacher: any) => ({
         ...teacher,
@@ -408,7 +472,7 @@ export class SubstituteManager {
     if (!fs.existsSync(path)) {
       return new Map();
     }
-    
+
     try {
       const data = fs.readFileSync(path, 'utf-8');
       const schedules = JSON.parse(data);
@@ -422,7 +486,7 @@ export class SubstituteManager {
     if (!fs.existsSync(path)) {
       return [];
     }
-    
+
     try {
       const data = fs.readFileSync(path, 'utf-8');
       const { assignments } = JSON.parse(data);
@@ -445,22 +509,22 @@ export class SubstituteManager {
         })),
         warnings: warnings || []
       };
-      
+
       // Log what we're saving
       console.log(`Saving ${assignments.length} assignments to ${DEFAULT_ASSIGNED_TEACHERS_PATH}`);
-      
+
       // Ensure the directory exists
       const dirPath = path.dirname(DEFAULT_ASSIGNED_TEACHERS_PATH);
       if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
       }
-      
+
       // Write the file
       fs.writeFileSync(
         DEFAULT_ASSIGNED_TEACHERS_PATH, 
         JSON.stringify(data, null, 2)
       );
-      
+
       console.log("Assignments saved successfully");
     } catch (error) {
       console.error("Error saving assignments:", error);
@@ -527,10 +591,10 @@ export class SubstituteManager {
     } catch (error) {
       // Fallback to legacy format if error
     }
-    
+
     // Legacy format - convert assignments to a more useful format
     const result: Record<string, any> = {};
-    
+
     this.allAssignments.forEach(assignment => {
       const key = `${(assignment as any).period}-${assignment.className}`;
       result[key] = {
@@ -542,7 +606,7 @@ export class SubstituteManager {
         day: assignment.day
       };
     });
-    
+
     return result;
   }
 
@@ -566,13 +630,13 @@ export class SubstituteManager {
       'sat': 'saturday',
       'sun': 'sunday'
     };
-    
+
     const normalized = day.trim().toLowerCase();
     const shortDay = normalized.slice(0, 3);
-    
+
     return dayMap[shortDay] || normalized;
   }
-  
+
   assignSubstitutes(absentTeacher: string, day: string): any[] {
     // This method is kept for backward compatibility
     // It now delegates to the new autoAssignSubstitutes method
