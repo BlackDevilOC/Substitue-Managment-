@@ -1,5 +1,6 @@
-import * as fs from 'fs';
-import * as path from 'path';
+
+import fs from 'fs';
+import path from 'path';
 import { parse } from 'csv-parse/sync';
 import { fileURLToPath } from 'url';
 
@@ -43,36 +44,45 @@ export async function processTimetables(): Promise<void> {
     // Initialize data structures
     const teacherSchedules: { [key: string]: TeacherSchedule[] } = {};
     const daySchedules: { [key: string]: DaySchedule[] } = {};
-    const validClasses = ['10a', '10b', '10c', '9a', '9b', '9c', '8a', '8b', '8c', '7a', '7b', '7c', '6a', '6b', '6c'];
+    const validClasses = ['10A', '10B', '10C', '9A', '9B', '9C', '8A', '8B', '8C', '7A', '7B', '7C', '6A', '6B', '6C'];
 
-    // Process each row
-    for (let i = 1; i < records.length; i++) {
-      const row = records[i];
-      if (!row[0] || !row[1]) continue;
+    for (const row of records) {
+      const day = normalizeDay(row[0]?.trim());
+      if (!day) {
+        console.warn(`Invalid day: ${row[0]}`);
+        continue;
+      }
 
-      const day = normalizeDay(row[0].toLowerCase().trim());
-      const period = parseInt(row[1].trim());
-
-      if (!day || isNaN(period)) continue;
+      const period = parseInt(row[1]?.trim(), 10);
+      if (isNaN(period)) {
+        console.warn(`Invalid period: ${row[1]}`);
+        continue;
+      }
 
       // Process each class column
-      for (let j = 2; j < Math.min(row.length, validClasses.length + 2); j++) {
-        const teacherName = row[j]?.trim();
-        if (teacherName && teacherName.toLowerCase() !== 'empty') {
-          const className = validClasses[j - 2];
-          
-          // Add to teacher schedules
-          if (!teacherSchedules[teacherName]) {
-            teacherSchedules[teacherName] = [];
-          }
-          teacherSchedules[teacherName].push({ day, period, className });
-
-          // Add to day schedules
-          if (!daySchedules[day]) {
-            daySchedules[day] = [];
-          }
-          daySchedules[day].push({ period, teacherName, className });
+      for (let j = 2; j < row.length; j++) {
+        const teacherName = normalizeTeacherName(row[j]?.trim());
+        if (!teacherName || teacherName.toLowerCase() === 'empty') {
+          continue;
         }
+
+        const className = validClasses[j - 2] || `UnknownClass_${j - 2}`; // Handle additional columns
+        if (!className) {
+          console.warn(`Invalid class column index: ${j}`);
+          continue;
+        }
+
+        // Add to teacher schedules
+        if (!teacherSchedules[teacherName]) {
+          teacherSchedules[teacherName] = [];
+        }
+        teacherSchedules[teacherName].push({ day, period, className });
+
+        // Add to day schedules
+        if (!daySchedules[day]) {
+          daySchedules[day] = [];
+        }
+        daySchedules[day].push({ period, teacherName, className });
       }
     }
 
@@ -98,6 +108,15 @@ export async function processTimetables(): Promise<void> {
     fs.writeFileSync(daySchedulesPath, JSON.stringify(daySchedules, null, 2));
 
     console.log('Timetable processing completed successfully');
+
+    // Retrieve Tuesday's timetable for Sir Mushtaque Ahmed
+    const sirMushtaqueAhmedSchedule = teacherSchedules['sir mushtaque ahmed'];
+    if (sirMushtaqueAhmedSchedule) {
+      const tuesdaySchedule = sirMushtaqueAhmedSchedule.filter(entry => entry.day === 'tuesday');
+      console.log("Tuesday's timetable for Sir Mushtaque Ahmed:", tuesdaySchedule);
+    } else {
+      console.log("No schedule found for Sir Mushtaque Ahmed.");
+    }
   } catch (error) {
     console.error('Error processing timetables:', error);
     throw error;
@@ -105,7 +124,7 @@ export async function processTimetables(): Promise<void> {
 }
 
 function normalizeDay(day: string): string | null {
-  const days = {
+  const days: { [key: string]: string } = {
     'monday': 'monday',
     'tuesday': 'tuesday',
     'wednesday': 'wednesday',
@@ -116,3 +135,14 @@ function normalizeDay(day: string): string | null {
   };
   return days[day.toLowerCase()] || null;
 }
+
+function normalizeTeacherName(teacherName: string): string | null {
+  if (!teacherName || teacherName.trim() === '') {
+    return null;
+  }
+  // Standardize teacher names (e.g., convert to lowercase or a consistent format)
+  return teacherName.trim().toLowerCase();
+}
+
+// Run the function
+processTimetables();
