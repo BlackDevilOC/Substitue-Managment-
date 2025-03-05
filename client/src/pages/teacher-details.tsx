@@ -1,3 +1,4 @@
+
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
@@ -9,7 +10,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, CalendarIcon } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
@@ -139,32 +140,39 @@ export default function TeacherDetailsPage() {
         {weekdays.map((day) => (
           <TabsContent key={day} value={day} className="mt-0">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5" />
-                  <span className="capitalize">{day}</span> Schedule
+              <CardHeader>
+                <CardTitle className="text-lg capitalize">
+                  {day}'s Schedule
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {scheduleLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
-                ) : teacherDaySchedule?.schedule?.length ? (
-                  <div className="grid gap-2">
-                    {teacherDaySchedule.schedule.map((entry: TeacherSchedule) => (
-                      <div
-                        key={`${entry.day}-${entry.period}-${entry.className}`}
-                        className="flex justify-between items-center p-3 bg-muted/50 rounded-md"
-                      >
-                        <div className="font-medium">Period {entry.period}</div>
-                        <Badge variant="secondary">Class {entry.className}</Badge>
-                      </div>
-                    ))}
+                ) : teacherDaySchedule?.schedule && teacherDaySchedule.schedule.length > 0 ? (
+                  <div className="space-y-3">
+                    {teacherDaySchedule.schedule
+                      .sort((a: TeacherSchedule, b: TeacherSchedule) => a.period - b.period)
+                      .map((item: TeacherSchedule, index: number) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <Badge variant="outline" className="h-8 w-8 rounded-full flex items-center justify-center">
+                              {item.period}
+                            </Badge>
+                            <div>
+                              <div className="font-medium">Class {item.className.toUpperCase()}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    No schedule found for {selectedDay}.
+                    No schedule found for this day
                   </div>
                 )}
               </CardContent>
