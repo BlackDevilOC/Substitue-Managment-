@@ -111,17 +111,6 @@ export default function HomePage() {
     }
   });
 
-  const { data: currentSchedule, isLoading: loadingSchedule, refetch: refetchSchedule } = useQuery({
-    queryKey: ["/api/schedule", currentDay],
-    queryFn: async () => {
-      const res = await fetch(`/api/schedule/${currentDay}`);
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to fetch schedule');
-      }
-      return res.json() as Promise<Schedule[]>;
-    }
-  });
 
   const { data: absences, isLoading: loadingAbsences, refetch: refetchAbsences } = useQuery({
     queryKey: ["/api/absences"],
@@ -171,7 +160,6 @@ export default function HomePage() {
     });
 
     await Promise.all([
-      refetchSchedule(),
       refetchAbsences(),
       refetchTeachers(),
       refetchPeriodSchedules()
@@ -183,46 +171,45 @@ export default function HomePage() {
     });
   };
 
-  const isLoading = loadingAbsences || loadingTeachers || loadingSchedule || loadingPeriodSchedules || loadingPeriodConfigs;
+  const isLoading = loadingAbsences || loadingTeachers || loadingPeriodSchedules || loadingPeriodConfigs;
 
   const currentTeachers = React.useMemo((): ClassInfo[] => {
-    if (!currentSchedule || !teachers || !absences) return [];
-    const todayStr = format(new Date(), "yyyy-MM-dd");
+    if (!periodSchedules) return [];
+    const daySchedule = periodSchedules[currentDay] || {};
+    const periodData = daySchedule[currentPeriod] || [];
 
-    return currentSchedule
-      .filter((s: Schedule) => s.period === currentPeriod)
-      .map((schedule: Schedule) => {
-        const teacher = teachers.find(t => t.id === schedule.teacherId);
-        const isAbsent = absences.some(
-          a => a.teacherId === teacher?.id &&
-          format(new Date(a.date), "yyyy-MM-dd") === todayStr
+    return periodData.map((schedule: any) => {
+      const className = schedule.className;
+      const teacherName = schedule.teacherName;
+      const isAbsent = absences?.some(
+        a => a.teacherId === teachers?.find(t => t.name === teacherName)?.id &&
+        format(new Date(a.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
+      );
+
+      let substituteTeacher = null;
+      if (isAbsent && absences) {
+        const absence = absences.find(
+          a => a.teacherId === teachers?.find(t => t.name === teacherName)?.id &&
+          format(new Date(a.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
         );
-
-        let substituteTeacher = null;
-        if (isAbsent) {
-          const absence = absences.find(
-            a => a.teacherId === teacher?.id &&
-            format(new Date(a.date), "yyyy-MM-dd") === todayStr
-          );
-          if (absence?.substituteId) {
-            substituteTeacher = teachers.find(t => t.id === absence.substituteId);
-          }
+        if (absence?.substituteId) {
+          substituteTeacher = teachers?.find(t => t.id === absence.substituteId);
         }
+      }
 
-        return {
-          className: schedule.className,
-          teacher: isAbsent
-            ? substituteTeacher
-              ? `${substituteTeacher.name} (Substitute)`
-              : "Teacher Absent"
-            : teacher?.name || "No teacher",
-          status: isAbsent
-            ? substituteTeacher ? 'substitute' : 'absent'
-            : 'present'
-        };
-      })
-      .sort((a, b) => a.className.localeCompare(b.className));
-  }, [currentSchedule, teachers, absences, currentPeriod]);
+      return {
+        className,
+        teacher: isAbsent
+          ? substituteTeacher
+            ? `${substituteTeacher.name} (Substitute)`
+            : "Teacher Absent"
+          : teacherName || "No teacher",
+        status: isAbsent
+          ? substituteTeacher ? 'substitute' : 'absent'
+          : 'present'
+      };
+    }).sort((a, b) => a.className.localeCompare(b.className));
+  }, [periodSchedules, currentDay, currentPeriod, absences, teachers]);
 
   return (
     <div className="container mx-auto px-4 py-6">
