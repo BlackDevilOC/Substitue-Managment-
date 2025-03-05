@@ -89,16 +89,19 @@ export default function ManageAbsencesPage() {
 
   return (
     <div className="p-4 max-w-6xl mx-auto space-y-6">
-      <div className="relative w-full mb-6">
-        <div className="flex justify-center">
+      <div className="w-full mb-8">
+        {/* Top center title */}
+        <div className="flex justify-center mb-4">
           <h1 className="text-3xl font-bold">Manage Absences</h1>
         </div>
-        <div className="absolute top-0 right-0">
+        
+        {/* Top right refresh button */}
+        <div className="flex flex-col items-end">
           <Button 
             onClick={handleRefresh}
             variant="outline"
             size="icon"
-            className="h-10 w-10"
+            className="h-10 w-10 mb-2"
             disabled={isRefreshing || isLoading}
             title="Refresh Data"
           >
@@ -108,6 +111,8 @@ export default function ManageAbsencesPage() {
               <RefreshCcw className="h-5 w-5" />
             )}
           </Button>
+          
+          {/* Reset button below refresh button */}
           <Button 
             onClick={() => resetMutation.mutate()}
             variant="outline"
