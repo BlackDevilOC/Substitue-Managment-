@@ -318,6 +318,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Teacher schedule endpoint
+  app.get("/api/teacher-schedule/:teacherName", (req, res) => {
+    try {
+      const teacherName = req.params.teacherName?.toLowerCase();
+      if (!teacherName) {
+        return res.status(400).json({ error: 'Teacher name is required' });
+      }
+
+      // Read the teacher_schedules.json file
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/teacher_schedules.json');
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Teacher schedules file not found' });
+      }
+
+      const scheduleData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      
+      // Find the teacher's schedule (with case insensitive matching)
+      const teacherSchedule = scheduleData[teacherName] || [];
+      
+      res.json(teacherSchedule);
+    } catch (error) {
+      console.error('Error fetching teacher schedule:', error);
+      res.status(500).json({ error: 'Failed to fetch teacher schedule' });
+    }
+  });
+
   // File upload endpoints
   app.post("/api/upload/timetable", upload.single('file'), async (req, res) => {
     try {
