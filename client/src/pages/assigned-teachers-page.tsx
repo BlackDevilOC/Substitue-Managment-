@@ -1,15 +1,11 @@
 
-import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserCheck, AlertCircle, Phone } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/card";
+import { Loader2, RefreshCw, UserCheck } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-interface SubstituteAssignment {
+interface Assignment {
   originalTeacher: string;
   period: number;
   className: string;
@@ -17,131 +13,126 @@ interface SubstituteAssignment {
   substitutePhone: string;
 }
 
-interface AssignmentsResponse {
-  assignments: SubstituteAssignment[];
+interface AssignedTeacherData {
+  assignments: Assignment[];
   warnings: string[];
 }
 
 export default function AssignedTeachersPage() {
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const [expandedTeacher, setExpandedTeacher] = useState<string | null>(null);
+  const [data, setData] = useState<AssignedTeacherData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch substitute assignments
-  const { data: assignmentsData, isLoading } = useQuery<AssignmentsResponse>({
-    queryKey: ["/api/substitute-assignments"],
-  });
-
-  // Group assignments by original teacher
-  const groupedAssignments = assignmentsData?.assignments.reduce((acc, curr) => {
-    if (!acc[curr.originalTeacher]) {
-      acc[curr.originalTeacher] = [];
-    }
-    acc[curr.originalTeacher].push(curr);
-    return acc;
-  }, {} as Record<string, SubstituteAssignment[]>) || {};
-
-  const handleTeacherClick = (teacherName: string) => {
-    if (expandedTeacher === teacherName) {
-      setExpandedTeacher(null);
-    } else {
-      setExpandedTeacher(teacherName);
+  const fetchAssignments = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/substitute-assignments');
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
+      const assignmentData = await response.json();
+      setData(assignmentData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch assignments');
+      console.error('Error fetching substitute assignments:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchAssignments();
+  }, []);
 
-  if (!assignmentsData || assignmentsData.assignments.length === 0) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <UserCheck className="h-16 w-16 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium">No Substitute Assignments</h3>
-          <p className="text-muted-foreground mt-2">
-            There are no substitute teachers assigned currently.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const handleRefresh = () => {
+    fetchAssignments();
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Warnings section */}
-      {assignmentsData.warnings && assignmentsData.warnings.length > 0 && (
-        <Alert variant="warning" className="bg-amber-50 border-amber-200">
-          <AlertCircle className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-800">
-            <div className="font-medium mb-1">Assignment Warnings</div>
-            <ul className="list-disc pl-5 space-y-1">
-              {assignmentsData.warnings.map((warning, i) => (
-                <li key={i} className="text-sm">{warning}</li>
-              ))}
-            </ul>
-          </AlertDescription>
+    <div className="container py-6">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Assigned Teachers</h1>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleRefresh}
+          disabled={loading}
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4 mr-2" />
+          )}
+          Refresh
+        </Button>
+      </div>
+
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      {/* Substitute assignments card */}
-      <Card className="shadow-md">
-        <CardHeader className="bg-muted/50">
+      <Card>
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <UserCheck className="h-5 w-5 text-primary" />
-            Substitute Assignments - {format(new Date(today), 'MMMM d, yyyy')}
+            <UserCheck className="h-5 w-5" />
+            Substitute Assignments
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {Object.entries(groupedAssignments).map(([teacher, assignments]) => (
-              <div key={teacher} className="border rounded-lg overflow-hidden">
-                <div
-                  className="p-4 bg-muted/30 flex justify-between items-center cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => handleTeacherClick(teacher)}
-                >
-                  <h3 className="font-medium">{teacher}</h3>
-                  <Badge variant="outline">
-                    {assignments.length} {assignments.length === 1 ? 'assignment' : 'assignments'}
-                  </Badge>
-                </div>
-                
-                {expandedTeacher === teacher && (
-                  <ScrollArea className="max-h-[300px]">
-                    <div className="p-4 space-y-3 divide-y">
-                      {assignments.map((assignment, idx) => (
-                        <div key={idx} className={idx > 0 ? 'pt-3' : ''}>
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="secondary">Period {assignment.period}</Badge>
-                                <span className="font-medium">{assignment.className}</span>
-                              </div>
-                              <p className="text-sm mt-1">
-                                <span className="text-muted-foreground">Substitute:</span>{' '}
-                                <span className="font-medium">{assignment.substitute}</span>
-                              </p>
-                            </div>
-                            <a 
-                              href={`tel:${assignment.substitutePhone}`} 
-                              className="text-sm text-primary flex items-center gap-1 hover:underline"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Phone className="h-3 w-3" />
-                              {assignment.substitutePhone}
-                            </a>
-                          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-border" />
+            </div>
+          ) : (
+            <>
+              {data?.assignments && data.assignments.length > 0 ? (
+                <div className="space-y-4">
+                  {data.assignments.map((assignment, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Original Teacher</p>
+                          <p className="font-medium">{assignment.originalTeacher}</p>
                         </div>
-                      ))}
+                        <div>
+                          <p className="text-sm text-muted-foreground">Substitute</p>
+                          <p className="font-medium">{assignment.substitute}</p>
+                          <p className="text-xs text-muted-foreground">{assignment.substitutePhone}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Class</p>
+                          <p className="font-medium">{assignment.className}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Period</p>
+                          <p className="font-medium">{assignment.period}</p>
+                        </div>
+                      </div>
                     </div>
-                  </ScrollArea>
-                )}
-              </div>
-            ))}
-          </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No assignments found
+                </div>
+              )}
+
+              {data?.warnings && data.warnings.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-md font-medium mb-2">Warnings</h3>
+                  <ul className="space-y-1 text-sm text-amber-600 list-disc pl-5">
+                    {data.warnings.map((warning, index) => (
+                      <li key={index}>{warning}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
