@@ -723,6 +723,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/period-schedules", (req, res) => {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/period_schedules.json');
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Period schedules file not found' });
+      }
+
+      const schedules = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      res.json(schedules);
+    } catch (error) {
+      console.error('Error reading period schedules:', error);
+      res.status(500).json({ error: 'Failed to read period schedules' });
+    }
+  });
+
+  app.get("/api/day-schedules", (req, res) => {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/day_schedules.json');
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Day schedules file not found' });
+      }
+
+      const schedules = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      res.json(schedules);
+    } catch (error) {
+      console.error('Error reading day schedules:', error);
+      res.status(500).json({ error: 'Failed to read day schedules' });
+    }
+  });
+
+  app.get("/api/class-schedules", (req, res) => {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/class_schedules.json');
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Class schedules file not found' });
+      }
+
+      const schedules = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      res.json(schedules);
+    } catch (error) {
+      console.error('Error reading class schedules:', error);
+      res.status(500).json({ error: 'Failed to read class schedules' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

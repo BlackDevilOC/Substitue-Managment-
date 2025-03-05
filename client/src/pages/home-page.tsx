@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar, UserCheck, UserMinus, LogOut, Clock, RefreshCcw } from "lucide-react";
+import { Loader2, Calendar, UserCheck, UserMinus, LogOut, Clock, RefreshCcw, Bell } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -15,6 +15,7 @@ interface Teacher {
   id: number;
   name: string;
   isSubstitute: boolean;
+  phoneNumber: string | null;
 }
 
 interface Schedule {
@@ -32,6 +33,7 @@ interface Absence {
 interface ClassInfo {
   className: string;
   teacher: string;
+  status: 'absent' | 'substitute' | 'present';
 }
 
 // Helper functions
@@ -59,7 +61,19 @@ export default function HomePage() {
   const currentDay = getDayOfWeek();
   const [currentPeriod, setCurrentPeriod] = useState(getCurrentPeriod());
 
-  // Queries with refresh functionality
+  // Enhanced queries with error handling
+  const { data: periodSchedules, isLoading: loadingPeriodSchedules, refetch: refetchPeriodSchedules } = useQuery({
+    queryKey: ["/api/period-schedules"],
+    queryFn: async () => {
+      const res = await fetch('/api/period-schedules');
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to fetch period schedules');
+      }
+      return res.json();
+    }
+  });
+
   const { data: currentSchedule, isLoading: loadingSchedule, refetch: refetchSchedule } = useQuery({
     queryKey: ["/api/schedule", currentDay],
     queryFn: async () => {
@@ -105,7 +119,8 @@ export default function HomePage() {
     await Promise.all([
       refetchSchedule(),
       refetchAbsences(),
-      refetchTeachers()
+      refetchTeachers(),
+      refetchPeriodSchedules()
     ]);
 
     toast({
@@ -114,7 +129,7 @@ export default function HomePage() {
     });
   };
 
-  const isLoading = loadingAbsences || loadingTeachers || loadingSchedule;
+  const isLoading = loadingAbsences || loadingTeachers || loadingSchedule || loadingPeriodSchedules;
 
   const currentTeachers = React.useMemo((): ClassInfo[] => {
     if (!currentSchedule || !teachers || !absences) return [];
@@ -146,7 +161,10 @@ export default function HomePage() {
             ? substituteTeacher
               ? `${substituteTeacher.name} (Substitute)`
               : "Teacher Absent"
-            : teacher?.name || "No teacher"
+            : teacher?.name || "No teacher",
+          status: isAbsent 
+            ? substituteTeacher ? 'substitute' : 'absent'
+            : 'present'
         };
       })
       .sort((a, b) => a.className.localeCompare(b.className));
@@ -165,8 +183,13 @@ export default function HomePage() {
             size="icon"
             onClick={refreshAll}
             disabled={isLoading}
+            className="relative"
           >
-            <RefreshCcw className="h-4 w-4" />
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCcw className="h-4 w-4" />
+            )}
           </Button>
           <Button
             variant="outline"
@@ -184,17 +207,18 @@ export default function HomePage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link href="/schedule" className="block">
           <Card className="h-full hover:bg-accent/5 transition-colors">
             <CardHeader className="pb-2">
               <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
+                <Calendar className="h-5 w-5 text-primary" />
                 Schedule Overview
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">View and manage daily schedules</p>
+              <p className="text-2xl font-bold">{periodSchedules?.length || 0}</p>
+              <p className="text-sm text-muted-foreground">total periods today</p>
             </CardContent>
           </Card>
         </Link>
@@ -203,7 +227,7 @@ export default function HomePage() {
           <Card className="h-full hover:bg-accent/5 transition-colors">
             <CardHeader className="pb-2">
               <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                <UserMinus className="h-5 w-5" />
+                <UserMinus className="h-5 w-5 text-destructive" />
                 Absent Teachers
               </CardTitle>
             </CardHeader>
@@ -218,7 +242,7 @@ export default function HomePage() {
           <Card className="h-full hover:bg-accent/5 transition-colors">
             <CardHeader className="pb-2">
               <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                <UserCheck className="h-5 w-5" />
+                <UserCheck className="h-5 w-5 text-success" />
                 Substitute Teachers
               </CardTitle>
             </CardHeader>
@@ -230,6 +254,23 @@ export default function HomePage() {
             </CardContent>
           </Card>
         </Link>
+
+        <Link href="/notifications" className="block">
+          <Card className="h-full hover:bg-accent/5 transition-colors">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                <Bell className="h-5 w-5 text-warning" />
+                Notifications
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">
+                {currentTeachers.filter(t => t.status === 'absent').length}
+              </p>
+              <p className="text-sm text-muted-foreground">pending assignments</p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Current Classes Section */}
@@ -237,7 +278,7 @@ export default function HomePage() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-              <Clock className="h-5 w-5" />
+              <Clock className="h-5 w-5 text-primary" />
               Current Classes
             </CardTitle>
             <Button
@@ -278,19 +319,19 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-            {currentTeachers.map(({ className, teacher }) => (
+            {currentTeachers.map(({ className, teacher, status }) => (
               <div
                 key={className}
                 className={`p-3 rounded-lg border ${
-                  teacher === "Teacher Absent" ? "bg-destructive/5 border-destructive/20" :
-                    teacher.includes("(Substitute)") ? "bg-warning/5 border-warning/20" :
-                      ""
+                  status === 'absent' ? "bg-destructive/5 border-destructive/20" :
+                    status === 'substitute' ? "bg-warning/5 border-warning/20" :
+                      "bg-card hover:bg-accent/5"
                 }`}
               >
                 <div className="font-medium">{className.toUpperCase()}</div>
                 <div className={`text-sm ${
-                  teacher === "Teacher Absent" ? "text-destructive" :
-                    teacher.includes("(Substitute)") ? "text-warning-foreground" :
+                  status === 'absent' ? "text-destructive" :
+                    status === 'substitute' ? "text-warning-foreground" :
                       "text-muted-foreground"
                 }`}>
                   {teacher}
