@@ -80,85 +80,106 @@ export default function ManageAbsencesPage() {
 
   if (isLoadingAbsent) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading absent teachers...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 max-w-6xl mx-auto space-y-6">
-      <div className="w-full mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <div className="w-10"></div>
-          <h1 className="text-3xl font-bold text-primary">Manage Absences</h1>
-          <Button 
-            onClick={handleRefresh}
-            variant="outline"
-            size="icon"
-            className="h-10 w-10"
-            disabled={isRefreshing || isLoadingAbsent}
-            title="Refresh Data"
-          >
-            {isRefreshing ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <RefreshCcw className="h-5 w-5" />
-            )}
-          </Button>
-        </div>
+    <div className="container max-w-4xl mx-auto p-4 space-y-6">
+      {/* Header Section */}
+      <div className="text-center space-y-2 mb-8">
+        <h1 className="text-3xl font-bold text-primary flex items-center justify-center gap-3">
+          <UserCheck className="h-8 w-8" />
+          Manage Absences
+        </h1>
+        <p className="text-muted-foreground">
+          {format(new Date(today), 'EEEE, MMMM d, yyyy')}
+        </p>
+      </div>
 
-        <div className="flex justify-end mb-4">
-          <Button 
-            onClick={() => resetMutation.mutate()}
-            variant="outline"
-            disabled={resetMutation.isPending}
-          >
-            {resetMutation.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Resetting...
-              </>
-            ) : (
-              <>
-                <RefreshCcw className="mr-2 h-4 w-4" />
-                Reset Assignments
-              </>
-            )}
-          </Button>
-        </div>
+      {/* Control Buttons */}
+      <div className="flex justify-end gap-3">
+        <Button 
+          onClick={handleRefresh}
+          variant="outline"
+          size="sm"
+          className="h-9"
+          disabled={isRefreshing}
+        >
+          {isRefreshing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Refreshing...
+            </>
+          ) : (
+            <>
+              <RefreshCcw className="mr-2 h-4 w-4" />
+              Refresh Data
+            </>
+          )}
+        </Button>
+
+        <Button 
+          onClick={() => resetMutation.mutate()}
+          variant="outline"
+          size="sm"
+          className="h-9"
+          disabled={resetMutation.isPending}
+        >
+          {resetMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Resetting...
+            </>
+          ) : (
+            <>
+              <RefreshCcw className="mr-2 h-4 w-4" />
+              Reset Assignments
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Absent Teachers Section */}
-      <Card className="shadow-md">
-        <CardHeader className="bg-muted/50">
-          <CardTitle className="flex items-center gap-2">
+      <Card className="shadow-lg border-t-4 border-t-primary">
+        <CardHeader className="bg-muted/50 space-y-1">
+          <CardTitle className="flex items-center gap-2 text-xl">
             <UserCheck className="h-5 w-5 text-primary" />
-            Absent Teachers - {format(new Date(today), 'MMMM d, yyyy')}
+            Absent Teachers Today
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {absentTeachers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <CalendarX className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium">No absent teachers</h3>
-              <p className="text-muted-foreground mt-2">
-                All teachers are present today.
+            <div className="flex flex-col items-center justify-center py-12 text-center bg-muted/10 rounded-lg">
+              <CalendarX className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
+              <h3 className="text-xl font-medium mb-2">No Absences Reported</h3>
+              <p className="text-muted-foreground max-w-sm">
+                All teachers are present today. Check back later for any updates.
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               {absentTeachers.map((teacher, index) => (
-                <div key={index} className="relative p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <div 
+                  key={index} 
+                  className="relative p-4 border rounded-lg hover:bg-muted/50 transition-colors duration-200 group"
+                >
                   <div 
                     className="flex justify-between items-center cursor-pointer"
                     onClick={() => handleTeacherClick(teacher.name)}
                   >
-                    <div>
-                      <h3 className="font-medium">{teacher.name}</h3>
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-medium group-hover:text-primary transition-colors">
+                        {teacher.name}
+                      </h3>
                       {teacher.phoneNumber && (
-                        <p className="text-sm text-muted-foreground">
-                          📱 {teacher.phoneNumber}
+                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                          <span className="text-primary">📱</span> {teacher.phoneNumber}
                         </p>
                       )}
                     </div>
@@ -183,14 +204,15 @@ export default function ManageAbsencesPage() {
       </Card>
 
       {/* Navigation Button to Assigned Substitutes Page */}
-      <div className="flex justify-center mt-6">
+      <div className="flex justify-center py-6">
         <Button
           onClick={() => setLocation('/assigned-substitutes')}
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto text-base gap-2 h-12"
           variant="default"
+          size="lg"
         >
           View Assigned Substitutes
-          <ArrowRight className="ml-2 h-4 w-4" />
+          <ArrowRight className="h-5 w-5" />
         </Button>
       </div>
     </div>
