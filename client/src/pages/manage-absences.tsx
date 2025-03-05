@@ -89,9 +89,11 @@ export default function ManageAbsencesPage() {
 
   return (
     <div className="p-4 max-w-6xl mx-auto space-y-6">
-      <div className="flex flex-col items-center">
-        <h1 className="text-3xl font-bold mb-4">Manage Absences</h1>
-        <div className="flex justify-between w-full">
+      <div className="relative w-full mb-6">
+        <div className="flex justify-center">
+          <h1 className="text-3xl font-bold">Manage Absences</h1>
+        </div>
+        <div className="absolute top-0 right-0">
           <Button 
             onClick={handleRefresh}
             variant="outline"
