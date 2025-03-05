@@ -20,13 +20,7 @@ export default function SchedulePage() {
     }
   });
 
-  const { data: teachers, isLoading: loadingTeachers } = useQuery({
-    queryKey: ["/api/teachers"],
-  });
-
-  const isLoading = loadingPeriodSchedules || loadingTeachers;
-
-  if (isLoading) {
+  if (loadingPeriodSchedules) {
     return (
       <div className="flex justify-center items-center min-h-[80vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -39,7 +33,7 @@ export default function SchedulePage() {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold">Class Schedule</h1>
         <Select value={selectedDay} onValueChange={setSelectedDay}>
           <SelectTrigger className="w-[180px]">
@@ -55,41 +49,37 @@ export default function SchedulePage() {
         </Select>
       </div>
 
-      <div className="grid gap-4">
-        {PERIODS.map(period => {
-          const periodData = daySchedule[period] || [];
+      {PERIODS.map(period => {
+        const periodData = daySchedule[period] || [];
 
-          return (
-            <Card key={period}>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="text-lg font-semibold">Period {period}</div>
-                  <div className="grid grid-cols-3 sm:col-span-2 gap-2">
-                    {CLASSES.map(className => {
-                      const classSchedule = periodData.find(
-                        (s: any) => s.className.toLowerCase() === className.toLowerCase()
-                      );
-                      const teacherName = classSchedule?.teacherName || "No teacher";
+        return (
+          <Card key={period} className="mb-4">
+            <CardContent className="p-4">
+              <h2 className="text-lg font-semibold mb-4">Period {period}</h2>
+              <div className="grid grid-cols-3 gap-3">
+                {CLASSES.map(className => {
+                  const classSchedule = periodData.find(
+                    (s: any) => s.className.toLowerCase() === className.toLowerCase()
+                  );
+                  const teacherName = classSchedule?.teacherName || "No teacher";
 
-                      return (
-                        <div
-                          key={className}
-                          className="p-2 text-sm border rounded-md hover:bg-accent/5 transition-colors"
-                        >
-                          <div className="font-medium">{className.toUpperCase()}</div>
-                          <div className="text-muted-foreground truncate">
-                            {teacherName}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                  return (
+                    <div
+                      key={className}
+                      className="bg-background rounded-lg p-3 shadow-sm hover:bg-accent/5 transition-colors"
+                    >
+                      <div className="font-medium text-base mb-1">{className.toUpperCase()}</div>
+                      <div className="text-sm text-muted-foreground line-clamp-1">
+                        {teacherName}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }
