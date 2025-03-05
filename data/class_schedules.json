@@ -1,0 +1,3572 @@
+{
+  "10A": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir faisal ali",
+        "className": "10A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir shafique ahmed",
+        "className": "10A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir waqar ali",
+        "className": "10A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "10A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir muhammad taha",
+        "className": "10A"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir muhammad taha",
+        "className": "10A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir faisal ali",
+        "className": "10A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir shafique ahmed",
+        "className": "10A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir waqar ali",
+        "className": "10A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "10A"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir faisal ali",
+        "className": "10A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "10A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir waqar ali",
+        "className": "10A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "10A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir shafique ahmed",
+        "className": "10A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir faisal ali",
+        "className": "10A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir shafique ahmed",
+        "className": "10A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir muhammad taha",
+        "className": "10A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir waqar ali",
+        "className": "10A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir waqar ali",
+        "className": "10A"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir shafique ahmed",
+        "className": "10A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir faisal ali",
+        "className": "10A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir waqar ali",
+        "className": "10A"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir faisal ali",
+        "className": "10A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir shafique ahmed",
+        "className": "10A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "10A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir waqar ali",
+        "className": "10A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir muhammad taha",
+        "className": "10A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir bakir shah",
+        "className": "10A"
+      }
+    ]
+  },
+  "10B": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir waqar ali",
+        "className": "10B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir waqar ali",
+        "className": "10B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir shafique ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir muhammad taha",
+        "className": "10B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "10B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "10B"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir waqar ali",
+        "className": "10B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir shafique ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "10B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir waqar ali",
+        "className": "10B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir muhammad taha",
+        "className": "10B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir bakir shah",
+        "className": "10B"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir waqar ali",
+        "className": "10B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir shafique ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir shafique ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir bakir shah",
+        "className": "10B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir waqar ali",
+        "className": "10B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "10B"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir waqar ali",
+        "className": "10B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir bakir shah",
+        "className": "10B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir waqar ali",
+        "className": "10B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir shafique ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir muhammad taha",
+        "className": "10B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "10B"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir waqar ali",
+        "className": "10B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir waqar ali",
+        "className": "10B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir bakir shah",
+        "className": "10B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir bakir shah",
+        "className": "10B"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir waqar ali",
+        "className": "10B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir waqar ali",
+        "className": "10B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir shafique ahmed",
+        "className": "10B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir bakir shah",
+        "className": "10B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir waqar ali",
+        "className": "10B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir muhammad taha",
+        "className": "10B"
+      }
+    ]
+  },
+  "10C": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir iqbal ahmed",
+        "className": "10C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir abdul hameed",
+        "className": "10C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir faisal ali",
+        "className": "10C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir abdul rehman",
+        "className": "10C"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir iqbal ahmed",
+        "className": "10C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir abdul hameed",
+        "className": "10C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir faisal ali",
+        "className": "10C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir abdul rehman",
+        "className": "10C"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir iqbal ahmed",
+        "className": "10C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir abdul hameed",
+        "className": "10C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir faisal ali",
+        "className": "10C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir abdul rehman",
+        "className": "10C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir iqbal ahmed",
+        "className": "10C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir abdul hameed",
+        "className": "10C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir abdul hameed",
+        "className": "10C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir faisal ali",
+        "className": "10C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir iqbal ahmed",
+        "className": "10C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "10C"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir irshad qureshi",
+        "className": "10C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir iqbal ahmed",
+        "className": "10C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir abdul hameed",
+        "className": "10C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir abdul rehman",
+        "className": "10C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir faisal ali",
+        "className": "10C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir faisal ali",
+        "className": "10C"
+      }
+    ]
+  },
+  "9A": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "sir muhammad taha",
+        "className": "9A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir muhammad taha",
+        "className": "9A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir romanulabdin",
+        "className": "9A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir faisal ali",
+        "className": "9A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir khadim hussain",
+        "className": "9A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir romanulabdin",
+        "className": "9A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir faraz ahmed",
+        "className": "9A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir anwar ali",
+        "className": "9A"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "sir muhammad taha",
+        "className": "9A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir muhammad taha",
+        "className": "9A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir faisal ali",
+        "className": "9A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir khadim hussain",
+        "className": "9A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir romanulabdin",
+        "className": "9A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir romanulabdin",
+        "className": "9A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir faraz ahmed",
+        "className": "9A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir anwar ali",
+        "className": "9A"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "sir muhammad taha",
+        "className": "9A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir muhammad taha",
+        "className": "9A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir romanulabdin",
+        "className": "9A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir faisal ali",
+        "className": "9A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir khadim hussain",
+        "className": "9A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir romanulabdin",
+        "className": "9A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir faraz ahmed",
+        "className": "9A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "9A"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "sir muhammad taha",
+        "className": "9A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir muhammad taha",
+        "className": "9A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir romanulabdin",
+        "className": "9A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir faisal ali",
+        "className": "9A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir faisal ali",
+        "className": "9A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir khadim hussain",
+        "className": "9A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir romanulabdin",
+        "className": "9A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir anwar ali",
+        "className": "9A"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "sir muhammad taha",
+        "className": "9A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir faisal ali",
+        "className": "9A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir romanulabdin",
+        "className": "9A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir khadim hussain",
+        "className": "9A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir romanulabdin",
+        "className": "9A"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "sir muhammad taha",
+        "className": "9A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir muhammad taha",
+        "className": "9A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir romanulabdin",
+        "className": "9A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir romanulabdin",
+        "className": "9A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir khadim hussain",
+        "className": "9A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir faisal ali",
+        "className": "9A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir faraz ahmed",
+        "className": "9A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir anwar ali",
+        "className": "9A"
+      }
+    ]
+  },
+  "9B": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "sir shafique ahmed",
+        "className": "9B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir shafique ahmed",
+        "className": "9B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir anwar ali",
+        "className": "9B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir asif nawaz",
+        "className": "9B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir romanulabdin",
+        "className": "9B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir khadim hussain",
+        "className": "9B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir faisal ali",
+        "className": "9B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir amir shaikh senior",
+        "className": "9B"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "sir shafique ahmed",
+        "className": "9B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir shafique ahmed",
+        "className": "9B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir romanulabdin",
+        "className": "9B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir asif nawaz",
+        "className": "9B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir anwar ali",
+        "className": "9B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir khadim hussain",
+        "className": "9B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir faisal ali",
+        "className": "9B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir amir shaikh senior",
+        "className": "9B"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "sir shafique ahmed",
+        "className": "9B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir shafique ahmed",
+        "className": "9B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir anwar ali",
+        "className": "9B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir asif nawaz",
+        "className": "9B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir romanulabdin",
+        "className": "9B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir amir shaikh senior",
+        "className": "9B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir faisal ali",
+        "className": "9B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir khadim hussain",
+        "className": "9B"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "sir shafique ahmed",
+        "className": "9B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir shafique ahmed",
+        "className": "9B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir khadim hussain",
+        "className": "9B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir romanulabdin",
+        "className": "9B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir asif nawaz",
+        "className": "9B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir asif nawaz",
+        "className": "9B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "9B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir faisal ali",
+        "className": "9B"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "sir shafique ahmed",
+        "className": "9B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir romanulabdin",
+        "className": "9B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir faisal ali",
+        "className": "9B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir asif nawaz",
+        "className": "9B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir khadim hussain",
+        "className": "9B"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "sir shafique ahmed",
+        "className": "9B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir shafique ahmed",
+        "className": "9B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir anwar ali",
+        "className": "9B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir faisal ali",
+        "className": "9B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir romanulabdin",
+        "className": "9B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir khadim hussain",
+        "className": "9B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir asif nawaz",
+        "className": "9B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir amir shaikh senior",
+        "className": "9B"
+      }
+    ]
+  },
+  "9C": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir aman arif",
+        "className": "9C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir aman arif",
+        "className": "9C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir abdul hameed",
+        "className": "9C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir imran ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "9C"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir aman arif",
+        "className": "9C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir aman arif",
+        "className": "9C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir abdul hameed",
+        "className": "9C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir imran ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "9C"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir aman arif",
+        "className": "9C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir abdul hameed",
+        "className": "9C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir imran ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir aman arif",
+        "className": "9C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir aman arif",
+        "className": "9C"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir aman arif",
+        "className": "9C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "9C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir aman arif",
+        "className": "9C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir abdul hameed",
+        "className": "9C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir imran ahmed",
+        "className": "9C"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir aman arif",
+        "className": "9C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir abdul hameed",
+        "className": "9C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir aman arif",
+        "className": "9C"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir aman arif",
+        "className": "9C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir aman arif",
+        "className": "9C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir iqbal ahmed",
+        "className": "9C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir abdul hameed",
+        "className": "9C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "9C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir mushtaque ahmed",
+        "className": "9C"
+      }
+    ]
+  },
+  "8A": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "sir asif nawaz",
+        "className": "8A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir asif nawaz",
+        "className": "8A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir khadim hussain",
+        "className": "8A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir meer muhammad",
+        "className": "8A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir irshad bhutto",
+        "className": "8A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir irshad bhutto",
+        "className": "8A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir anwar ali",
+        "className": "8A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir romanulabdin",
+        "className": "8A"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "sir asif nawaz",
+        "className": "8A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir asif nawaz",
+        "className": "8A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir khadim hussain",
+        "className": "8A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir abdul sami",
+        "className": "8A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir meer muhammad",
+        "className": "8A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "8A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir anwar ali",
+        "className": "8A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir romanulabdin",
+        "className": "8A"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "sir asif nawaz",
+        "className": "8A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir asif nawaz",
+        "className": "8A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir shumail arsalan",
+        "className": "8A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir irshad bhutto",
+        "className": "8A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir abdul sami",
+        "className": "8A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir khadim hussain",
+        "className": "8A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir anwar ali",
+        "className": "8A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir romanulabdin",
+        "className": "8A"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "sir asif nawaz",
+        "className": "8A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir asif nawaz",
+        "className": "8A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir irshad bhutto",
+        "className": "8A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir khadim hussain",
+        "className": "8A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir romanulabdin",
+        "className": "8A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "8A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir anwar ali",
+        "className": "8A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir farhan siddiqui",
+        "className": "8A"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "sir asif nawaz",
+        "className": "8A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "8A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir farhan siddiqui",
+        "className": "8A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir romanulabdin",
+        "className": "8A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir abdul sami",
+        "className": "8A"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "sir asif nawaz",
+        "className": "8A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir asif nawaz",
+        "className": "8A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir khadim hussain",
+        "className": "8A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir khadim hussain",
+        "className": "8A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir abdul sami",
+        "className": "8A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir irshad bhutto",
+        "className": "8A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir shumail arsalan",
+        "className": "8A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "8A"
+      }
+    ]
+  },
+  "8B": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "sir amir shaikh senior",
+        "className": "8B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir amir shaikh senior",
+        "className": "8B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir jawad ul haq",
+        "className": "8B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir faraz ahmed",
+        "className": "8B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir asif nawaz",
+        "className": "8B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir meer muhammad",
+        "className": "8B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir shumail arsalan",
+        "className": "8B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir farhan siddiqui",
+        "className": "8B"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "sir amir shaikh senior",
+        "className": "8B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir amir shaikh senior",
+        "className": "8B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir jamalullah",
+        "className": "8B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir irshad bhutto",
+        "className": "8B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir asif nawaz",
+        "className": "8B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir faraz ahmed",
+        "className": "8B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir faiz hussain",
+        "className": "8B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir shumail arsalan",
+        "className": "8B"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "sir amir shaikh senior",
+        "className": "8B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir amir shaikh senior",
+        "className": "8B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir jawad ul haq",
+        "className": "8B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir meer muhammad",
+        "className": "8B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir jamalullah",
+        "className": "8B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir asif nawaz",
+        "className": "8B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir asif nawaz",
+        "className": "8B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir farhan siddiqui",
+        "className": "8B"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "sir amir shaikh senior",
+        "className": "8B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir amir shaikh senior",
+        "className": "8B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir jawad ul haq",
+        "className": "8B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir asif nawaz",
+        "className": "8B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir jamalullah",
+        "className": "8B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir irshad bhutto",
+        "className": "8B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir faiz hussain",
+        "className": "8B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir faraz ahmed",
+        "className": "8B"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "sir amir shaikh senior",
+        "className": "8B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir asif nawaz",
+        "className": "8B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir jamalullah",
+        "className": "8B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir faraz ahmed",
+        "className": "8B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir anwar ali",
+        "className": "8B"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "sir amir shaikh senior",
+        "className": "8B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir amir shaikh senior",
+        "className": "8B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir irshad bhutto",
+        "className": "8B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir irshad bhutto",
+        "className": "8B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir asif nawaz",
+        "className": "8B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir faiz hussain",
+        "className": "8B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir faraz ahmed",
+        "className": "8B"
+      }
+    ]
+  },
+  "8C": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      },
+      {
+        "period": 2,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir amir shaikh junior",
+        "className": "8C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "8C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir jawad ul haq",
+        "className": "8C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir imran ahmed",
+        "className": "8C"
+      },
+      {
+        "period": 7,
+        "teacherName": "miss anum hussain",
+        "className": "8C"
+      },
+      {
+        "period": 8,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      },
+      {
+        "period": 2,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir amir shaikh junior",
+        "className": "8C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "8C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir jawad ul haq",
+        "className": "8C"
+      },
+      {
+        "period": 6,
+        "teacherName": "miss anum hussain",
+        "className": "8C"
+      },
+      {
+        "period": 7,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir farhan siddiqui",
+        "className": "8C"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      },
+      {
+        "period": 2,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir amir shaikh junior",
+        "className": "8C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir usama",
+        "className": "8C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "8C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir jawad ul haq",
+        "className": "8C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir shumail arsalan",
+        "className": "8C"
+      },
+      {
+        "period": 8,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      },
+      {
+        "period": 2,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir amir shaikh junior",
+        "className": "8C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir faiz hussain",
+        "className": "8C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "8C"
+      },
+      {
+        "period": 6,
+        "teacherName": "miss anum hussain",
+        "className": "8C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir imran ahmed",
+        "className": "8C"
+      },
+      {
+        "period": 8,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir amir shaikh junior",
+        "className": "8C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir jawad ul haq",
+        "className": "8C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir amir shaikh junior",
+        "className": "8C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir shumail arsalan",
+        "className": "8C"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      },
+      {
+        "period": 2,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir amir shaikh junior",
+        "className": "8C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir amir shaikh junior",
+        "className": "8C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir faiz hussain",
+        "className": "8C"
+      },
+      {
+        "period": 6,
+        "teacherName": "miss romalia",
+        "className": "8C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir anwar ali",
+        "className": "8C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir farhan siddiqui",
+        "className": "8C"
+      }
+    ]
+  },
+  "7A": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir faraz ahmed",
+        "className": "7A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir abdul sami",
+        "className": "7A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir farhan siddiqui",
+        "className": "7A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir jawad ul haq",
+        "className": "7A"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir abdul sami",
+        "className": "7A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir faraz ahmed",
+        "className": "7A"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir shabeer ahmedb",
+        "className": "7A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir jawad ul haq",
+        "className": "7A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir faraz ahmed",
+        "className": "7A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir abdul sami",
+        "className": "7A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir shoaib",
+        "className": "7A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir shoaib",
+        "className": "7A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir meer muhammad",
+        "className": "7A"
+      },
+      {
+        "period": 5,
+        "teacherName": "miss anum hussain",
+        "className": "7A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir faraz ahmed",
+        "className": "7A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir farhan siddiqui",
+        "className": "7A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir abdul hameed",
+        "className": "7A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir jawad ul haq",
+        "className": "7A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir faraz ahmed",
+        "className": "7A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir meer muhammad",
+        "className": "7A"
+      },
+      {
+        "period": 5,
+        "teacherName": "miss anum hussain",
+        "className": "7A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir abdul sami",
+        "className": "7A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir jamalullah",
+        "className": "7A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir wajiudin",
+        "className": "7A"
+      }
+    ]
+  },
+  "7B": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir imran ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir anwar ali",
+        "className": "7B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir faraz ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir shoaib",
+        "className": "7B"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir faraz ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir imran ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir farhan siddiqui",
+        "className": "7B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7B"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir imran ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir imran ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir faraz ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir meer muhammad",
+        "className": "7B"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir faraz ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir imran ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 4,
+        "teacherName": "miss anum hussain",
+        "className": "7B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir imran ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir farhan siddiqui",
+        "className": "7B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir meer muhammad",
+        "className": "7B"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir faraz ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir meer muhammad",
+        "className": "7B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir anwar ali",
+        "className": "7B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir shoaib",
+        "className": "7B"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir imran ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir faraz ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 6,
+        "teacherName": "miss anum hussain",
+        "className": "7B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7B"
+      },
+      {
+        "period": 8,
+        "teacherName": "miss anum hussain",
+        "className": "7B"
+      }
+    ]
+  },
+  "7C": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "sir abdul hameed",
+        "className": "7C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir abdul hameed",
+        "className": "7C"
+      },
+      {
+        "period": 3,
+        "teacherName": "miss anum hussain",
+        "className": "7C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir jawad ul haq",
+        "className": "7C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir jawad ul haq",
+        "className": "7C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir wajiudin",
+        "className": "7C"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "sir abdul hameed",
+        "className": "7C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir abdul hameed",
+        "className": "7C"
+      },
+      {
+        "period": 3,
+        "teacherName": "miss anum hussain",
+        "className": "7C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir shoaib",
+        "className": "7C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir jawad ul haq",
+        "className": "7C"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "sir abdul hameed",
+        "className": "7C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir abdul hameed",
+        "className": "7C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir shoaib",
+        "className": "7C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir farhan siddiqui",
+        "className": "7C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir jawad ul haq",
+        "className": "7C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir jawad ul haq",
+        "className": "7C"
+      },
+      {
+        "period": 8,
+        "teacherName": "miss anum hussain",
+        "className": "7C"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "sir abdul hameed",
+        "className": "7C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir abdul hameed",
+        "className": "7C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir anwar ali",
+        "className": "7C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir jawad ul haq",
+        "className": "7C"
+      },
+      {
+        "period": 8,
+        "teacherName": "miss anum hussain",
+        "className": "7C"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "sir abdul hameed",
+        "className": "7C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir anwar ali",
+        "className": "7C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir imran ahmed",
+        "className": "7C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir jawad ul haq",
+        "className": "7C"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "sir abdul hameed",
+        "className": "7C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir abdul hameed",
+        "className": "7C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir jawad ul haq",
+        "className": "7C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir jawad ul haq",
+        "className": "7C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir anwar ali",
+        "className": "7C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir farhan siddiqui",
+        "className": "7C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir amir shaikh junior",
+        "className": "7C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir shabeer ahmed",
+        "className": "7C"
+      }
+    ]
+  },
+  "6A": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "sir abdul sami",
+        "className": "6A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir abdul sami",
+        "className": "6A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir irshad bhutto",
+        "className": "6A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir shoaib",
+        "className": "6A"
+      },
+      {
+        "period": 5,
+        "teacherName": "miss anum hussain",
+        "className": "6A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir farhan siddiqui",
+        "className": "6A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir asif nawaz",
+        "className": "6A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir irshad bhutto",
+        "className": "6A"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "sir abdul sami",
+        "className": "6A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir abdul sami",
+        "className": "6A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir irshad bhutto",
+        "className": "6A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir abdul rehman",
+        "className": "6A"
+      },
+      {
+        "period": 5,
+        "teacherName": "miss anum hussain",
+        "className": "6A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir aman arif",
+        "className": "6A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir irshad bhutto",
+        "className": "6A"
+      },
+      {
+        "period": 8,
+        "teacherName": "miss anum hussain",
+        "className": "6A"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "sir abdul sami",
+        "className": "6A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir abdul sami",
+        "className": "6A"
+      },
+      {
+        "period": 3,
+        "teacherName": "miss anum hussain",
+        "className": "6A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir aman arif",
+        "className": "6A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir irshad bhutto",
+        "className": "6A"
+      },
+      {
+        "period": 6,
+        "teacherName": "miss anum hussain",
+        "className": "6A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir irshad bhutto",
+        "className": "6A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir irshad bhutto",
+        "className": "6A"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "sir abdul sami",
+        "className": "6A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir abdul sami",
+        "className": "6A"
+      },
+      {
+        "period": 3,
+        "teacherName": "miss anum hussain",
+        "className": "6A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir aman arif",
+        "className": "6A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir aman arif",
+        "className": "6A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir meer muhammad",
+        "className": "6A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir abdul rehman",
+        "className": "6A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir irshad bhutto",
+        "className": "6A"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "sir abdul sami",
+        "className": "6A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir irshad bhutto",
+        "className": "6A"
+      },
+      {
+        "period": 3,
+        "teacherName": "miss anum hussain",
+        "className": "6A"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir aman arif",
+        "className": "6A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir farhan siddiqui",
+        "className": "6A"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "sir abdul sami",
+        "className": "6A"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir abdul sami",
+        "className": "6A"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir wajiudin",
+        "className": "6A"
+      },
+      {
+        "period": 4,
+        "teacherName": "miss anum hussain",
+        "className": "6A"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir aman arif",
+        "className": "6A"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir meer muhammad",
+        "className": "6A"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir abdul rehman",
+        "className": "6A"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir irshad ahmed",
+        "className": "6A"
+      }
+    ]
+  },
+  "6B": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir amir shaikh senior",
+        "className": "6B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir irshad bhutto",
+        "className": "6B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir shoaib",
+        "className": "6B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir shoaib",
+        "className": "6B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir meer muhammad",
+        "className": "6B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir amir shaikh senior",
+        "className": "6B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir irshad bhutto",
+        "className": "6B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir farhan siddiqui",
+        "className": "6B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir shoaib",
+        "className": "6B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir amir shaikh senior",
+        "className": "6B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir amir shaikh senior",
+        "className": "6B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir imran ahmed",
+        "className": "6B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir meer muhammad",
+        "className": "6B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir farhan siddiqui",
+        "className": "6B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir shoaib",
+        "className": "6B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir irshad bhutto",
+        "className": "6B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir amir shaikh senior",
+        "className": "6B"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir wajiudin",
+        "className": "6B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      },
+      {
+        "period": 2,
+        "teacherName": "miss anum hussain",
+        "className": "6B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir imran ahmed",
+        "className": "6B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir shoaib",
+        "className": "6B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir irshad bhutto",
+        "className": "6B"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir shoaib",
+        "className": "6B"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir amir shaikh senior",
+        "className": "6B"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir imran ahmed",
+        "className": "6B"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir shoaib",
+        "className": "6B"
+      },
+      {
+        "period": 7,
+        "teacherName": "miss anum hussain",
+        "className": "6B"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir faiz hussain",
+        "className": "6B"
+      }
+    ]
+  },
+  "6C": {
+    "monday": [
+      {
+        "period": 1,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 4,
+        "teacherName": "miss anum hussain",
+        "className": "6C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir abdul rehman",
+        "className": "6C"
+      },
+      {
+        "period": 7,
+        "teacherName": "miss romalia",
+        "className": "6C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir usama",
+        "className": "6C"
+      }
+    ],
+    "tuesday": [
+      {
+        "period": 1,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 4,
+        "teacherName": "miss romalia",
+        "className": "6C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir abdul rehman",
+        "className": "6C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir muhammad taha",
+        "className": "6C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir usama",
+        "className": "6C"
+      }
+    ],
+    "wednesday": [
+      {
+        "period": 1,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir abdul rehman",
+        "className": "6C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 6,
+        "teacherName": "miss romalia",
+        "className": "6C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir wajiudin",
+        "className": "6C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir shoaib",
+        "className": "6C"
+      }
+    ],
+    "thursday": [
+      {
+        "period": 1,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 3,
+        "teacherName": "miss romalia",
+        "className": "6C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir abdul rehman",
+        "className": "6C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir abdul rehman",
+        "className": "6C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir abdul rehman",
+        "className": "6C"
+      },
+      {
+        "period": 7,
+        "teacherName": "miss romalia",
+        "className": "6C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir shoaib",
+        "className": "6C"
+      }
+    ],
+    "friday": [
+      {
+        "period": 1,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir abdul rehman",
+        "className": "6C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir farhan siddiqui",
+        "className": "6C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir imran ahmed",
+        "className": "6C"
+      }
+    ],
+    "saturday": [
+      {
+        "period": 1,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 2,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 3,
+        "teacherName": "sir meer muhammad",
+        "className": "6C"
+      },
+      {
+        "period": 4,
+        "teacherName": "sir abdul rehman",
+        "className": "6C"
+      },
+      {
+        "period": 5,
+        "teacherName": "sir farhan siddiqui",
+        "className": "6C"
+      },
+      {
+        "period": 6,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 7,
+        "teacherName": "sir usama",
+        "className": "6C"
+      },
+      {
+        "period": 8,
+        "teacherName": "sir shoaib",
+        "className": "6C"
+      }
+    ]
+  }
+}
