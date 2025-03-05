@@ -41,9 +41,15 @@ export async function processTimetables(): Promise<void> {
       relax_column_count: true // Allow for inconsistent column counts
     });
 
-    // Initialize data structures
+    // Initialize data structures with improved organization
     const teacherSchedules: { [key: string]: TeacherSchedule[] } = {};
     const daySchedules: { [key: string]: DaySchedule[] } = {};
+    
+    // Add period-specific indexing for faster lookups
+    const periodSchedules: { [key: string]: { [key: number]: DaySchedule[] } } = {};
+    
+    // Add class-specific indexing
+    const classSchedules: { [key: string]: { [key: string]: DaySchedule[] } } = {};
     const validClasses = ['10A', '10B', '10C', '9A', '9B', '9C', '8A', '8B', '8C', '7A', '7B', '7C', '6A', '6B', '6C'];
 
     for (const row of records) {
@@ -83,6 +89,24 @@ export async function processTimetables(): Promise<void> {
           daySchedules[day] = [];
         }
         daySchedules[day].push({ period, teacherName, className });
+        
+        // Add to period schedules for faster period-specific lookups
+        if (!periodSchedules[day]) {
+          periodSchedules[day] = {};
+        }
+        if (!periodSchedules[day][period]) {
+          periodSchedules[day][period] = [];
+        }
+        periodSchedules[day][period].push({ period, teacherName, className });
+        
+        // Add to class schedules for class-specific lookups
+        if (!classSchedules[className]) {
+          classSchedules[className] = {};
+        }
+        if (!classSchedules[className][day]) {
+          classSchedules[className][day] = [];
+        }
+        classSchedules[className][day].push({ period, teacherName, className });
       }
     }
 
@@ -106,6 +130,14 @@ export async function processTimetables(): Promise<void> {
     // Save day schedules
     const daySchedulesPath = path.join(dataDir, 'day_schedules.json');
     fs.writeFileSync(daySchedulesPath, JSON.stringify(daySchedules, null, 2));
+    
+    // Save period-indexed schedules
+    const periodSchedulesPath = path.join(dataDir, 'period_schedules.json');
+    fs.writeFileSync(periodSchedulesPath, JSON.stringify(periodSchedules, null, 2));
+    
+    // Save class-indexed schedules
+    const classSchedulesPath = path.join(dataDir, 'class_schedules.json');
+    fs.writeFileSync(classSchedulesPath, JSON.stringify(classSchedules, null, 2));
 
     console.log('Timetable processing completed successfully');
 
