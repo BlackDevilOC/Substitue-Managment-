@@ -11,6 +11,8 @@ const __dirname = path.dirname(__filename);
 // Constants for file paths
 const ABSENT_TEACHERS_PATH = path.join(__dirname, 'data/absent_teachers.json');
 const ASSIGNED_TEACHERS_PATH = path.join(__dirname, 'data/assigned_teacher.json');
+const SUBSTITUTE_FILE_PATH = path.join(__dirname, 'data/Substitude_file.csv');
+const TIMETABLE_FILE_PATH = path.join(__dirname, 'data/timetable_file.csv');
 
 async function main() {
   try {
@@ -29,9 +31,57 @@ async function main() {
     // 2. Create substitute manager and run auto-assign
     const manager = new SubstituteManager();
     
+    // Check if CSV files exist and show their contents
+    console.log("Checking substitute file:", SUBSTITUTE_FILE_PATH);
+    if (fs.existsSync(SUBSTITUTE_FILE_PATH)) {
+      const substituteContent = fs.readFileSync(SUBSTITUTE_FILE_PATH, 'utf-8');
+      console.log("Substitute file content (first 3 lines):");
+      console.log(substituteContent.split('\n').slice(0, 3).join('\n'));
+    } else {
+      console.error("Substitute file not found:", SUBSTITUTE_FILE_PATH);
+    }
+    
+    console.log("\nChecking timetable file:", TIMETABLE_FILE_PATH);
+    if (fs.existsSync(TIMETABLE_FILE_PATH)) {
+      const timetableContent = fs.readFileSync(TIMETABLE_FILE_PATH, 'utf-8');
+      console.log("Timetable file content (first 3 lines):");
+      console.log(timetableContent.split('\n').slice(0, 3).join('\n'));
+    } else {
+      console.error("Timetable file not found:", TIMETABLE_FILE_PATH);
+    }
+    
     // Load data from timetable and substitute files
-    await manager.loadData();
-    console.log("Data loaded successfully");
+    try {
+      await manager.loadData();
+      console.log("Data loaded successfully");
+    } catch (error) {
+      console.error("Error loading data:", error);
+      
+      // Try to fix the substitute file if parsing error
+      if (fs.existsSync(SUBSTITUTE_FILE_PATH) && error.message.includes("Invalid Record Length")) {
+        console.log("Attempting to fix substitute file format...");
+        const substituteContent = fs.readFileSync(SUBSTITUTE_FILE_PATH, 'utf-8');
+        const lines = substituteContent.split('\n').map(line => {
+          // Ensure each line has at least two columns
+          const parts = line.split(',');
+          if (parts.length < 2 && parts[0].trim()) {
+            return parts[0].trim() + ',,';
+          }
+          return line;
+        });
+        
+        const fixedContent = lines.join('\n');
+        const backupPath = SUBSTITUTE_FILE_PATH + '.bak';
+        fs.writeFileSync(backupPath, substituteContent);
+        fs.writeFileSync(SUBSTITUTE_FILE_PATH, fixedContent);
+        console.log("Created backup at", backupPath);
+        console.log("Fixed substitute file. Retrying data load...");
+        
+        // Try loading again
+        await manager.loadData();
+        console.log("Data loaded successfully after fix");
+      }
+    }
     
     // Get today's date
     const today = new Date().toISOString().split('T')[0];
@@ -64,7 +114,35 @@ async function main() {
     // 3. Read the assigned_teacher.json file to verify
     console.log("\nVerifying assignments from file:");
     const savedAssignments = JSON.parse(fs.readFileSync(ASSIGNED_TEACHERS_PATH, 'utf-8'));
-    console.log(JSON.stringify(savedAssignments, null, 2));
+    
+    // Display the results in a more readable format
+    console.log("\n=== ASSIGNMENT RESULTS ===");
+    console.log(`Total assignments saved: ${savedAssignments.assignments.length}`);
+    
+    if (savedAssignments.assignments.length > 0) {
+      console.log("\nDetailed assignments:");
+      savedAssignments.assignments.forEach((assignment, index) => {
+        console.log(`\nAssignment #${index + 1}:`);
+        console.log(`  Original Teacher: ${assignment.originalTeacher}`);
+        console.log(`  Period: ${assignment.period}`);
+        console.log(`  Class: ${assignment.className}`);
+        console.log(`  Substitute: ${assignment.substitute}`);
+        console.log(`  Substitute Phone: ${assignment.substitutePhone || 'N/A'}`);
+      });
+    } else {
+      console.log("\nNo assignments were saved.");
+    }
+    
+    if (savedAssignments.warnings && savedAssignments.warnings.length > 0) {
+      console.log("\nWarnings:");
+      savedAssignments.warnings.forEach((warning, index) => {
+        console.log(`  ${index + 1}. ${warning}`);
+      });
+    }
+    
+    // Show path to the assignment file for future reference
+    console.log(`\nAssignment results are stored in: ${ASSIGNED_TEACHERS_PATH}`);
+    console.log("You can view this file anytime to see the current assignments.");
     
   } catch (error) {
     console.error("Error during auto-assignment test:", error);

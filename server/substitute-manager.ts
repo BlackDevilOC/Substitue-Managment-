@@ -47,18 +47,23 @@ export class SubstituteManager {
     if (fs.existsSync(actualSubstitutePath)) {
       const subData = fs.readFileSync(actualSubstitutePath, 'utf-8');
       try {
+        // Parse with relaxed settings
         const rows = parse(subData, {
           columns: false,
           skip_empty_lines: true,
-          trim: true
+          trim: true,
+          relax_column_count: true
         });
         
         rows.forEach(row => {
           const name = row[0]?.trim();
-          const phone = row[1]?.trim();
+          const phone = row[1]?.trim() || "";  // Default to empty string if phone is missing
           if (name) this.substitutes.set(this.normalizeName(name), phone);
         });
+        
+        console.log(`Loaded ${this.substitutes.size} substitutes`);
       } catch (error) {
+        console.error("Raw substitute data:", subData.slice(0, 200) + "...");
         throw new Error(`Error parsing substitute file: ${error}`);
       }
     } else {
@@ -429,16 +434,36 @@ export class SubstituteManager {
 
   private saveAssignmentsToFile(assignments: SubstituteAssignment[], warnings: string[]): void {
     try {
+      // Create a well-formatted data object
       const data = {
-        assignments,
-        warnings
+        assignments: assignments.map(a => ({
+          originalTeacher: a.originalTeacher || "",
+          period: a.period || 0,
+          className: a.className || "",
+          substitute: a.substitute || "",
+          substitutePhone: a.substitutePhone || ""
+        })),
+        warnings: warnings || []
       };
       
+      // Log what we're saving
+      console.log(`Saving ${assignments.length} assignments to ${DEFAULT_ASSIGNED_TEACHERS_PATH}`);
+      
+      // Ensure the directory exists
+      const dirPath = path.dirname(DEFAULT_ASSIGNED_TEACHERS_PATH);
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+      }
+      
+      // Write the file
       fs.writeFileSync(
         DEFAULT_ASSIGNED_TEACHERS_PATH, 
         JSON.stringify(data, null, 2)
       );
+      
+      console.log("Assignments saved successfully");
     } catch (error) {
+      console.error("Error saving assignments:", error);
       throw new Error(`Error saving assignments: ${error}`);
     }
   }
