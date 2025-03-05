@@ -419,19 +419,19 @@ export default function HomePage() {
               variants={container}
               initial="hidden"
               animate="show"
-              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             >
               {currentTeachers.map(({ className, teacher, status }) => (
                 <motion.div
                   key={className}
                   variants={item}
-                  className={`p-3 rounded-lg border-2 ${
+                  className={`p-4 rounded-lg border-2 ${
                     status === 'absent' ? "bg-destructive/5 border-destructive/20" :
                       status === 'substitute' ? "bg-warning/5 border-warning/20" :
                         "bg-card hover:bg-accent/5"
                   }`}
                 >
-                  <div className="font-medium">{className.toUpperCase()}</div>
+                  <div className="font-medium text-lg mb-2">{className.toUpperCase()}</div>
                   <div className={`text-sm ${
                     status === 'absent' ? "text-destructive" :
                       status === 'substitute' ? "text-warning-foreground" :
