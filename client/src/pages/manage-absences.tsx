@@ -74,7 +74,9 @@ export default function ManageAbsencesPage() {
   });
 
   const handleTeacherClick = (teacherName: string) => {
-    setLocation(`/teacher-details/${encodeURIComponent(teacherName)}`);
+    // Reset any previous state
+    localStorage.removeItem('currentTeacherDetails');
+    setLocation(`/teacher/${encodeURIComponent(teacherName)}`);
   };
 
   return (
