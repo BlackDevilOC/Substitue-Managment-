@@ -106,14 +106,6 @@ export default function ManageAbsencesPage() {
     }
   };
 
-  // Group assignments by original teacher
-  const groupedAssignments = assignmentsData?.assignments.reduce((acc, curr) => {
-    if (!acc[curr.originalTeacher]) {
-      acc[curr.originalTeacher] = [];
-    }
-    acc[curr.originalTeacher].push(curr);
-    return acc;
-  }, {} as Record<string, SubstituteAssignment[]>) || {};
 
   if (isLoadingAbsent || isLoadingAssignments) {
     return (
@@ -219,71 +211,11 @@ export default function ManageAbsencesPage() {
         </CardContent>
       </Card>
 
-      {/* Assigned Teachers Section */}
-      <Card className="shadow-md">
-        <CardHeader className="bg-muted/50">
-          <CardTitle className="flex items-center gap-2">
-            <School className="h-5 w-5 text-primary" />
-            Substitute Assignments - {format(new Date(today), 'MMMM d, yyyy')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {Object.keys(groupedAssignments).length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <CalendarX className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium">No assignments</h3>
-              <p className="text-muted-foreground mt-2">
-                No substitute teachers have been assigned yet.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {Object.entries(groupedAssignments).map(([teacherName, assignments]) => (
-                <div key={teacherName} className="relative p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div 
-                    className="flex justify-between items-center cursor-pointer"
-                    onClick={() => handleAssignmentTeacherClick(teacherName)}
-                  >
-                    <div>
-                      <h3 className="font-medium text-primary">{teacherName}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {assignments.length} {assignments.length === 1 ? 'period' : 'periods'} assigned
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm" className="text-muted-foreground">
-                      {selectedAssignmentTeacher === teacherName ? 'Hide Details' : 'View Details'}
-                    </Button>
-                  </div>
-
-                  {selectedAssignmentTeacher === teacherName && (
-                    <div className="mt-4 space-y-3 pl-4 border-l-2 border-primary/20">
-                      {assignments.map((assignment, idx) => (
-                        <div key={idx} className="bg-muted/30 p-3 rounded-md">
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                              <p className="font-medium">
-                                Period {assignment.period} - Class {assignment.className}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                Substitute: {assignment.substitute}
-                              </p>
-                              {assignment.substitutePhone && (
-                                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                  📱 {assignment.substitutePhone}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="mt-6 text-center">
+        <Button onClick={() => setLocation('/assigned-substitute')} className="w-full md:w-auto">
+          View Assigned Substitutes
+        </Button>
+      </div>
     </div>
   );
 }
