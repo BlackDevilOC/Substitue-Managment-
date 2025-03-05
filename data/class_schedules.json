@@ -59,11 +59,6 @@
         "className": "10A"
       },
       {
-        "period": 4,
-        "teacherName": "sir faisal ali",
-        "className": "10A"
-      },
-      {
         "period": 5,
         "teacherName": "sir bakir shah",
         "className": "10A"
@@ -98,11 +93,6 @@
       {
         "period": 3,
         "teacherName": "sir faisal ali",
-        "className": "10A"
-      },
-      {
-        "period": 4,
-        "teacherName": "sir rafaqat maseeh",
         "className": "10A"
       },
       {
@@ -298,11 +288,6 @@
         "className": "10B"
       },
       {
-        "period": 4,
-        "teacherName": "sir shafique ahmed",
-        "className": "10B"
-      },
-      {
         "period": 5,
         "teacherName": "sir rafaqat maseeh",
         "className": "10B"
@@ -337,11 +322,6 @@
       {
         "period": 3,
         "teacherName": "sir waqar ali",
-        "className": "10B"
-      },
-      {
-        "period": 4,
-        "teacherName": "sir shafique ahmed",
         "className": "10B"
       },
       {
@@ -537,11 +517,6 @@
         "className": "10C"
       },
       {
-        "period": 4,
-        "teacherName": "sir iqbal ahmed",
-        "className": "10C"
-      },
-      {
         "period": 5,
         "teacherName": "sir abdul hameed",
         "className": "10C"
@@ -576,11 +551,6 @@
       {
         "period": 3,
         "teacherName": "sir irshad qureshi",
-        "className": "10C"
-      },
-      {
-        "period": 4,
-        "teacherName": "sir iqbal ahmed",
         "className": "10C"
       },
       {
@@ -776,11 +746,6 @@
         "className": "9A"
       },
       {
-        "period": 4,
-        "teacherName": "sir khadim hussain",
-        "className": "9A"
-      },
-      {
         "period": 5,
         "teacherName": "sir romanulabdin",
         "className": "9A"
@@ -815,11 +780,6 @@
       {
         "period": 3,
         "teacherName": "sir romanulabdin",
-        "className": "9A"
-      },
-      {
-        "period": 4,
-        "teacherName": "sir faisal ali",
         "className": "9A"
       },
       {
@@ -1015,11 +975,6 @@
         "className": "9B"
       },
       {
-        "period": 4,
-        "teacherName": "sir asif nawaz",
-        "className": "9B"
-      },
-      {
         "period": 5,
         "teacherName": "sir anwar ali",
         "className": "9B"
@@ -1054,11 +1009,6 @@
       {
         "period": 3,
         "teacherName": "sir anwar ali",
-        "className": "9B"
-      },
-      {
-        "period": 4,
-        "teacherName": "sir asif nawaz",
         "className": "9B"
       },
       {
@@ -1254,11 +1204,6 @@
         "className": "9C"
       },
       {
-        "period": 4,
-        "teacherName": "sir aman arif",
-        "className": "9C"
-      },
-      {
         "period": 5,
         "teacherName": "sir iqbal ahmed",
         "className": "9C"
@@ -1293,11 +1238,6 @@
       {
         "period": 3,
         "teacherName": "sir aman arif",
-        "className": "9C"
-      },
-      {
-        "period": 4,
-        "teacherName": "sir abdul hameed",
         "className": "9C"
       },
       {
@@ -1493,11 +1433,6 @@
         "className": "8A"
       },
       {
-        "period": 4,
-        "teacherName": "sir abdul sami",
-        "className": "8A"
-      },
-      {
         "period": 5,
         "teacherName": "sir meer muhammad",
         "className": "8A"
@@ -1532,11 +1467,6 @@
       {
         "period": 3,
         "teacherName": "sir shumail arsalan",
-        "className": "8A"
-      },
-      {
-        "period": 4,
-        "teacherName": "sir irshad bhutto",
         "className": "8A"
       },
       {
@@ -1732,11 +1662,6 @@
         "className": "8B"
       },
       {
-        "period": 4,
-        "teacherName": "sir irshad bhutto",
-        "className": "8B"
-      },
-      {
         "period": 5,
         "teacherName": "sir asif nawaz",
         "className": "8B"
@@ -1771,11 +1696,6 @@
       {
         "period": 3,
         "teacherName": "sir jawad ul haq",
-        "className": "8B"
-      },
-      {
-        "period": 4,
-        "teacherName": "sir meer muhammad",
         "className": "8B"
       },
       {
@@ -1966,11 +1886,6 @@
         "className": "8C"
       },
       {
-        "period": 4,
-        "teacherName": "sir rafaqat maseeh",
-        "className": "8C"
-      },
-      {
         "period": 5,
         "teacherName": "sir jawad ul haq",
         "className": "8C"
@@ -2005,11 +1920,6 @@
       {
         "period": 3,
         "teacherName": "sir amir shaikh junior",
-        "className": "8C"
-      },
-      {
-        "period": 4,
-        "teacherName": "sir usama",
         "className": "8C"
       },
       {
@@ -2242,11 +2152,6 @@
         "className": "7A"
       },
       {
-        "period": 4,
-        "teacherName": "sir jawad ul haq",
-        "className": "7A"
-      },
-      {
         "period": 5,
         "teacherName": "sir faraz ahmed",
         "className": "7A"
@@ -2439,11 +2344,6 @@
         "className": "7B"
       },
       {
-        "period": 4,
-        "teacherName": "sir shabeer ahmed",
-        "className": "7B"
-      },
-      {
         "period": 5,
         "teacherName": "sir imran ahmed",
         "className": "7B"
@@ -2477,11 +2377,6 @@
       },
       {
         "period": 3,
-        "teacherName": "sir imran ahmed",
-        "className": "7B"
-      },
-      {
-        "period": 4,
         "teacherName": "sir imran ahmed",
         "className": "7B"
       },
@@ -2678,11 +2573,6 @@
         "className": "7C"
       },
       {
-        "period": 4,
-        "teacherName": "sir shoaib",
-        "className": "7C"
-      },
-      {
         "period": 5,
         "teacherName": "sir shabeer ahmed",
         "className": "7C"
@@ -2717,11 +2607,6 @@
       {
         "period": 3,
         "teacherName": "sir shoaib",
-        "className": "7C"
-      },
-      {
-        "period": 4,
-        "teacherName": "sir farhan siddiqui",
         "className": "7C"
       },
       {
@@ -2917,11 +2802,6 @@
         "className": "6A"
       },
       {
-        "period": 4,
-        "teacherName": "sir abdul rehman",
-        "className": "6A"
-      },
-      {
         "period": 5,
         "teacherName": "miss anum hussain",
         "className": "6A"
@@ -2956,11 +2836,6 @@
       {
         "period": 3,
         "teacherName": "miss anum hussain",
-        "className": "6A"
-      },
-      {
-        "period": 4,
-        "teacherName": "sir aman arif",
         "className": "6A"
       },
       {
@@ -3156,11 +3031,6 @@
         "className": "6B"
       },
       {
-        "period": 4,
-        "teacherName": "sir amir shaikh senior",
-        "className": "6B"
-      },
-      {
         "period": 5,
         "teacherName": "sir irshad bhutto",
         "className": "6B"
@@ -3194,11 +3064,6 @@
       },
       {
         "period": 3,
-        "teacherName": "sir amir shaikh senior",
-        "className": "6B"
-      },
-      {
-        "period": 4,
         "teacherName": "sir amir shaikh senior",
         "className": "6B"
       },
@@ -3349,7 +3214,7 @@
       },
       {
         "period": 4,
-        "teacherName": "miss anum hussain",
+        "teacherName": "miss anum hussain\ntuesday",
         "className": "6C"
       },
       {
@@ -3390,11 +3255,6 @@
         "className": "6C"
       },
       {
-        "period": 4,
-        "teacherName": "miss romalia",
-        "className": "6C"
-      },
-      {
         "period": 5,
         "teacherName": "sir abdul rehman",
         "className": "6C"
@@ -3429,11 +3289,6 @@
       {
         "period": 3,
         "teacherName": "sir usama",
-        "className": "6C"
-      },
-      {
-        "period": 4,
-        "teacherName": "sir abdul rehman",
         "className": "6C"
       },
       {
@@ -3566,6 +3421,285 @@
         "period": 8,
         "teacherName": "sir shoaib",
         "className": "6C"
+      }
+    ]
+  },
+  "UnknownClass_15": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "4",
+        "className": "UnknownClass_15"
+      }
+    ]
+  },
+  "UnknownClass_16": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir faisal ali",
+        "className": "UnknownClass_16"
+      }
+    ]
+  },
+  "UnknownClass_17": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir shafique ahmed",
+        "className": "UnknownClass_17"
+      }
+    ]
+  },
+  "UnknownClass_18": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir iqbal ahmed",
+        "className": "UnknownClass_18"
+      }
+    ]
+  },
+  "UnknownClass_19": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir khadim hussain",
+        "className": "UnknownClass_19"
+      }
+    ]
+  },
+  "UnknownClass_20": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir asif nawaz",
+        "className": "UnknownClass_20"
+      }
+    ]
+  },
+  "UnknownClass_21": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir aman arif",
+        "className": "UnknownClass_21"
+      }
+    ]
+  },
+  "UnknownClass_22": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir abdul sami",
+        "className": "UnknownClass_22"
+      }
+    ]
+  },
+  "UnknownClass_23": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir irshad bhutto",
+        "className": "UnknownClass_23"
+      }
+    ]
+  },
+  "UnknownClass_24": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "UnknownClass_24"
+      }
+    ]
+  },
+  "UnknownClass_26": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir shabeer ahmed",
+        "className": "UnknownClass_26"
+      }
+    ]
+  },
+  "UnknownClass_27": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir shoaib",
+        "className": "UnknownClass_27"
+      }
+    ]
+  },
+  "UnknownClass_28": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir abdul rehman",
+        "className": "UnknownClass_28"
+      }
+    ]
+  },
+  "UnknownClass_29": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir amir shaikh senior",
+        "className": "UnknownClass_29"
+      }
+    ]
+  },
+  "UnknownClass_30": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "miss romalia\nwednesday",
+        "className": "UnknownClass_30"
+      }
+    ]
+  },
+  "UnknownClass_31": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "4",
+        "className": "UnknownClass_31"
+      }
+    ]
+  },
+  "UnknownClass_32": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir rafaqat maseeh",
+        "className": "UnknownClass_32"
+      }
+    ]
+  },
+  "UnknownClass_33": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir shafique ahmed",
+        "className": "UnknownClass_33"
+      }
+    ]
+  },
+  "UnknownClass_34": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir iqbal ahmed",
+        "className": "UnknownClass_34"
+      }
+    ]
+  },
+  "UnknownClass_35": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir faisal ali",
+        "className": "UnknownClass_35"
+      }
+    ]
+  },
+  "UnknownClass_36": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir asif nawaz",
+        "className": "UnknownClass_36"
+      }
+    ]
+  },
+  "UnknownClass_37": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir abdul hameed",
+        "className": "UnknownClass_37"
+      }
+    ]
+  },
+  "UnknownClass_38": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir irshad bhutto",
+        "className": "UnknownClass_38"
+      }
+    ]
+  },
+  "UnknownClass_39": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir meer muhammad",
+        "className": "UnknownClass_39"
+      }
+    ]
+  },
+  "UnknownClass_40": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir usama",
+        "className": "UnknownClass_40"
+      }
+    ]
+  },
+  "UnknownClass_41": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir jawad ul haq",
+        "className": "UnknownClass_41"
+      }
+    ]
+  },
+  "UnknownClass_42": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir imran ahmed",
+        "className": "UnknownClass_42"
+      }
+    ]
+  },
+  "UnknownClass_43": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir farhan siddiqui",
+        "className": "UnknownClass_43"
+      }
+    ]
+  },
+  "UnknownClass_44": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir aman arif",
+        "className": "UnknownClass_44"
+      }
+    ]
+  },
+  "UnknownClass_45": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir amir shaikh senior",
+        "className": "UnknownClass_45"
+      }
+    ]
+  },
+  "UnknownClass_46": {
+    "monday": [
+      {
+        "period": 4,
+        "teacherName": "sir abdul rehman",
+        "className": "UnknownClass_46"
       }
     ]
   }
