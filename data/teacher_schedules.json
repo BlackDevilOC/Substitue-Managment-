@@ -1,3484 +1,3434 @@
 {
-  "sir bakir Shah": [
+  "sir bakir shah": [
     {
       "day": "monday",
       "period": 1,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "monday",
       "period": 2,
-      "className": "10a"
+      "className": "10A"
+    },
+    {
+      "day": "monday",
+      "period": 7,
+      "className": "10A"
     },
     {
       "day": "tuesday",
       "period": 1,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "tuesday",
       "period": 2,
-      "className": "10a"
+      "className": "10A"
+    },
+    {
+      "day": "tuesday",
+      "period": 5,
+      "className": "10A"
+    },
+    {
+      "day": "tuesday",
+      "period": 8,
+      "className": "10B"
     },
     {
       "day": "wednesday",
       "period": 1,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "wednesday",
       "period": 2,
-      "className": "10a"
+      "className": "10A"
+    },
+    {
+      "day": "wednesday",
+      "period": 6,
+      "className": "10B"
+    },
+    {
+      "day": "wednesday",
+      "period": 8,
+      "className": "10A"
     },
     {
       "day": "thursday",
       "period": 1,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "thursday",
       "period": 2,
-      "className": "10a"
+      "className": "10A"
+    },
+    {
+      "day": "thursday",
+      "period": 4,
+      "className": "10B"
+    },
+    {
+      "day": "thursday",
+      "period": 5,
+      "className": "10A"
     },
     {
       "day": "friday",
       "period": 1,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "friday",
       "period": 2,
-      "className": "10a"
+      "className": "10A"
+    },
+    {
+      "day": "friday",
+      "period": 4,
+      "className": "10B"
+    },
+    {
+      "day": "friday",
+      "period": 5,
+      "className": "10B"
     },
     {
       "day": "saturday",
       "period": 1,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "saturday",
       "period": 2,
-      "className": "10a"
+      "className": "10A"
+    },
+    {
+      "day": "saturday",
+      "period": 6,
+      "className": "10B"
+    },
+    {
+      "day": "saturday",
+      "period": 8,
+      "className": "10A"
     }
   ],
   "sir mushtaque ahmed": [
     {
       "day": "monday",
       "period": 1,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "monday",
       "period": 2,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "monday",
       "period": 8,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "tuesday",
       "period": 1,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "tuesday",
       "period": 2,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "tuesday",
       "period": 8,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "wednesday",
       "period": 1,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "wednesday",
       "period": 2,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "wednesday",
       "period": 8,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "thursday",
       "period": 1,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "thursday",
       "period": 2,
-      "className": "10b"
+      "className": "10B"
+    },
+    {
+      "day": "thursday",
+      "period": 7,
+      "className": "9B"
     },
     {
       "day": "friday",
       "period": 1,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "friday",
       "period": 5,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "saturday",
       "period": 1,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "saturday",
       "period": 2,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "saturday",
       "period": 8,
-      "className": "9c"
+      "className": "9C"
     }
   ],
-  "sir Irshad Qureshi": [
+  "sir irshad qureshi": [
     {
       "day": "monday",
       "period": 1,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "monday",
       "period": 2,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "monday",
       "period": 3,
-      "className": "10c"
+      "className": "10C"
+    },
+    {
+      "day": "monday",
+      "period": 7,
+      "className": "10C"
     },
     {
       "day": "tuesday",
       "period": 1,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "tuesday",
       "period": 2,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "tuesday",
       "period": 3,
-      "className": "10c"
+      "className": "10C"
+    },
+    {
+      "day": "tuesday",
+      "period": 7,
+      "className": "10C"
     },
     {
       "day": "wednesday",
       "period": 1,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "wednesday",
       "period": 2,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "wednesday",
       "period": 3,
-      "className": "10c"
+      "className": "10C"
+    },
+    {
+      "day": "wednesday",
+      "period": 8,
+      "className": "10C"
     },
     {
       "day": "thursday",
       "period": 1,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "thursday",
       "period": 2,
-      "className": "10c"
+      "className": "10C"
+    },
+    {
+      "day": "thursday",
+      "period": 3,
+      "className": "10C"
+    },
+    {
+      "day": "thursday",
+      "period": 8,
+      "className": "10C"
     },
     {
       "day": "friday",
       "period": 1,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "friday",
       "period": 2,
-      "className": "10c"
+      "className": "10C"
+    },
+    {
+      "day": "friday",
+      "period": 3,
+      "className": "10C"
     },
     {
       "day": "saturday",
       "period": 1,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "saturday",
       "period": 2,
-      "className": "10c"
+      "className": "10C"
+    },
+    {
+      "day": "saturday",
+      "period": 3,
+      "className": "10C"
     }
   ],
-  "sir muhammad Taha": [
+  "sir muhammad taha": [
     {
       "day": "monday",
       "period": 1,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "monday",
       "period": 2,
-      "className": "9a"
+      "className": "9A"
+    },
+    {
+      "day": "monday",
+      "period": 6,
+      "className": "10B"
+    },
+    {
+      "day": "monday",
+      "period": 8,
+      "className": "10A"
     },
     {
       "day": "tuesday",
       "period": 1,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "tuesday",
       "period": 2,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "tuesday",
       "period": 3,
-      "className": "10a"
+      "className": "10A"
+    },
+    {
+      "day": "tuesday",
+      "period": 6,
+      "className": "6C"
+    },
+    {
+      "day": "tuesday",
+      "period": 7,
+      "className": "10B"
     },
     {
       "day": "wednesday",
       "period": 1,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "wednesday",
       "period": 2,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "thursday",
       "period": 1,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "thursday",
       "period": 2,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "thursday",
       "period": 6,
-      "className": "10a"
+      "className": "10A"
+    },
+    {
+      "day": "thursday",
+      "period": 7,
+      "className": "10B"
     },
     {
       "day": "friday",
       "period": 1,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "saturday",
       "period": 1,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "saturday",
       "period": 2,
-      "className": "9a"
+      "className": "9A"
+    },
+    {
+      "day": "saturday",
+      "period": 7,
+      "className": "10A"
+    },
+    {
+      "day": "saturday",
+      "period": 8,
+      "className": "10B"
     }
   ],
   "sir shafique ahmed": [
     {
       "day": "monday",
       "period": 1,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "monday",
       "period": 2,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "monday",
       "period": 4,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "monday",
       "period": 5,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "tuesday",
       "period": 1,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "tuesday",
       "period": 2,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "tuesday",
       "period": 4,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "tuesday",
       "period": 6,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "wednesday",
       "period": 1,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "wednesday",
       "period": 2,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "wednesday",
       "period": 4,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "wednesday",
       "period": 5,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "wednesday",
       "period": 7,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "thursday",
       "period": 1,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "thursday",
       "period": 2,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "thursday",
       "period": 4,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "thursday",
       "period": 6,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "friday",
       "period": 1,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "friday",
       "period": 3,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "saturday",
       "period": 1,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "saturday",
       "period": 2,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "saturday",
       "period": 4,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "saturday",
       "period": 5,
-      "className": "10b"
+      "className": "10B"
     }
   ],
   "sir iqbal ahmed": [
     {
       "day": "monday",
       "period": 1,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "monday",
       "period": 2,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "monday",
       "period": 4,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "monday",
       "period": 5,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "tuesday",
       "period": 1,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "tuesday",
       "period": 2,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "tuesday",
       "period": 4,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "tuesday",
       "period": 5,
-      "className": "9c"
+      "className": "9C"
+    },
+    {
+      "day": "wednesday",
+      "period": 1,
+      "className": "9C"
     },
     {
       "day": "wednesday",
       "period": 2,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "wednesday",
       "period": 4,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "wednesday",
       "period": 5,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "thursday",
       "period": 1,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "thursday",
       "period": 2,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "thursday",
       "period": 4,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "thursday",
       "period": 5,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "friday",
       "period": 1,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "friday",
       "period": 2,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "friday",
       "period": 4,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "saturday",
       "period": 1,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "saturday",
       "period": 2,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "saturday",
       "period": 4,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "saturday",
       "period": 5,
-      "className": "9c"
+      "className": "9C"
     }
   ],
-  "sir Asif Nawaz": [
+  "sir asif nawaz": [
     {
       "day": "monday",
       "period": 1,
-      "className": "8a"
-    },
-    {
-      "day": "monday",
-      "period": 2,
-      "className": "8a"
-    },
-    {
-      "day": "tuesday",
-      "period": 1,
-      "className": "8a"
-    },
-    {
-      "day": "tuesday",
-      "period": 2,
-      "className": "8a"
-    },
-    {
-      "day": "wednesday",
-      "period": 1,
-      "className": "8a"
-    },
-    {
-      "day": "wednesday",
-      "period": 2,
-      "className": "8a"
-    },
-    {
-      "day": "thursday",
-      "period": 1,
-      "className": "8a"
-    },
-    {
-      "day": "thursday",
-      "period": 2,
-      "className": "8a"
-    },
-    {
-      "day": "friday",
-      "period": 1,
-      "className": "8a"
-    },
-    {
-      "day": "friday",
-      "period": 2,
-      "className": "8b"
-    },
-    {
-      "day": "saturday",
-      "period": 1,
-      "className": "8a"
-    },
-    {
-      "day": "saturday",
-      "period": 2,
-      "className": "8a"
-    }
-  ],
-  "sir Amir Shaikh Senior": [
-    {
-      "day": "monday",
-      "period": 1,
-      "className": "8b"
+      "className": "8A"
     },
     {
       "day": "monday",
       "period": 2,
-      "className": "8b"
-    },
-    {
-      "day": "monday",
-      "period": 3,
-      "className": "6b"
-    },
-    {
-      "day": "tuesday",
-      "period": 1,
-      "className": "8b"
-    },
-    {
-      "day": "tuesday",
-      "period": 2,
-      "className": "8b"
-    },
-    {
-      "day": "wednesday",
-      "period": 1,
-      "className": "8b"
-    },
-    {
-      "day": "wednesday",
-      "period": 2,
-      "className": "8b"
-    },
-    {
-      "day": "wednesday",
-      "period": 3,
-      "className": "6b"
-    },
-    {
-      "day": "thursday",
-      "period": 1,
-      "className": "8b"
-    },
-    {
-      "day": "thursday",
-      "period": 2,
-      "className": "8b"
-    },
-    {
-      "day": "friday",
-      "period": 1,
-      "className": "8b"
-    },
-    {
-      "day": "saturday",
-      "period": 1,
-      "className": "8b"
-    },
-    {
-      "day": "saturday",
-      "period": 2,
-      "className": "8b"
-    }
-  ],
-  "Miss Romalia": [
-    {
-      "day": "monday",
-      "period": 1,
-      "className": "8c"
-    },
-    {
-      "day": "monday",
-      "period": 2,
-      "className": "8c"
-    },
-    {
-      "day": "tuesday",
-      "period": 1,
-      "className": "8c"
-    },
-    {
-      "day": "tuesday",
-      "period": 2,
-      "className": "8c"
-    },
-    {
-      "day": "wednesday",
-      "period": 1,
-      "className": "8c"
-    },
-    {
-      "day": "wednesday",
-      "period": 2,
-      "className": "8c"
-    },
-    {
-      "day": "thursday",
-      "period": 1,
-      "className": "8c"
-    },
-    {
-      "day": "thursday",
-      "period": 2,
-      "className": "8c"
-    },
-    {
-      "day": "friday",
-      "period": 1,
-      "className": "8c"
-    },
-    {
-      "day": "saturday",
-      "period": 1,
-      "className": "8c"
-    },
-    {
-      "day": "saturday",
-      "period": 2,
-      "className": "8c"
-    }
-  ],
-  "sir Jamalullah": [
-    {
-      "day": "monday",
-      "period": 1,
-      "className": "7a"
-    },
-    {
-      "day": "monday",
-      "period": 2,
-      "className": "7a"
+      "className": "8A"
     },
     {
       "day": "monday",
       "period": 4,
-      "className": "7a"
+      "className": "9B"
+    },
+    {
+      "day": "monday",
+      "period": 5,
+      "className": "8B"
+    },
+    {
+      "day": "monday",
+      "period": 7,
+      "className": "6A"
     },
     {
       "day": "tuesday",
       "period": 1,
-      "className": "7a"
+      "className": "8A"
     },
     {
       "day": "tuesday",
       "period": 2,
-      "className": "7a"
+      "className": "8A"
     },
     {
       "day": "tuesday",
-      "period": 3,
-      "className": "8b"
+      "period": 4,
+      "className": "9B"
     },
     {
       "day": "tuesday",
       "period": 5,
-      "className": "7a"
+      "className": "8B"
     },
     {
-      "day": "tuesday",
+      "day": "wednesday",
+      "period": 1,
+      "className": "8A"
+    },
+    {
+      "day": "wednesday",
+      "period": 2,
+      "className": "8A"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "9B"
+    },
+    {
+      "day": "wednesday",
       "period": 6,
-      "className": "7a"
+      "className": "8B"
     },
     {
       "day": "wednesday",
-      "period": 1,
-      "className": "7a"
-    },
-    {
-      "day": "wednesday",
-      "period": 2,
-      "className": "7a"
-    },
-    {
-      "day": "wednesday",
-      "period": 5,
-      "className": "8b"
-    },
-    {
-      "day": "wednesday",
-      "period": 8,
-      "className": "7a"
+      "period": 7,
+      "className": "8B"
     },
     {
       "day": "thursday",
       "period": 1,
-      "className": "7a"
+      "className": "8A"
     },
     {
       "day": "thursday",
       "period": 2,
-      "className": "7a"
+      "className": "8A"
+    },
+    {
+      "day": "thursday",
+      "period": 4,
+      "className": "8B"
     },
     {
       "day": "thursday",
       "period": 5,
-      "className": "8b"
+      "className": "9B"
     },
     {
       "day": "thursday",
-      "period": 8,
-      "className": "7a"
+      "period": 6,
+      "className": "9B"
     },
     {
       "day": "friday",
       "period": 1,
-      "className": "7a"
+      "className": "8A"
     },
     {
       "day": "friday",
-      "period": 3,
-      "className": "8b"
+      "period": 2,
+      "className": "8B"
     },
     {
       "day": "friday",
-      "period": 5,
-      "className": "7a"
+      "period": 4,
+      "className": "9B"
     },
     {
       "day": "saturday",
       "period": 1,
-      "className": "7a"
+      "className": "8A"
     },
     {
       "day": "saturday",
       "period": 2,
-      "className": "7a"
+      "className": "8A"
+    },
+    {
+      "day": "saturday",
+      "period": 6,
+      "className": "8B"
     },
     {
       "day": "saturday",
       "period": 7,
-      "className": "7a"
+      "className": "9B"
     }
   ],
-  "sir Amir Shaikh Junior": [
+  "sir amir shaikh senior": [
     {
       "day": "monday",
       "period": 1,
-      "className": "7b"
+      "className": "8B"
     },
     {
       "day": "monday",
       "period": 2,
-      "className": "7b"
+      "className": "8B"
     },
     {
       "day": "monday",
       "period": 3,
-      "className": "8c"
+      "className": "6B"
+    },
+    {
+      "day": "monday",
+      "period": 8,
+      "className": "9B"
     },
     {
       "day": "tuesday",
       "period": 1,
-      "className": "7b"
+      "className": "8B"
     },
     {
       "day": "tuesday",
       "period": 2,
-      "className": "7b"
+      "className": "8B"
     },
     {
       "day": "tuesday",
+      "period": 4,
+      "className": "6B"
+    },
+    {
+      "day": "tuesday",
+      "period": 8,
+      "className": "9B"
+    },
+    {
+      "day": "wednesday",
+      "period": 1,
+      "className": "8B"
+    },
+    {
+      "day": "wednesday",
+      "period": 2,
+      "className": "8B"
+    },
+    {
+      "day": "wednesday",
       "period": 3,
-      "className": "8c"
+      "className": "6B"
     },
     {
       "day": "wednesday",
-      "period": 1,
-      "className": "7b"
+      "period": 4,
+      "className": "6B"
     },
     {
       "day": "wednesday",
-      "period": 2,
-      "className": "7b"
+      "period": 6,
+      "className": "9B"
     },
     {
       "day": "thursday",
       "period": 1,
-      "className": "7b"
+      "className": "8B"
+    },
+    {
+      "day": "thursday",
+      "period": 2,
+      "className": "8B"
+    },
+    {
+      "day": "thursday",
+      "period": 6,
+      "className": "6B"
     },
     {
       "day": "friday",
       "period": 1,
-      "className": "7b"
+      "className": "8B"
     },
     {
       "day": "saturday",
       "period": 1,
-      "className": "7b"
+      "className": "8B"
     },
     {
       "day": "saturday",
       "period": 2,
-      "className": "7b"
+      "className": "8B"
+    },
+    {
+      "day": "saturday",
+      "period": 4,
+      "className": "6B"
+    },
+    {
+      "day": "saturday",
+      "period": 8,
+      "className": "9B"
+    }
+  ],
+  "miss romalia": [
+    {
+      "day": "monday",
+      "period": 1,
+      "className": "8C"
+    },
+    {
+      "day": "monday",
+      "period": 2,
+      "className": "8C"
+    },
+    {
+      "day": "monday",
+      "period": 7,
+      "className": "6C"
+    },
+    {
+      "day": "monday",
+      "period": 8,
+      "className": "8C"
+    },
+    {
+      "day": "tuesday",
+      "period": 1,
+      "className": "8C"
+    },
+    {
+      "day": "tuesday",
+      "period": 2,
+      "className": "8C"
+    },
+    {
+      "day": "tuesday",
+      "period": 4,
+      "className": "6C"
+    },
+    {
+      "day": "tuesday",
+      "period": 7,
+      "className": "8C"
+    },
+    {
+      "day": "wednesday",
+      "period": 1,
+      "className": "8C"
+    },
+    {
+      "day": "wednesday",
+      "period": 2,
+      "className": "8C"
+    },
+    {
+      "day": "wednesday",
+      "period": 6,
+      "className": "6C"
+    },
+    {
+      "day": "wednesday",
+      "period": 8,
+      "className": "8C"
+    },
+    {
+      "day": "thursday",
+      "period": 1,
+      "className": "8C"
+    },
+    {
+      "day": "thursday",
+      "period": 2,
+      "className": "8C"
+    },
+    {
+      "day": "thursday",
+      "period": 3,
+      "className": "6C"
+    },
+    {
+      "day": "thursday",
+      "period": 7,
+      "className": "6C"
+    },
+    {
+      "day": "thursday",
+      "period": 8,
+      "className": "8C"
+    },
+    {
+      "day": "friday",
+      "period": 1,
+      "className": "8C"
+    },
+    {
+      "day": "saturday",
+      "period": 1,
+      "className": "8C"
+    },
+    {
+      "day": "saturday",
+      "period": 2,
+      "className": "8C"
+    },
+    {
+      "day": "saturday",
+      "period": 6,
+      "className": "8C"
+    }
+  ],
+  "sir jamalullah": [
+    {
+      "day": "monday",
+      "period": 1,
+      "className": "7A"
+    },
+    {
+      "day": "monday",
+      "period": 2,
+      "className": "7A"
+    },
+    {
+      "day": "monday",
+      "period": 4,
+      "className": "7A"
+    },
+    {
+      "day": "tuesday",
+      "period": 1,
+      "className": "7A"
+    },
+    {
+      "day": "tuesday",
+      "period": 2,
+      "className": "7A"
+    },
+    {
+      "day": "tuesday",
+      "period": 3,
+      "className": "8B"
+    },
+    {
+      "day": "tuesday",
+      "period": 5,
+      "className": "7A"
+    },
+    {
+      "day": "tuesday",
+      "period": 6,
+      "className": "7A"
+    },
+    {
+      "day": "wednesday",
+      "period": 1,
+      "className": "7A"
+    },
+    {
+      "day": "wednesday",
+      "period": 2,
+      "className": "7A"
+    },
+    {
+      "day": "wednesday",
+      "period": 5,
+      "className": "8B"
+    },
+    {
+      "day": "wednesday",
+      "period": 8,
+      "className": "7A"
+    },
+    {
+      "day": "thursday",
+      "period": 1,
+      "className": "7A"
+    },
+    {
+      "day": "thursday",
+      "period": 2,
+      "className": "7A"
+    },
+    {
+      "day": "thursday",
+      "period": 5,
+      "className": "8B"
+    },
+    {
+      "day": "thursday",
+      "period": 8,
+      "className": "7A"
+    },
+    {
+      "day": "friday",
+      "period": 1,
+      "className": "7A"
+    },
+    {
+      "day": "friday",
+      "period": 3,
+      "className": "8B"
+    },
+    {
+      "day": "friday",
+      "period": 5,
+      "className": "7A"
+    },
+    {
+      "day": "saturday",
+      "period": 1,
+      "className": "7A"
+    },
+    {
+      "day": "saturday",
+      "period": 2,
+      "className": "7A"
+    },
+    {
+      "day": "saturday",
+      "period": 7,
+      "className": "7A"
+    }
+  ],
+  "sir amir shaikh junior": [
+    {
+      "day": "monday",
+      "period": 1,
+      "className": "7B"
+    },
+    {
+      "day": "monday",
+      "period": 2,
+      "className": "7B"
+    },
+    {
+      "day": "monday",
+      "period": 3,
+      "className": "8C"
+    },
+    {
+      "day": "monday",
+      "period": 6,
+      "className": "7C"
+    },
+    {
+      "day": "tuesday",
+      "period": 1,
+      "className": "7B"
+    },
+    {
+      "day": "tuesday",
+      "period": 2,
+      "className": "7B"
+    },
+    {
+      "day": "tuesday",
+      "period": 3,
+      "className": "8C"
+    },
+    {
+      "day": "tuesday",
+      "period": 6,
+      "className": "7C"
+    },
+    {
+      "day": "tuesday",
+      "period": 7,
+      "className": "7C"
+    },
+    {
+      "day": "wednesday",
+      "period": 1,
+      "className": "7B"
+    },
+    {
+      "day": "wednesday",
+      "period": 2,
+      "className": "7B"
+    },
+    {
+      "day": "wednesday",
+      "period": 3,
+      "className": "8C"
+    },
+    {
+      "day": "wednesday",
+      "period": 6,
+      "className": "7C"
+    },
+    {
+      "day": "thursday",
+      "period": 1,
+      "className": "7B"
+    },
+    {
+      "day": "thursday",
+      "period": 3,
+      "className": "8C"
+    },
+    {
+      "day": "thursday",
+      "period": 6,
+      "className": "7C"
+    },
+    {
+      "day": "friday",
+      "period": 1,
+      "className": "7B"
+    },
+    {
+      "day": "friday",
+      "period": 2,
+      "className": "8C"
+    },
+    {
+      "day": "friday",
+      "period": 3,
+      "className": "7C"
+    },
+    {
+      "day": "friday",
+      "period": 4,
+      "className": "8C"
+    },
+    {
+      "day": "saturday",
+      "period": 1,
+      "className": "7B"
+    },
+    {
+      "day": "saturday",
+      "period": 2,
+      "className": "7B"
+    },
+    {
+      "day": "saturday",
+      "period": 3,
+      "className": "8C"
+    },
+    {
+      "day": "saturday",
+      "period": 4,
+      "className": "8C"
+    },
+    {
+      "day": "saturday",
+      "period": 7,
+      "className": "7C"
     }
   ],
   "sir abdul hameed": [
     {
       "day": "monday",
       "period": 1,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "monday",
       "period": 2,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "monday",
       "period": 5,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "monday",
       "period": 6,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "tuesday",
       "period": 1,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "tuesday",
       "period": 2,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "tuesday",
       "period": 5,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "tuesday",
       "period": 6,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "wednesday",
       "period": 1,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "wednesday",
       "period": 2,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "wednesday",
       "period": 4,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "wednesday",
       "period": 5,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "thursday",
       "period": 1,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "thursday",
       "period": 2,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "thursday",
       "period": 5,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "thursday",
       "period": 6,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "thursday",
       "period": 7,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "friday",
       "period": 1,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "friday",
       "period": 3,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "friday",
       "period": 4,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "saturday",
       "period": 1,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "saturday",
       "period": 2,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "saturday",
       "period": 5,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "saturday",
       "period": 6,
-      "className": "9c"
+      "className": "9C"
     }
   ],
   "sir abdul sami": [
     {
       "day": "monday",
       "period": 1,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "monday",
       "period": 2,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "monday",
       "period": 6,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "tuesday",
       "period": 1,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "tuesday",
       "period": 2,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "tuesday",
       "period": 4,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "tuesday",
       "period": 7,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "wednesday",
       "period": 1,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "wednesday",
       "period": 2,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "wednesday",
       "period": 5,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "wednesday",
       "period": 6,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "thursday",
       "period": 1,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "thursday",
       "period": 2,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "friday",
       "period": 1,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "friday",
       "period": 5,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "saturday",
       "period": 1,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "saturday",
       "period": 2,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "saturday",
       "period": 5,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "saturday",
       "period": 6,
-      "className": "7a"
+      "className": "7A"
     }
   ],
   "sir faiz hussain": [
     {
       "day": "monday",
       "period": 1,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "monday",
       "period": 2,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "monday",
       "period": 4,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "monday",
       "period": 8,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "tuesday",
       "period": 1,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "tuesday",
       "period": 2,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "tuesday",
       "period": 7,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "tuesday",
       "period": 8,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "wednesday",
       "period": 1,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "wednesday",
       "period": 2,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "wednesday",
       "period": 8,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "thursday",
       "period": 1,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "thursday",
       "period": 2,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "thursday",
       "period": 4,
-      "className": "8c"
+      "className": "8C"
     },
     {
       "day": "thursday",
       "period": 7,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "thursday",
       "period": 8,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "friday",
       "period": 1,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "saturday",
       "period": 1,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "saturday",
       "period": 2,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "saturday",
       "period": 5,
-      "className": "8c"
+      "className": "8C"
     },
     {
       "day": "saturday",
       "period": 7,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "saturday",
       "period": 8,
-      "className": "6b"
+      "className": "6B"
     }
   ],
   "sir usama": [
     {
       "day": "monday",
       "period": 1,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "monday",
       "period": 2,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "monday",
       "period": 3,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "monday",
       "period": 5,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "monday",
       "period": 8,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "tuesday",
       "period": 1,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "tuesday",
       "period": 2,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "tuesday",
       "period": 3,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "tuesday",
       "period": 7,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "tuesday",
       "period": 8,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "wednesday",
       "period": 1,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "wednesday",
       "period": 2,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "wednesday",
       "period": 3,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "wednesday",
       "period": 4,
-      "className": "8c"
+      "className": "8C"
     },
     {
       "day": "wednesday",
       "period": 5,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "thursday",
       "period": 1,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "thursday",
       "period": 2,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "friday",
       "period": 1,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "friday",
       "period": 3,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "saturday",
       "period": 1,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "saturday",
       "period": 2,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "saturday",
       "period": 6,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "saturday",
       "period": 7,
-      "className": "6c"
-    }
-  ],
-  "sir Iqbal ahmed": [
-    {
-      "day": "wednesday",
-      "period": 1,
-      "className": "9c"
+      "className": "6C"
     }
   ],
   "sir faraz ahmed": [
     {
       "day": "monday",
       "period": 4,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "monday",
       "period": 5,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "monday",
       "period": 6,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "monday",
       "period": 7,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "tuesday",
       "period": 3,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "tuesday",
       "period": 6,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "tuesday",
       "period": 7,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "tuesday",
       "period": 8,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "wednesday",
       "period": 5,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "wednesday",
       "period": 6,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "wednesday",
       "period": 7,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "thursday",
       "period": 2,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "thursday",
       "period": 6,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "thursday",
       "period": 8,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "friday",
       "period": 2,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "friday",
       "period": 4,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "saturday",
       "period": 3,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "saturday",
       "period": 5,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "saturday",
       "period": 7,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "saturday",
       "period": 8,
-      "className": "8b"
+      "className": "8B"
     }
   ],
   "sir waqar ali": [
     {
       "day": "monday",
       "period": 3,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "monday",
       "period": 4,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "monday",
       "period": 5,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "tuesday",
       "period": 3,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "tuesday",
       "period": 6,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "tuesday",
       "period": 7,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "wednesday",
       "period": 3,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "wednesday",
       "period": 5,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "wednesday",
       "period": 7,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "thursday",
       "period": 3,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "thursday",
       "period": 5,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "thursday",
       "period": 7,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "thursday",
       "period": 8,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "friday",
       "period": 2,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "friday",
       "period": 3,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "friday",
       "period": 5,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "saturday",
       "period": 3,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "saturday",
       "period": 4,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "saturday",
       "period": 6,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "saturday",
       "period": 7,
-      "className": "10b"
+      "className": "10B"
     }
   ],
   "sir faisal ali": [
     {
       "day": "monday",
       "period": 3,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "monday",
       "period": 4,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "monday",
       "period": 6,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "monday",
       "period": 7,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "tuesday",
       "period": 3,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "tuesday",
       "period": 4,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "tuesday",
       "period": 6,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "tuesday",
       "period": 7,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "wednesday",
       "period": 3,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "wednesday",
       "period": 4,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "wednesday",
       "period": 6,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "wednesday",
       "period": 7,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "thursday",
       "period": 3,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "thursday",
       "period": 4,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "thursday",
       "period": 5,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "thursday",
       "period": 7,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "thursday",
       "period": 8,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "friday",
       "period": 2,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "friday",
       "period": 3,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "friday",
       "period": 4,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "saturday",
       "period": 3,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "saturday",
       "period": 4,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "saturday",
       "period": 6,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "saturday",
       "period": 7,
-      "className": "10c"
+      "className": "10C"
     },
     {
       "day": "saturday",
       "period": 8,
-      "className": "10c"
+      "className": "10C"
     }
   ],
-  "sir Romanulabdin": [
+  "sir romanulabdin": [
     {
       "day": "monday",
       "period": 3,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "monday",
       "period": 5,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "monday",
       "period": 6,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "monday",
       "period": 8,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "tuesday",
       "period": 3,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "tuesday",
       "period": 5,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "tuesday",
       "period": 6,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "tuesday",
       "period": 8,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "wednesday",
       "period": 3,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "wednesday",
       "period": 5,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "wednesday",
       "period": 6,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "wednesday",
       "period": 8,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "thursday",
       "period": 3,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "thursday",
       "period": 4,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "thursday",
       "period": 5,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "thursday",
       "period": 7,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "friday",
       "period": 2,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "friday",
       "period": 3,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "friday",
       "period": 4,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "friday",
       "period": 5,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "saturday",
       "period": 3,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "saturday",
       "period": 4,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "saturday",
       "period": 5,
-      "className": "9b"
+      "className": "9B"
     }
   ],
   "sir rafaqat maseeh": [
     {
       "day": "monday",
       "period": 4,
-      "className": "8c"
+      "className": "8C"
     },
     {
       "day": "monday",
       "period": 6,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "monday",
       "period": 7,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "monday",
       "period": 8,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "tuesday",
       "period": 4,
-      "className": "8c"
+      "className": "8C"
     },
     {
       "day": "tuesday",
       "period": 5,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "tuesday",
       "period": 6,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "tuesday",
       "period": 8,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "wednesday",
       "period": 4,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "wednesday",
       "period": 5,
-      "className": "8c"
+      "className": "8C"
     },
     {
       "day": "wednesday",
       "period": 6,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "wednesday",
       "period": 8,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "thursday",
       "period": 4,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "thursday",
       "period": 5,
-      "className": "8c"
+      "className": "8C"
     },
     {
       "day": "thursday",
       "period": 6,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "thursday",
       "period": 8,
-      "className": "10b"
+      "className": "10B"
     },
     {
       "day": "friday",
       "period": 2,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "saturday",
       "period": 5,
-      "className": "10a"
+      "className": "10A"
     },
     {
       "day": "saturday",
       "period": 7,
-      "className": "9c"
+      "className": "9C"
     },
     {
       "day": "saturday",
       "period": 8,
-      "className": "8a"
-    }
-  ],
-  "sir amir shaikh Junior": [
-    {
-      "day": "friday",
-      "period": 2,
-      "className": "8c"
+      "className": "8A"
     }
   ],
   "sir shabeer ahmed": [
     {
       "day": "monday",
       "period": 3,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "monday",
       "period": 4,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "monday",
       "period": 5,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "monday",
       "period": 7,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "tuesday",
       "period": 3,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "tuesday",
       "period": 4,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "tuesday",
       "period": 5,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "tuesday",
       "period": 6,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "tuesday",
       "period": 8,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "wednesday",
       "period": 5,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "wednesday",
       "period": 7,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "thursday",
       "period": 4,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "thursday",
       "period": 5,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "thursday",
       "period": 7,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "friday",
       "period": 2,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "saturday",
       "period": 3,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "saturday",
       "period": 7,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "saturday",
       "period": 8,
-      "className": "7c"
+      "className": "7C"
     }
   ],
   "sir anwar ali": [
     {
       "day": "monday",
+      "period": 3,
+      "className": "9B"
+    },
+    {
+      "day": "monday",
       "period": 5,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "monday",
       "period": 7,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "monday",
       "period": 8,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "tuesday",
       "period": 5,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "tuesday",
       "period": 7,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "tuesday",
       "period": 8,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "wednesday",
       "period": 3,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "wednesday",
       "period": 7,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "thursday",
       "period": 3,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "thursday",
       "period": 7,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "thursday",
       "period": 8,
-      "className": "9a"
+      "className": "9A"
     },
     {
       "day": "friday",
       "period": 2,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "friday",
       "period": 4,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "friday",
       "period": 5,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "saturday",
       "period": 3,
-      "className": "9b"
+      "className": "9B"
     },
     {
       "day": "saturday",
       "period": 5,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "saturday",
       "period": 7,
-      "className": "8c"
+      "className": "8C"
     },
     {
       "day": "saturday",
       "period": 8,
-      "className": "9a"
-    }
-  ],
-  "sir Irshad Bhutto": [
-    {
-      "day": "friday",
-      "period": 2,
-      "className": "6a"
-    }
-  ],
-  "miss anum hussain": [
-    {
-      "day": "monday",
-      "period": 3,
-      "className": "7c"
-    },
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "6c"
-    },
-    {
-      "day": "monday",
-      "period": 5,
-      "className": "6a"
-    },
-    {
-      "day": "monday",
-      "period": 7,
-      "className": "8c"
-    },
-    {
-      "day": "tuesday",
-      "period": 3,
-      "className": "7c"
-    },
-    {
-      "day": "tuesday",
-      "period": 5,
-      "className": "6a"
-    },
-    {
-      "day": "tuesday",
-      "period": 6,
-      "className": "8c"
-    },
-    {
-      "day": "tuesday",
-      "period": 8,
-      "className": "6a"
-    },
-    {
-      "day": "wednesday",
-      "period": 3,
-      "className": "6a"
-    },
-    {
-      "day": "wednesday",
-      "period": 6,
-      "className": "6a"
-    },
-    {
-      "day": "wednesday",
-      "period": 8,
-      "className": "7c"
-    },
-    {
-      "day": "thursday",
-      "period": 3,
-      "className": "6a"
-    },
-    {
-      "day": "thursday",
-      "period": 4,
-      "className": "7b"
-    },
-    {
-      "day": "thursday",
-      "period": 5,
-      "className": "7a"
-    },
-    {
-      "day": "thursday",
-      "period": 6,
-      "className": "8c"
-    },
-    {
-      "day": "thursday",
-      "period": 8,
-      "className": "7c"
-    },
-    {
-      "day": "friday",
-      "period": 2,
-      "className": "6b"
-    },
-    {
-      "day": "friday",
-      "period": 3,
-      "className": "6a"
-    },
-    {
-      "day": "saturday",
-      "period": 4,
-      "className": "6a"
-    },
-    {
-      "day": "saturday",
-      "period": 5,
-      "className": "7a"
-    },
-    {
-      "day": "saturday",
-      "period": 6,
-      "className": "7b"
-    },
-    {
-      "day": "saturday",
-      "period": 7,
-      "className": "6b"
-    },
-    {
-      "day": "saturday",
-      "period": 8,
-      "className": "7b"
-    }
-  ],
-  "sir abdul rehman": [
-    {
-      "day": "monday",
-      "period": 8,
-      "className": "10c"
-    },
-    {
-      "day": "tuesday",
-      "period": 4,
-      "className": "6a"
-    },
-    {
-      "day": "tuesday",
-      "period": 5,
-      "className": "6c"
-    },
-    {
-      "day": "tuesday",
-      "period": 8,
-      "className": "10c"
-    },
-    {
-      "day": "wednesday",
-      "period": 4,
-      "className": "6c"
-    },
-    {
-      "day": "wednesday",
-      "period": 7,
-      "className": "10c"
-    },
-    {
-      "day": "thursday",
-      "period": 4,
-      "className": "6c"
-    },
-    {
-      "day": "thursday",
-      "period": 5,
-      "className": "6c"
-    },
-    {
-      "day": "thursday",
-      "period": 6,
-      "className": "6c"
-    },
-    {
-      "day": "thursday",
-      "period": 7,
-      "className": "6a"
-    },
-    {
-      "day": "friday",
-      "period": 2,
-      "className": "6c"
-    },
-    {
-      "day": "saturday",
-      "period": 4,
-      "className": "6c"
-    },
-    {
-      "day": "saturday",
-      "period": 6,
-      "className": "10c"
-    },
-    {
-      "day": "saturday",
-      "period": 7,
-      "className": "6a"
-    }
-  ],
-  "sir Anwar ali": [
-    {
-      "day": "monday",
-      "period": 3,
-      "className": "9b"
-    }
-  ],
-  "sir Aman Arif": [
-    {
-      "day": "monday",
-      "period": 3,
-      "className": "9c"
-    },
-    {
-      "day": "tuesday",
-      "period": 3,
-      "className": "9c"
-    }
-  ],
-  "sir khadim hussain": [
-    {
-      "day": "monday",
-      "period": 3,
-      "className": "8a"
-    },
-    {
-      "day": "monday",
-      "period": 5,
-      "className": "9a"
-    },
-    {
-      "day": "monday",
-      "period": 6,
-      "className": "9b"
-    },
-    {
-      "day": "tuesday",
-      "period": 3,
-      "className": "8a"
-    },
-    {
-      "day": "tuesday",
-      "period": 4,
-      "className": "9a"
-    },
-    {
-      "day": "tuesday",
-      "period": 6,
-      "className": "9b"
-    },
-    {
-      "day": "wednesday",
-      "period": 5,
-      "className": "9a"
-    },
-    {
-      "day": "wednesday",
-      "period": 6,
-      "className": "8a"
-    },
-    {
-      "day": "wednesday",
-      "period": 8,
-      "className": "9b"
-    },
-    {
-      "day": "thursday",
-      "period": 3,
-      "className": "9b"
-    },
-    {
-      "day": "thursday",
-      "period": 4,
-      "className": "8a"
-    },
-    {
-      "day": "thursday",
-      "period": 6,
-      "className": "9a"
-    },
-    {
-      "day": "friday",
-      "period": 4,
-      "className": "9a"
-    },
-    {
-      "day": "friday",
-      "period": 5,
-      "className": "9b"
-    },
-    {
-      "day": "saturday",
-      "period": 3,
-      "className": "8a"
-    },
-    {
-      "day": "saturday",
-      "period": 4,
-      "className": "8a"
-    },
-    {
-      "day": "saturday",
-      "period": 5,
-      "className": "9a"
-    },
-    {
-      "day": "saturday",
-      "period": 6,
-      "className": "9b"
-    }
-  ],
-  "sir jawad ul haq": [
-    {
-      "day": "monday",
-      "period": 3,
-      "className": "8b"
-    },
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "7c"
-    },
-    {
-      "day": "monday",
-      "period": 5,
-      "className": "8c"
-    },
-    {
-      "day": "monday",
-      "period": 7,
-      "className": "7c"
-    },
-    {
-      "day": "monday",
-      "period": 8,
-      "className": "7a"
-    },
-    {
-      "day": "tuesday",
-      "period": 5,
-      "className": "8c"
-    },
-    {
-      "day": "tuesday",
-      "period": 8,
-      "className": "7c"
-    },
-    {
-      "day": "wednesday",
-      "period": 3,
-      "className": "8b"
-    },
-    {
-      "day": "wednesday",
-      "period": 4,
-      "className": "7a"
-    },
-    {
-      "day": "wednesday",
-      "period": 5,
-      "className": "7c"
-    },
-    {
-      "day": "wednesday",
-      "period": 6,
-      "className": "8c"
-    },
-    {
-      "day": "wednesday",
-      "period": 7,
-      "className": "7c"
-    },
-    {
-      "day": "thursday",
-      "period": 3,
-      "className": "8b"
-    },
-    {
-      "day": "thursday",
-      "period": 7,
-      "className": "7c"
-    },
-    {
-      "day": "friday",
-      "period": 3,
-      "className": "8c"
-    },
-    {
-      "day": "friday",
-      "period": 4,
-      "className": "7a"
-    },
-    {
-      "day": "friday",
-      "period": 5,
-      "className": "7c"
-    },
-    {
-      "day": "saturday",
-      "period": 3,
-      "className": "7c"
-    },
-    {
-      "day": "saturday",
-      "period": 4,
-      "className": "7c"
-    }
-  ],
-  "sir Imran ahmed": [
-    {
-      "day": "monday",
-      "period": 3,
-      "className": "7b"
+      "className": "9A"
     }
   ],
   "sir irshad bhutto": [
     {
       "day": "monday",
       "period": 3,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "monday",
       "period": 5,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "monday",
       "period": 5,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "monday",
       "period": 6,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "monday",
       "period": 8,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "tuesday",
       "period": 3,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "tuesday",
       "period": 4,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "tuesday",
       "period": 5,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "tuesday",
       "period": 7,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "wednesday",
       "period": 4,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "wednesday",
       "period": 5,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "wednesday",
       "period": 7,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "wednesday",
       "period": 8,
-      "className": "6a"
+      "className": "6A"
+    },
+    {
+      "day": "thursday",
+      "period": 3,
+      "className": "8A"
     },
     {
       "day": "thursday",
       "period": 5,
-      "className": "6b"
+      "className": "6B"
+    },
+    {
+      "day": "thursday",
+      "period": 6,
+      "className": "8B"
     },
     {
       "day": "thursday",
       "period": 8,
-      "className": "6a"
+      "className": "6A"
+    },
+    {
+      "day": "friday",
+      "period": 2,
+      "className": "6A"
     },
     {
       "day": "friday",
       "period": 5,
-      "className": "6b"
+      "className": "6B"
+    },
+    {
+      "day": "saturday",
+      "period": 3,
+      "className": "8B"
     },
     {
       "day": "saturday",
       "period": 4,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "saturday",
       "period": 6,
-      "className": "8a"
+      "className": "8A"
+    }
+  ],
+  "miss anum hussain": [
+    {
+      "day": "monday",
+      "period": 3,
+      "className": "7C"
+    },
+    {
+      "day": "monday",
+      "period": 4,
+      "className": "6C"
+    },
+    {
+      "day": "monday",
+      "period": 5,
+      "className": "6A"
+    },
+    {
+      "day": "monday",
+      "period": 7,
+      "className": "8C"
+    },
+    {
+      "day": "tuesday",
+      "period": 3,
+      "className": "7C"
+    },
+    {
+      "day": "tuesday",
+      "period": 5,
+      "className": "6A"
+    },
+    {
+      "day": "tuesday",
+      "period": 6,
+      "className": "8C"
+    },
+    {
+      "day": "tuesday",
+      "period": 8,
+      "className": "6A"
+    },
+    {
+      "day": "wednesday",
+      "period": 3,
+      "className": "6A"
+    },
+    {
+      "day": "wednesday",
+      "period": 6,
+      "className": "6A"
+    },
+    {
+      "day": "wednesday",
+      "period": 8,
+      "className": "7C"
+    },
+    {
+      "day": "thursday",
+      "period": 3,
+      "className": "6A"
+    },
+    {
+      "day": "thursday",
+      "period": 4,
+      "className": "7B"
+    },
+    {
+      "day": "thursday",
+      "period": 5,
+      "className": "7A"
+    },
+    {
+      "day": "thursday",
+      "period": 6,
+      "className": "8C"
+    },
+    {
+      "day": "thursday",
+      "period": 8,
+      "className": "7C"
+    },
+    {
+      "day": "friday",
+      "period": 2,
+      "className": "6B"
+    },
+    {
+      "day": "friday",
+      "period": 3,
+      "className": "6A"
+    },
+    {
+      "day": "saturday",
+      "period": 4,
+      "className": "6A"
+    },
+    {
+      "day": "saturday",
+      "period": 5,
+      "className": "7A"
+    },
+    {
+      "day": "saturday",
+      "period": 6,
+      "className": "7B"
+    },
+    {
+      "day": "saturday",
+      "period": 7,
+      "className": "6B"
+    },
+    {
+      "day": "saturday",
+      "period": 8,
+      "className": "7B"
+    }
+  ],
+  "sir abdul rehman": [
+    {
+      "day": "monday",
+      "period": 6,
+      "className": "6C"
+    },
+    {
+      "day": "monday",
+      "period": 8,
+      "className": "10C"
+    },
+    {
+      "day": "tuesday",
+      "period": 4,
+      "className": "6A"
+    },
+    {
+      "day": "tuesday",
+      "period": 5,
+      "className": "6C"
+    },
+    {
+      "day": "tuesday",
+      "period": 8,
+      "className": "10C"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "6C"
+    },
+    {
+      "day": "wednesday",
+      "period": 7,
+      "className": "10C"
+    },
+    {
+      "day": "thursday",
+      "period": 4,
+      "className": "6C"
+    },
+    {
+      "day": "thursday",
+      "period": 5,
+      "className": "6C"
+    },
+    {
+      "day": "thursday",
+      "period": 6,
+      "className": "6C"
+    },
+    {
+      "day": "thursday",
+      "period": 7,
+      "className": "6A"
+    },
+    {
+      "day": "friday",
+      "period": 2,
+      "className": "6C"
+    },
+    {
+      "day": "saturday",
+      "period": 4,
+      "className": "6C"
+    },
+    {
+      "day": "saturday",
+      "period": 6,
+      "className": "10C"
+    },
+    {
+      "day": "saturday",
+      "period": 7,
+      "className": "6A"
+    }
+  ],
+  "sir aman arif": [
+    {
+      "day": "monday",
+      "period": 3,
+      "className": "9C"
+    },
+    {
+      "day": "monday",
+      "period": 4,
+      "className": "9C"
+    },
+    {
+      "day": "tuesday",
+      "period": 3,
+      "className": "9C"
+    },
+    {
+      "day": "tuesday",
+      "period": 4,
+      "className": "9C"
+    },
+    {
+      "day": "tuesday",
+      "period": 6,
+      "className": "6A"
+    },
+    {
+      "day": "wednesday",
+      "period": 3,
+      "className": "9C"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "6A"
+    },
+    {
+      "day": "wednesday",
+      "period": 7,
+      "className": "9C"
+    },
+    {
+      "day": "wednesday",
+      "period": 8,
+      "className": "9C"
+    },
+    {
+      "day": "thursday",
+      "period": 3,
+      "className": "9C"
+    },
+    {
+      "day": "thursday",
+      "period": 4,
+      "className": "6A"
+    },
+    {
+      "day": "thursday",
+      "period": 5,
+      "className": "6A"
+    },
+    {
+      "day": "thursday",
+      "period": 6,
+      "className": "9C"
+    },
+    {
+      "day": "friday",
+      "period": 3,
+      "className": "9C"
+    },
+    {
+      "day": "friday",
+      "period": 4,
+      "className": "6A"
+    },
+    {
+      "day": "friday",
+      "period": 5,
+      "className": "9C"
+    },
+    {
+      "day": "saturday",
+      "period": 3,
+      "className": "9C"
+    },
+    {
+      "day": "saturday",
+      "period": 4,
+      "className": "9C"
+    },
+    {
+      "day": "saturday",
+      "period": 5,
+      "className": "6A"
+    }
+  ],
+  "sir khadim hussain": [
+    {
+      "day": "monday",
+      "period": 3,
+      "className": "8A"
+    },
+    {
+      "day": "monday",
+      "period": 5,
+      "className": "9A"
+    },
+    {
+      "day": "monday",
+      "period": 6,
+      "className": "9B"
+    },
+    {
+      "day": "tuesday",
+      "period": 3,
+      "className": "8A"
+    },
+    {
+      "day": "tuesday",
+      "period": 4,
+      "className": "9A"
+    },
+    {
+      "day": "tuesday",
+      "period": 6,
+      "className": "9B"
+    },
+    {
+      "day": "wednesday",
+      "period": 5,
+      "className": "9A"
+    },
+    {
+      "day": "wednesday",
+      "period": 6,
+      "className": "8A"
+    },
+    {
+      "day": "wednesday",
+      "period": 8,
+      "className": "9B"
+    },
+    {
+      "day": "thursday",
+      "period": 3,
+      "className": "9B"
+    },
+    {
+      "day": "thursday",
+      "period": 4,
+      "className": "8A"
+    },
+    {
+      "day": "thursday",
+      "period": 6,
+      "className": "9A"
+    },
+    {
+      "day": "friday",
+      "period": 4,
+      "className": "9A"
+    },
+    {
+      "day": "friday",
+      "period": 5,
+      "className": "9B"
+    },
+    {
+      "day": "saturday",
+      "period": 3,
+      "className": "8A"
+    },
+    {
+      "day": "saturday",
+      "period": 4,
+      "className": "8A"
+    },
+    {
+      "day": "saturday",
+      "period": 5,
+      "className": "9A"
+    },
+    {
+      "day": "saturday",
+      "period": 6,
+      "className": "9B"
+    }
+  ],
+  "sir jawad ul haq": [
+    {
+      "day": "monday",
+      "period": 3,
+      "className": "8B"
+    },
+    {
+      "day": "monday",
+      "period": 4,
+      "className": "7C"
+    },
+    {
+      "day": "monday",
+      "period": 5,
+      "className": "8C"
+    },
+    {
+      "day": "monday",
+      "period": 7,
+      "className": "7C"
+    },
+    {
+      "day": "monday",
+      "period": 8,
+      "className": "7A"
+    },
+    {
+      "day": "tuesday",
+      "period": 5,
+      "className": "8C"
+    },
+    {
+      "day": "tuesday",
+      "period": 8,
+      "className": "7C"
+    },
+    {
+      "day": "wednesday",
+      "period": 3,
+      "className": "8B"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "7A"
+    },
+    {
+      "day": "wednesday",
+      "period": 5,
+      "className": "7C"
+    },
+    {
+      "day": "wednesday",
+      "period": 6,
+      "className": "8C"
+    },
+    {
+      "day": "wednesday",
+      "period": 7,
+      "className": "7C"
+    },
+    {
+      "day": "thursday",
+      "period": 3,
+      "className": "8B"
+    },
+    {
+      "day": "thursday",
+      "period": 7,
+      "className": "7C"
+    },
+    {
+      "day": "friday",
+      "period": 3,
+      "className": "8C"
+    },
+    {
+      "day": "friday",
+      "period": 4,
+      "className": "7A"
+    },
+    {
+      "day": "friday",
+      "period": 5,
+      "className": "7C"
+    },
+    {
+      "day": "saturday",
+      "period": 3,
+      "className": "7C"
+    },
+    {
+      "day": "saturday",
+      "period": 4,
+      "className": "7C"
+    }
+  ],
+  "sir imran ahmed": [
+    {
+      "day": "monday",
+      "period": 3,
+      "className": "7B"
+    },
+    {
+      "day": "monday",
+      "period": 6,
+      "className": "8C"
+    },
+    {
+      "day": "monday",
+      "period": 7,
+      "className": "9C"
+    },
+    {
+      "day": "tuesday",
+      "period": 5,
+      "className": "7B"
+    },
+    {
+      "day": "tuesday",
+      "period": 7,
+      "className": "9C"
+    },
+    {
+      "day": "wednesday",
+      "period": 3,
+      "className": "7B"
+    },
+    {
+      "day": "wednesday",
+      "period": 4,
+      "className": "7B"
+    },
+    {
+      "day": "wednesday",
+      "period": 5,
+      "className": "6B"
+    },
+    {
+      "day": "wednesday",
+      "period": 6,
+      "className": "9C"
+    },
+    {
+      "day": "thursday",
+      "period": 3,
+      "className": "7B"
+    },
+    {
+      "day": "thursday",
+      "period": 5,
+      "className": "7B"
+    },
+    {
+      "day": "thursday",
+      "period": 7,
+      "className": "8C"
+    },
+    {
+      "day": "thursday",
+      "period": 8,
+      "className": "9C"
+    },
+    {
+      "day": "friday",
+      "period": 3,
+      "className": "6B"
+    },
+    {
+      "day": "friday",
+      "period": 4,
+      "className": "7C"
+    },
+    {
+      "day": "friday",
+      "period": 5,
+      "className": "6C"
+    },
+    {
+      "day": "saturday",
+      "period": 4,
+      "className": "7B"
+    },
+    {
+      "day": "saturday",
+      "period": 5,
+      "className": "6B"
     }
   ],
   "sir meer muhammad": [
     {
       "day": "monday",
       "period": 4,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "monday",
       "period": 6,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "tuesday",
       "period": 3,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "tuesday",
       "period": 5,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "wednesday",
       "period": 4,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "wednesday",
       "period": 6,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "wednesday",
       "period": 8,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "thursday",
       "period": 4,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "thursday",
       "period": 6,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "thursday",
       "period": 8,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "friday",
       "period": 3,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "saturday",
       "period": 3,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "saturday",
       "period": 4,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "saturday",
       "period": 6,
-      "className": "6a"
-    }
-  ],
-  "sir aman arif": [
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "9c"
-    },
-    {
-      "day": "tuesday",
-      "period": 4,
-      "className": "9c"
-    },
-    {
-      "day": "tuesday",
-      "period": 6,
-      "className": "6a"
-    },
-    {
-      "day": "wednesday",
-      "period": 3,
-      "className": "9c"
-    },
-    {
-      "day": "wednesday",
-      "period": 4,
-      "className": "6a"
-    },
-    {
-      "day": "wednesday",
-      "period": 7,
-      "className": "9c"
-    },
-    {
-      "day": "wednesday",
-      "period": 8,
-      "className": "9c"
-    },
-    {
-      "day": "thursday",
-      "period": 3,
-      "className": "9c"
-    },
-    {
-      "day": "thursday",
-      "period": 4,
-      "className": "6a"
-    },
-    {
-      "day": "thursday",
-      "period": 5,
-      "className": "6a"
-    },
-    {
-      "day": "thursday",
-      "period": 6,
-      "className": "9c"
-    },
-    {
-      "day": "friday",
-      "period": 3,
-      "className": "9c"
-    },
-    {
-      "day": "friday",
-      "period": 4,
-      "className": "6a"
-    },
-    {
-      "day": "friday",
-      "period": 5,
-      "className": "9c"
-    },
-    {
-      "day": "saturday",
-      "period": 3,
-      "className": "9c"
-    },
-    {
-      "day": "saturday",
-      "period": 4,
-      "className": "9c"
-    },
-    {
-      "day": "saturday",
-      "period": 5,
-      "className": "6a"
+      "className": "6A"
     }
   ],
   "sir shumail arsalan": [
     {
       "day": "monday",
       "period": 7,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "tuesday",
       "period": 8,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "wednesday",
       "period": 3,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "wednesday",
       "period": 7,
-      "className": "8c"
+      "className": "8C"
     },
     {
       "day": "friday",
       "period": 5,
-      "className": "8c"
-    }
-  ],
-  "sir Amir shaikh Junior": [
+      "className": "8C"
+    },
     {
-      "day": "wednesday",
-      "period": 3,
-      "className": "8c"
+      "day": "saturday",
+      "period": 7,
+      "className": "8A"
     }
   ],
   "sir shabeer ahmedb": [
     {
       "day": "wednesday",
       "period": 3,
-      "className": "7a"
-    }
-  ],
-  "sir imran ahmed": [
-    {
-      "day": "monday",
-      "period": 6,
-      "className": "8c"
-    },
-    {
-      "day": "monday",
-      "period": 7,
-      "className": "9c"
-    },
-    {
-      "day": "tuesday",
-      "period": 5,
-      "className": "7b"
-    },
-    {
-      "day": "tuesday",
-      "period": 7,
-      "className": "9c"
-    },
-    {
-      "day": "wednesday",
-      "period": 3,
-      "className": "7b"
-    },
-    {
-      "day": "wednesday",
-      "period": 4,
-      "className": "7b"
-    },
-    {
-      "day": "wednesday",
-      "period": 5,
-      "className": "6b"
-    },
-    {
-      "day": "wednesday",
-      "period": 6,
-      "className": "9c"
-    },
-    {
-      "day": "thursday",
-      "period": 3,
-      "className": "7b"
-    },
-    {
-      "day": "thursday",
-      "period": 5,
-      "className": "7b"
-    },
-    {
-      "day": "thursday",
-      "period": 7,
-      "className": "8c"
-    },
-    {
-      "day": "thursday",
-      "period": 8,
-      "className": "9c"
-    },
-    {
-      "day": "friday",
-      "period": 3,
-      "className": "6b"
-    },
-    {
-      "day": "friday",
-      "period": 4,
-      "className": "7c"
-    },
-    {
-      "day": "friday",
-      "period": 5,
-      "className": "6c"
-    },
-    {
-      "day": "saturday",
-      "period": 4,
-      "className": "7b"
-    },
-    {
-      "day": "saturday",
-      "period": 5,
-      "className": "6b"
+      "className": "7A"
     }
   ],
   "sir shoaib": [
     {
       "day": "monday",
       "period": 4,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "monday",
       "period": 6,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "monday",
       "period": 7,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "monday",
       "period": 8,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "tuesday",
       "period": 4,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "tuesday",
       "period": 7,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "wednesday",
       "period": 3,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "wednesday",
       "period": 7,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "wednesday",
       "period": 8,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "thursday",
       "period": 3,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "thursday",
       "period": 4,
-      "className": "6b"
+      "className": "6B"
+    },
+    {
+      "day": "thursday",
+      "period": 8,
+      "className": "6C"
     },
     {
       "day": "friday",
       "period": 4,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "friday",
       "period": 5,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "saturday",
       "period": 3,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "saturday",
       "period": 6,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "saturday",
       "period": 8,
-      "className": "6c"
-    }
-  ],
-  "sir Irshad qureshi": [
-    {
-      "day": "thursday",
-      "period": 3,
-      "className": "10c"
-    },
-    {
-      "day": "friday",
-      "period": 3,
-      "className": "10c"
-    },
-    {
-      "day": "saturday",
-      "period": 3,
-      "className": "10c"
-    }
-  ],
-  "sir Irshad bhutto": [
-    {
-      "day": "thursday",
-      "period": 3,
-      "className": "8a"
-    },
-    {
-      "day": "thursday",
-      "period": 6,
-      "className": "8b"
-    },
-    {
-      "day": "saturday",
-      "period": 3,
-      "className": "8b"
-    }
-  ],
-  "sir Amir Shaikh junior": [
-    {
-      "day": "thursday",
-      "period": 3,
-      "className": "8c"
-    }
-  ],
-  "miss Romalia": [
-    {
-      "day": "thursday",
-      "period": 3,
-      "className": "6c"
+      "className": "6C"
     }
   ],
   "sir farhan siddiqui": [
     {
       "day": "monday",
+      "period": 6,
+      "className": "6A"
+    },
+    {
+      "day": "monday",
       "period": 7,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "monday",
       "period": 8,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "tuesday",
       "period": 6,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "tuesday",
       "period": 7,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "tuesday",
       "period": 8,
-      "className": "8c"
+      "className": "8C"
     },
     {
       "day": "wednesday",
       "period": 4,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "wednesday",
       "period": 7,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "wednesday",
       "period": 8,
-      "className": "8b"
+      "className": "8B"
     },
     {
       "day": "thursday",
       "period": 6,
-      "className": "7b"
+      "className": "7B"
     },
     {
       "day": "thursday",
       "period": 7,
-      "className": "7a"
+      "className": "7A"
     },
     {
       "day": "thursday",
       "period": 8,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "friday",
       "period": 3,
-      "className": "8a"
+      "className": "8A"
     },
     {
       "day": "friday",
       "period": 4,
-      "className": "6c"
+      "className": "6C"
     },
     {
       "day": "friday",
       "period": 5,
-      "className": "6a"
+      "className": "6A"
+    },
+    {
+      "day": "saturday",
+      "period": 5,
+      "className": "6C"
     },
     {
       "day": "saturday",
       "period": 6,
-      "className": "7c"
+      "className": "7C"
     },
     {
       "day": "saturday",
       "period": 8,
-      "className": "8c"
-    }
-  ],
-  "sir amir shaikh junior": [
-    {
-      "day": "monday",
-      "period": 6,
-      "className": "7c"
-    },
-    {
-      "day": "tuesday",
-      "period": 6,
-      "className": "7c"
-    },
-    {
-      "day": "tuesday",
-      "period": 7,
-      "className": "7c"
-    },
-    {
-      "day": "wednesday",
-      "period": 6,
-      "className": "7c"
-    },
-    {
-      "day": "thursday",
-      "period": 6,
-      "className": "7c"
-    },
-    {
-      "day": "friday",
-      "period": 3,
-      "className": "7c"
-    },
-    {
-      "day": "friday",
-      "period": 4,
-      "className": "8c"
-    },
-    {
-      "day": "saturday",
-      "period": 3,
-      "className": "8c"
-    },
-    {
-      "day": "saturday",
-      "period": 4,
-      "className": "8c"
-    },
-    {
-      "day": "saturday",
-      "period": 7,
-      "className": "7c"
+      "className": "8C"
     }
   ],
   "sir wajiudin": [
     {
       "day": "monday",
       "period": 8,
-      "className": "7c"
+      "className": "7C"
+    },
+    {
+      "day": "wednesday",
+      "period": 7,
+      "className": "6C"
     },
     {
       "day": "thursday",
       "period": 7,
-      "className": "6b"
+      "className": "6B"
     },
     {
       "day": "saturday",
       "period": 3,
-      "className": "6a"
+      "className": "6A"
     },
     {
       "day": "saturday",
       "period": 8,
-      "className": "7a"
-    }
-  ],
-  "sir asif nawaz": [
-    {
-      "day": "monday",
-      "period": 4,
-      "className": "9b"
-    },
-    {
-      "day": "monday",
-      "period": 5,
-      "className": "8b"
-    },
-    {
-      "day": "monday",
-      "period": 7,
-      "className": "6a"
-    },
-    {
-      "day": "tuesday",
-      "period": 4,
-      "className": "9b"
-    },
-    {
-      "day": "tuesday",
-      "period": 5,
-      "className": "8b"
-    },
-    {
-      "day": "wednesday",
-      "period": 4,
-      "className": "9b"
-    },
-    {
-      "day": "wednesday",
-      "period": 6,
-      "className": "8b"
-    },
-    {
-      "day": "wednesday",
-      "period": 7,
-      "className": "8b"
-    },
-    {
-      "day": "thursday",
-      "period": 4,
-      "className": "8b"
-    },
-    {
-      "day": "thursday",
-      "period": 5,
-      "className": "9b"
-    },
-    {
-      "day": "thursday",
-      "period": 6,
-      "className": "9b"
-    },
-    {
-      "day": "friday",
-      "period": 4,
-      "className": "9b"
-    },
-    {
-      "day": "saturday",
-      "period": 6,
-      "className": "8b"
-    },
-    {
-      "day": "saturday",
-      "period": 7,
-      "className": "9b"
-    }
-  ],
-  "sir amir shaikh senior": [
-    {
-      "day": "monday",
-      "period": 8,
-      "className": "9b"
-    },
-    {
-      "day": "tuesday",
-      "period": 4,
-      "className": "6b"
-    },
-    {
-      "day": "tuesday",
-      "period": 8,
-      "className": "9b"
-    },
-    {
-      "day": "wednesday",
-      "period": 4,
-      "className": "6b"
-    },
-    {
-      "day": "wednesday",
-      "period": 6,
-      "className": "9b"
-    },
-    {
-      "day": "thursday",
-      "period": 6,
-      "className": "6b"
-    },
-    {
-      "day": "saturday",
-      "period": 4,
-      "className": "6b"
-    },
-    {
-      "day": "saturday",
-      "period": 8,
-      "className": "9b"
-    }
-  ],
-  "miss romalia": [
-    {
-      "day": "monday",
-      "period": 7,
-      "className": "6c"
-    },
-    {
-      "day": "monday",
-      "period": 8,
-      "className": "8c"
-    },
-    {
-      "day": "tuesday",
-      "period": 4,
-      "className": "6c"
-    },
-    {
-      "day": "tuesday",
-      "period": 7,
-      "className": "8c"
-    },
-    {
-      "day": "wednesday",
-      "period": 6,
-      "className": "6c"
-    },
-    {
-      "day": "wednesday",
-      "period": 8,
-      "className": "8c"
-    },
-    {
-      "day": "thursday",
-      "period": 7,
-      "className": "6c"
-    },
-    {
-      "day": "thursday",
-      "period": 8,
-      "className": "8c"
-    },
-    {
-      "day": "saturday",
-      "period": 6,
-      "className": "8c"
-    }
-  ],
-  "sir bakir shah": [
-    {
-      "day": "monday",
-      "period": 7,
-      "className": "10a"
-    },
-    {
-      "day": "tuesday",
-      "period": 5,
-      "className": "10a"
-    },
-    {
-      "day": "tuesday",
-      "period": 8,
-      "className": "10b"
-    },
-    {
-      "day": "wednesday",
-      "period": 6,
-      "className": "10b"
-    },
-    {
-      "day": "wednesday",
-      "period": 8,
-      "className": "10a"
-    },
-    {
-      "day": "thursday",
-      "period": 4,
-      "className": "10b"
-    },
-    {
-      "day": "thursday",
-      "period": 5,
-      "className": "10a"
-    },
-    {
-      "day": "friday",
-      "period": 4,
-      "className": "10b"
-    },
-    {
-      "day": "friday",
-      "period": 5,
-      "className": "10b"
-    },
-    {
-      "day": "saturday",
-      "period": 6,
-      "className": "10b"
-    },
-    {
-      "day": "saturday",
-      "period": 8,
-      "className": "10a"
-    }
-  ],
-  "sir farhan Siddiqui": [
-    {
-      "day": "saturday",
-      "period": 5,
-      "className": "6c"
-    }
-  ],
-  "sir muhammad taha": [
-    {
-      "day": "monday",
-      "period": 6,
-      "className": "10b"
-    },
-    {
-      "day": "monday",
-      "period": 8,
-      "className": "10a"
-    },
-    {
-      "day": "tuesday",
-      "period": 6,
-      "className": "6c"
-    },
-    {
-      "day": "tuesday",
-      "period": 7,
-      "className": "10b"
-    },
-    {
-      "day": "thursday",
-      "period": 7,
-      "className": "10b"
-    },
-    {
-      "day": "saturday",
-      "period": 7,
-      "className": "10a"
-    },
-    {
-      "day": "saturday",
-      "period": 8,
-      "className": "10b"
-    }
-  ],
-  "Sir farhan siddiqui": [
-    {
-      "day": "monday",
-      "period": 6,
-      "className": "6a"
-    }
-  ],
-  "Sir abdul rehman": [
-    {
-      "day": "monday",
-      "period": 6,
-      "className": "6c"
-    }
-  ],
-  "sir irshad qureshi": [
-    {
-      "day": "monday",
-      "period": 7,
-      "className": "10c"
-    },
-    {
-      "day": "tuesday",
-      "period": 7,
-      "className": "10c"
-    },
-    {
-      "day": "wednesday",
-      "period": 8,
-      "className": "10c"
-    },
-    {
-      "day": "thursday",
-      "period": 8,
-      "className": "10c"
-    }
-  ],
-  "sir Wajiudin": [
-    {
-      "day": "wednesday",
-      "period": 7,
-      "className": "6c"
-    }
-  ],
-  "Sir mushtaque ahmed": [
-    {
-      "day": "thursday",
-      "period": 7,
-      "className": "9b"
-    }
-  ],
-  "sir shumail Arsalan": [
-    {
-      "day": "saturday",
-      "period": 7,
-      "className": "8a"
-    }
-  ],
-  "sir Shoaib": [
-    {
-      "day": "thursday",
-      "period": 8,
-      "className": "6c"
+      "className": "7A"
     }
   ],
   "sir irshad ahmed": [
     {
       "day": "saturday",
       "period": 8,
-      "className": "6a"
+      "className": "6A"
     }
   ]
 }
