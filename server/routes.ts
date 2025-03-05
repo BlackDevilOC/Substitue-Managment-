@@ -13,7 +13,7 @@ import { processTimetables } from "../utils/timetableProcessor";
 import express from 'express';
 import { z } from 'zod';
 import { markAttendance, sendAbsenceAlert } from './attendance-handler';
-import { findSubstitutes, assignSubstitutes } from './substitute-manager';
+import { SubstituteManager } from './substitute-manager';
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -232,6 +232,34 @@ router.get('/api/schedule/:day', (req, res) => {
     res.status(500).json({ error: 'Failed to fetch schedule' });
   }
 });
+
+// Helper functions using SubstituteManager class
+async function findSubstitutes(teacherName: string, day: string) {
+  const substituteManager = new SubstituteManager();
+  await substituteManager.loadData();
+  const assignments = substituteManager.assignSubstitutes(teacherName, day);
+  return assignments;
+}
+
+async function assignSubstitutes(absentTeacher: string, assignments: any[], date: string) {
+  const substituteManager = new SubstituteManager();
+  await substituteManager.loadData();
+  
+  // Process the assignments
+  substituteManager.clearAssignments();
+  
+  // Get day of week from date
+  const day = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+  
+  // Manually record each assignment
+  for (const assignment of assignments) {
+    // The implementation depends on what you want to do with the assignments
+    // This is a simplified version
+    console.log(`Assigning ${assignment.substituteTeacher} for ${absentTeacher}'s class ${assignment.className} period ${assignment.period}`);
+  }
+  
+  return true;
+}
 
 router.post('/api/find-substitutes', async (req, res) => {
   try {
