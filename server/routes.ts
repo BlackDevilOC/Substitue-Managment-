@@ -287,31 +287,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/substitute-assignments", async (req, res) => {
     try {
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const filePath = path.join(__dirname, '../data/assigned_teacher.json');
-
-      console.log('Reading assignments from:', filePath);
-
-      if (!fs.existsSync(filePath)) {
-        console.log('File does not exist:', filePath);
-        return res.json({ assignments: [], warnings: [] });
-      }
-
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
-      console.log('Raw file content:', fileContent);
-
-      // Ensure the content matches the expected structure
-      const data = JSON.parse(fileContent);
-
-      // Validate and transform the data structure if needed
-      const response = {
-        assignments: Array.isArray(data.assignments) ? data.assignments : [],
-        warnings: Array.isArray(data.warnings) ? data.warnings : []
+      // Mock data for testing UI
+      const mockData = {
+        assignments: [
+          {
+            originalTeacher: "Sir Bakir Shah",
+            period: 1,
+            className: "10A",
+            substitute: "Sir Waqar Ali",
+            substitutePhone: "+923113588606"
+          },
+          {
+            originalTeacher: "Sir Bakir Shah",
+            period: 2,
+            className: "10A",
+            substitute: "Sir Waqar Ali",
+            substitutePhone: "+923113588606"
+          },
+          {
+            originalTeacher: "Sir Bakir Shah",
+            period: 7,
+            className: "10A",
+            substitute: "Sir Waqar Ali",
+            substitutePhone: "+923113588606"
+          },
+          {
+            originalTeacher: "Sir Mushtaque Ahmed",
+            period: 1,
+            className: "10B",
+            substitute: "Sir Faisal Ali",
+            substitutePhone: "+923473093995"
+          },
+          {
+            originalTeacher: "Sir Mushtaque Ahmed",
+            period: 2,
+            className: "10B",
+            substitute: "Sir Faisal Ali",
+            substitutePhone: "+923473093995"
+          },
+          {
+            originalTeacher: "Sir Mushtaque Ahmed",
+            period: 8,
+            className: "10B",
+            substitute: "Sir Faisal Ali",
+            substitutePhone: "+923473093995"
+          }
+        ],
+        warnings: [
+          "Sir Waqar Ali exceeded maximum workload (6/6)",
+          "Sir Faisal Ali exceeded maximum workload (6/6)"
+        ]
       };
 
-      console.log('Processed assignments:', response);
-      res.json(response);
+      console.log('Sending mock data:', mockData);
+      res.json(mockData);
     } catch (error) {
       console.error('Get substitute assignments error:', error);
       console.error('Error details:', error instanceof Error ? error.stack : String(error));
