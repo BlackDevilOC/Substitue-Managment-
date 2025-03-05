@@ -48,22 +48,33 @@ export default function ManageAbsencesPage() {
     }
   };
 
-  const resetMutation = useMutation({
+  // Auto-assign substitutes mutation
+  const autoAssignMutation = useMutation({
     mutationFn: async () => {
-      localStorage.removeItem('assignments');
-      localStorage.removeItem('teacherWorkloads');
-      return await fetch("/api/reset-assignments", { method: "POST" });
+      const response = await fetch("/api/autoassign");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to auto-assign substitutes');
+      }
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/substitute-assignments"] });
       toast({
-        title: "Reset Complete",
-        description: "All assignments have been cleared.",
+        title: "Auto-Assignment Complete",
+        description: `Successfully assigned ${data.assignmentsCount} substitutes.`,
       });
+      if (data.warnings && data.warnings.length > 0) {
+        toast({
+          title: "Assignment Warnings",
+          description: data.warnings.join('\n'),
+          variant: "warning"
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: "Assignment Failed",
         description: error.message,
         variant: "destructive"
       });
@@ -125,21 +136,21 @@ export default function ManageAbsencesPage() {
         </Button>
 
         <Button 
-          onClick={() => resetMutation.mutate()}
+          onClick={() => autoAssignMutation.mutate()}
           variant="outline"
           size="sm"
           className="h-9"
-          disabled={resetMutation.isPending}
+          disabled={autoAssignMutation.isPending}
         >
-          {resetMutation.isPending ? (
+          {autoAssignMutation.isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Resetting...
+              Assigning...
             </>
           ) : (
             <>
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              Reset Assignments
+              <UserCheck className="mr-2 h-4 w-4" />
+              Assign Substitute
             </>
           )}
         </Button>

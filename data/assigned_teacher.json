@@ -4,29 +4,50 @@
       "originalTeacher": "Sir Bakir Shah",
       "period": 1,
       "className": "10A",
-      "substitute": "Sir Waqar Ali",
-      "substitutePhone": "+923113588606"
+      "substitute": "Sir Romanulabdin",
+      "substitutePhone": "+923048151502"
     },
     {
       "originalTeacher": "Sir Bakir Shah",
       "period": 2,
       "className": "10A",
-      "substitute": "Sir Faisal Ali",
-      "substitutePhone": "+923473093995"
+      "substitute": "Sir Aman Arif",
+      "substitutePhone": "+923147500857"
     },
     {
       "originalTeacher": "Sir Bakir Shah",
       "period": 6,
       "className": "10B",
-      "substitute": "Sir Irshad Qureshi",
-      "substitutePhone": "+923123131179"
+      "substitute": "Sir Shafique Ahmed",
+      "substitutePhone": "+923337199001"
     },
     {
       "originalTeacher": "Sir Bakir Shah",
       "period": 8,
       "className": "10A",
-      "substitute": "Sir Muhammad Taha",
-      "substitutePhone": "+923163745043"
+      "substitute": "Sir Iqbal Ahmed",
+      "substitutePhone": "+923063624407"
+    },
+    {
+      "originalTeacher": "Sir Mushtaque Ahmed",
+      "period": 1,
+      "className": "10B",
+      "substitute": "Sir Khadim Hussain",
+      "substitutePhone": "+923013976248"
+    },
+    {
+      "originalTeacher": "Sir Mushtaque Ahmed",
+      "period": 2,
+      "className": "10B",
+      "substitute": "Sir Jawad-ul-Haq",
+      "substitutePhone": "+923153122161"
+    },
+    {
+      "originalTeacher": "Sir Mushtaque Ahmed",
+      "period": 8,
+      "className": "9A",
+      "substitute": "Sir Asif Nawaz",
+      "substitutePhone": "+923122084340"
     }
   ],
   "warnings": []
