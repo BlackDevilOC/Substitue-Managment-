@@ -211,8 +211,11 @@ export default function ManageAbsencesPage() {
         </CardContent>
       </Card>
 
-      <div className="mt-6 text-center">
-        <Button onClick={() => setLocation('/assigned-substitute')} className="w-full md:w-auto">
+      <div className="mt-6 text-center flex justify-center gap-4">
+        <Button variant="secondary" onClick={() => setLocation('/')}>
+          Back to Dashboard
+        </Button>
+        <Button variant="outline" onClick={() => setLocation('/assigned-substitute')}>
           View Assigned Substitutes
         </Button>
       </div>

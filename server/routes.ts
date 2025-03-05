@@ -306,6 +306,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(mockAssignmentsData);
     }
   });
+  
+  // Add endpoint to refresh assignments data
+  app.post("/api/refresh-assignments", async (req, res) => {
+    try {
+      // Read the current assignments from file
+      const fs = await import('fs');
+      const path = await import('path');
+      const filePath = path.join(process.cwd(), 'data', 'assigned_teacher.json');
+      
+      if (fs.existsSync(filePath)) {
+        const data = fs.readFileSync(filePath, 'utf8');
+        const assignmentsData = JSON.parse(data);
+        res.json({ success: true, data: assignmentsData });
+      } else {
+        res.status(404).json({ success: false, error: 'Assignments file not found' });
+      }
+    } catch (error) {
+      console.error('Error refreshing assignments:', error);
+      res.status(500).json({ success: false, error: 'Failed to refresh assignments' });
+    }
+  });
 
   app.post("/api/reset-assignments", async (req, res) => {
     try {
