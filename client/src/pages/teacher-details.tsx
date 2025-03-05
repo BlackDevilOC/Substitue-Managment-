@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +29,7 @@ export default function TeacherDetailsPage() {
   const [selectedDay, setSelectedDay] = useState<string>(getCurrentDay());
   const [teacherSchedule, setTeacherSchedule] = useState<TeacherSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const weekdays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
   // Get current day
   function getCurrentDay() {
@@ -56,9 +56,9 @@ export default function TeacherDetailsPage() {
         // First, try to find the correct teacher name/variation
         if (teacherData && teacherName) {
           // Find the teacher in the data by comparing with all possible variations
-          const foundTeacher = teacherData.find((teacher: any) => 
+          const foundTeacher = teacherData.find((teacher: any) =>
             teacher.name.toLowerCase() === teacherName.toLowerCase() ||
-            (teacher.variations && teacher.variations.some((v: string) => 
+            (teacher.variations && teacher.variations.some((v: string) =>
               v.toLowerCase() === teacherName.toLowerCase()
             ))
           );
@@ -67,7 +67,7 @@ export default function TeacherDetailsPage() {
             // Get the normalized name to use for schedule lookup
             const normalName = foundTeacher.name.toLowerCase();
             setNormalizedName(normalName);
-            
+
             // Fetch the actual schedule data
             const res = await fetch(`/api/teacher-schedule?name=${encodeURIComponent(normalName)}`);
             if (res.ok) {
@@ -113,6 +113,7 @@ export default function TeacherDetailsPage() {
       .sort((a, b) => a.period - b.period);
   }, [teacherSchedule, selectedDay]);
 
+  // Show loading spinner while loading data
   if (teacherDataLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -121,17 +122,32 @@ export default function TeacherDetailsPage() {
     );
   }
 
+  // Show message if no teacher name was provided
+  if (!teacherName) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="bg-yellow-50 p-4 rounded-md border border-yellow-200 flex items-center mb-4">
+          <AlertCircle className="h-5 w-5 text-yellow-500 mr-2" />
+          <p>No teacher name provided. Please select a teacher first.</p>
+        </div>
+        <Button onClick={() => navigate("/manage-absence")} variant="outline" className="gap-1">
+          <ArrowLeft className="h-4 w-4" /> Back to Absences
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-4">
       <div className="mb-4">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => navigate('/absences')}
           className="mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Absences
         </Button>
-        
+
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">
@@ -146,13 +162,13 @@ export default function TeacherDetailsPage() {
           <CardContent>
             {teacherData && teacherName && (
               <div className="mb-4">
-                {teacherData.find((t: any) => 
-                  t.name.toLowerCase() === teacherName.toLowerCase() || 
+                {teacherData.find((t: any) =>
+                  t.name.toLowerCase() === teacherName.toLowerCase() ||
                   (t.variations && t.variations.some((v: string) => v.toLowerCase() === teacherName.toLowerCase()))
                 )?.phoneNumber && (
                   <p className="text-muted-foreground">
-                    Phone: {teacherData.find((t: any) => 
-                      t.name.toLowerCase() === teacherName.toLowerCase() || 
+                    Phone: {teacherData.find((t: any) =>
+                      t.name.toLowerCase() === teacherName.toLowerCase() ||
                       (t.variations && t.variations.some((v: string) => v.toLowerCase() === teacherName.toLowerCase()))
                     )?.phoneNumber}
                   </p>
@@ -160,44 +176,43 @@ export default function TeacherDetailsPage() {
               </div>
             )}
 
-            <Tabs defaultValue={selectedDay} onValueChange={setSelectedDay}>
-              <TabsList className="grid grid-cols-7 mb-4">
-                <TabsTrigger value="monday">Mon</TabsTrigger>
-                <TabsTrigger value="tuesday">Tue</TabsTrigger>
-                <TabsTrigger value="wednesday">Wed</TabsTrigger>
-                <TabsTrigger value="thursday">Thu</TabsTrigger>
-                <TabsTrigger value="friday">Fri</TabsTrigger>
-                <TabsTrigger value="saturday">Sat</TabsTrigger>
-                <TabsTrigger value="sunday">Sun</TabsTrigger>
-              </TabsList>
+            <div>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {weekdays.map(day => (
+                  <Button
+                    key={day}
+                    variant={selectedDay === day ? "default" : "outline"}
+                    onClick={() => setSelectedDay(day)}
+                    className="capitalize"
+                  >
+                    {day}
+                  </Button>
+                ))}
+              </div>
 
-              {["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map(day => (
-                <TabsContent key={day} value={day}>
-                  <h3 className="text-lg font-medium capitalize mb-4">{day}'s Schedule</h3>
-                  
-                  {filteredSchedule.length > 0 ? (
-                    <div className="space-y-2">
-                      {filteredSchedule.map((item, idx) => (
-                        <Card key={idx} className="p-4">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <span className="font-medium">Period {item.period}</span>
-                              <p className="text-sm text-muted-foreground">Class: {item.className.toUpperCase()}</p>
-                            </div>
-                            <Clock className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <h3 className="text-lg font-medium mb-2 capitalize">{selectedDay}'s Schedule</h3>
+                {filteredSchedule.length > 0 ? (
+                  <div className="space-y-2">
+                    {filteredSchedule.map((item, idx) => (
+                      <Card key={idx} className="p-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <span className="font-medium">Period {item.period}</span>
+                            <p className="text-sm text-muted-foreground">Class: {item.className.toUpperCase()}</p>
                           </div>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex items-center p-4 text-amber-800 bg-amber-50 rounded-md">
-                      <AlertCircle className="h-5 w-5 mr-2" />
-                      <p>No schedule found for {day}</p>
-                    </div>
-                  )}
-                </TabsContent>
-              ))}
-            </Tabs>
+                          <Clock className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-muted p-4 rounded-md text-center">
+                    <p>No schedule found for {teacherName} on {selectedDay}</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
