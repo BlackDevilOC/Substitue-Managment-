@@ -1,3 +1,4 @@
+
 import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from 'csv-parse/sync';
@@ -182,7 +183,6 @@ export class SubstituteManager {
     });
   }
 
-
   async autoAssignSubstitutes(
     date: string,
     absentTeacherNames?: string[]
@@ -215,6 +215,16 @@ export class SubstituteManager {
     const workloadMap = new Map<string, number>();
     const assignedPeriodsMap = new Map<string, Set<number>>();
 
+    // Process existing assignments and check for conflicts
+    const assignedSubstitutePhones = new Set(assignedTeachers.map(a => a.substitutePhone));
+    const invalidAssignments = assignedTeachers.filter(a => 
+      absentTeacherNames!.some(name => name.toLowerCase() === a.substitute.toLowerCase())
+    );
+
+    if (invalidAssignments.length > 0) {
+      warnings.push(`Conflict: ${invalidAssignments.length} previously assigned substitutes are now absent`);
+    }
+
     // Process existing assignments
     assignedTeachers.forEach(({ substitutePhone, period }) => {
       workloadMap.set(substitutePhone, (workloadMap.get(substitutePhone) || 0) + 1);
@@ -238,9 +248,11 @@ export class SubstituteManager {
 
     // Filter available substitutes - convert substitutes map to array for processing
     const substituteArray = this.createSubstituteArray(teachers);
-    const availableSubstitutes = substituteArray.filter(sub => 
-      !absentTeachers.some(absent => absent.phone === sub.phone)
-    );
+    const availableSubstitutes = substituteArray.filter(sub => {
+      const isAbsent = absentTeachers.some(absent => absent.phone === sub.phone);
+      const wasPreviouslyAssigned = assignedSubstitutePhones.has(sub.phone);
+      return !isAbsent && !wasPreviouslyAssigned;
+    });
 
     // Process each absent teacher
     for (const teacher of absentTeachers) {
@@ -300,6 +312,61 @@ export class SubstituteManager {
     return {
       assignments,
       warnings: [...warnings, ...validation.warnings]
+    };
+  }
+
+  // Helper function to check if a substitute is available during a specific period
+  private checkAvailability(
+    substitute: Teacher,
+    period: number,
+    day: string,
+    schedules: Map<string, Assignment[]>
+  ): boolean {
+    const schedule = schedules.get(substitute.name.toLowerCase()) || [];
+    return !schedule.some(s => 
+      s.day.toLowerCase() === day.toLowerCase() && 
+      s.period === period
+    );
+  }
+
+  private findSuitableSubstitutes(params: {
+    className: string;
+    period: number;
+    day: string;
+    substitutes: Teacher[];
+    teachers: Map<string, Teacher>;
+    schedules: Map<string, Assignment[]>;
+    currentWorkload: Map<string, number>;
+    assignedPeriodsMap: Map<string, Set<number>>;
+  }): { candidates: Teacher[]; warnings: string[] } {
+    const warnings: string[] = [];
+    const targetGrade = parseInt(params.className.replace(/\D/g, '')) || 0;
+
+    // Split substitutes into preferred and fallback based on grade compatibility
+    const [preferred, fallback] = params.substitutes.reduce((acc, sub) => {
+      // Check all availability constraints
+      const isAvailable = 
+        this.checkAvailability(sub, params.period, params.day, params.schedules) &&
+        !params.assignedPeriodsMap.get(sub.phone)?.has(params.period) &&
+        (params.currentWorkload.get(sub.phone) || 0) < MAX_DAILY_WORKLOAD;
+
+      const gradeLevel = sub.gradeLevel || 10; // Default to highest grade if not specified
+      const isCompatible = gradeLevel >= targetGrade;
+      
+      if (isAvailable) {
+        if (isCompatible) {
+          acc[0].push(sub);
+        } else if (targetGrade <= 8 && gradeLevel >= 9) {
+          acc[1].push(sub);
+          warnings.push(`Using higher-grade substitute ${sub.name} for ${params.className}`);
+        }
+      }
+      return acc;
+    }, [[], []] as [Teacher[], Teacher[]]);
+
+    return {
+      candidates: preferred.length > 0 ? preferred : fallback,
+      warnings
     };
   }
 
@@ -366,49 +433,6 @@ export class SubstituteManager {
       }));
   }
 
-  private findSuitableSubstitutes(params: {
-    className: string;
-    period: number;
-    day: string;
-    substitutes: Teacher[];
-    teachers: Map<string, Teacher>;
-    schedules: Map<string, Assignment[]>;
-    currentWorkload: Map<string, number>;
-    assignedPeriodsMap: Map<string, Set<number>>;
-  }): { candidates: Teacher[]; warnings: string[] } {
-    const warnings: string[] = [];
-    const targetGrade = parseInt(params.className.replace(/\D/g, '')) || 0;
-
-    // Check if already teaching during this period
-    const availableSubstitutes = params.substitutes.filter(sub => {
-      // Check if already assigned to this period
-      if (params.assignedPeriodsMap.get(sub.phone)?.has(params.period)) {
-        return false;
-      }
-
-      // Check workload
-      const currentWorkload = params.currentWorkload.get(sub.phone) || 0;
-      if (currentWorkload >= MAX_DAILY_WORKLOAD) {
-        warnings.push(`${sub.name} exceeded maximum workload (${currentWorkload}/${MAX_DAILY_WORKLOAD})`);
-        return false;
-      }
-
-      return true;
-    });
-
-    // If no substitutes are available at all, return empty
-    if (availableSubstitutes.length === 0) {
-      warnings.push(`No available substitutes for period ${params.period}`);
-      return { candidates: [], warnings };
-    }
-
-    // Sort by workload (ascending)
-    return {
-      candidates: availableSubstitutes,
-      warnings
-    };
-  }
-
   private selectBestCandidate(candidates: Teacher[], workloadMap: Map<string, number>): Teacher {
     return candidates.sort((a, b) => {
       const aWorkload = workloadMap.get(a.phone) || 0;
@@ -461,7 +485,8 @@ export class SubstituteManager {
         ...teacher,
         id: teacher.id || teacher.phone || `teacher-${Math.random().toString(36).substring(2, 9)}`,
         gradeLevel: teacher.gradeLevel || 10, // Default to highest grade level
-        isRegular: teacher.isRegular !== undefined ? teacher.isRegular : true
+        isRegular: teacher.isRegular !== undefined ? teacher.isRegular : true,
+        variations: teacher.variations || []
       }));
     } catch (error) {
       throw new Error(`Error loading teachers: ${error}`);
@@ -484,15 +509,41 @@ export class SubstituteManager {
 
   private async loadAssignedTeachers(path: string): Promise<SubstituteAssignment[]> {
     if (!fs.existsSync(path)) {
-      return [];
+      // Create empty file if it doesn't exist
+      try {
+        const emptyData = {
+          assignments: [],
+          warnings: []
+        };
+        fs.writeFileSync(path, JSON.stringify(emptyData, null, 2));
+        return [];
+      } catch (error) {
+        throw new Error(`Error creating empty assignments file: ${error}`);
+      }
     }
 
     try {
       const data = fs.readFileSync(path, 'utf-8');
+      if (!data.trim()) {
+        // Handle empty file
+        const emptyData = {
+          assignments: [],
+          warnings: ["Previous data was corrupted and has been reset"]
+        };
+        fs.writeFileSync(path, JSON.stringify(emptyData, null, 2));
+        return [];
+      }
+      
       const { assignments } = JSON.parse(data);
       return assignments || [];
     } catch (error) {
-      throw new Error(`Error loading assigned teachers: ${error}`);
+      // If JSON parsing fails, reset the file
+      const emptyData = {
+        assignments: [],
+        warnings: ["Previous data was corrupted and has been reset"]
+      };
+      fs.writeFileSync(path, JSON.stringify(emptyData, null, 2));
+      return [];
     }
   }
 
