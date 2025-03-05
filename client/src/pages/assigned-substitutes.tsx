@@ -37,16 +37,32 @@ export default function AssignedSubstitutesPage() {
   const handleRefresh = async () => {
     try {
       setIsRefreshing(true);
+      
+      // First try to trigger auto-assign via API
+      const response = await fetch('/api/auto-assign-substitutes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ date: today }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to run auto-assign');
+      }
+      
+      // Then refresh the assignments data
       await queryClient.invalidateQueries({ queryKey: ["/api/substitute-assignments"] });
+      
       toast({
-        title: "Data Refreshed",
-        description: "The assignments list has been updated.",
+        title: "Auto-Assignment Complete",
+        description: "Substitute assignments have been updated.",
         variant: "default"
       });
     } catch (error) {
       toast({
-        title: "Refresh Failed",
-        description: error instanceof Error ? error.message : "Failed to refresh data",
+        title: "Auto-Assignment Failed",
+        description: error instanceof Error ? error.message : "Failed to run auto-assign",
         variant: "destructive"
       });
     } finally {
