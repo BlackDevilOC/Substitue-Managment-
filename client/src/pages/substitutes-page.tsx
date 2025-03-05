@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, UserCheck, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface TeacherStatus {
   teacherId: number;
@@ -12,6 +12,15 @@ interface TeacherStatus {
   assignedTo?: string;
   className?: string;
 }
+
+const SubstituteCardSkeleton = () => (
+  <div className="flex items-center justify-between p-4 border rounded-lg">
+    <div className="w-full">
+      <Skeleton className="h-5 w-32 mb-2" />
+      <Skeleton className="h-4 w-48" />
+    </div>
+  </div>
+);
 
 export default function SubstitutesPage() {
   const { user } = useAuth();
@@ -86,8 +95,22 @@ export default function SubstitutesPage() {
   // Show loading state
   if (teachersLoading || assignmentsLoading || absencesLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      <div className="container py-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5" />
+              <Skeleton className="h-6 w-40" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[...Array(5)].map((_, index) => (
+                <SubstituteCardSkeleton key={index} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -111,7 +134,7 @@ export default function SubstitutesPage() {
                 No teacher data available
               </div>
             )}
-            
+
             {displayTeachers.map((teacher: any) => {
               const status = teacherStatuses.find(s => s.teacherId === teacher.id);
 
