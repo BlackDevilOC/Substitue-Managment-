@@ -277,6 +277,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // New endpoint to auto-assign substitutes directly from absent_teachers.json file
+  app.get("/api/autoassign", async (req, res) => {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const absentTeachersPath = path.join(__dirname, '../data/absent_teachers.json');
+      
+      // Check if absent_teachers.json exists
+      if (!fs.existsSync(absentTeachersPath)) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Absent teachers file not found" 
+        });
+      }
+      
+      // Read absent teachers file
+      const absentTeachersContent = fs.readFileSync(absentTeachersPath, 'utf-8');
+      const absentTeachers = JSON.parse(absentTeachersContent);
+      
+      if (!absentTeachers || absentTeachers.length === 0) {
+        return res.status(200).json({ 
+          success: true, 
+          message: "No absent teachers found",
+          assignments: []
+        });
+      }
+      
+      // Extract teacher names
+      const teacherNames = absentTeachers.map((teacher: any) => teacher.name);
+      console.log(`Found ${teacherNames.length} absent teachers: ${teacherNames.join(', ')}`);
+      
+      // Get current date
+      const today = format(new Date(), "yyyy-MM-dd");
+      
+      // Run auto-assign functionality
+      const { SubstituteManager } = await import('./substitute-manager.js');
+      const manager = new SubstituteManager();
+      await manager.loadData();
+      
+      // Pass the teacher names to autoAssignSubstitutes 
+      const { assignments, warnings } = await manager.autoAssignSubstitutes(today, teacherNames);
+      
+      console.log(`Auto-assigned ${assignments.length} substitutes for absent teachers`);
+      
+      res.json({ 
+        success: true, 
+        message: "Auto-assignment completed successfully",
+        assignmentsCount: assignments.length,
+        assignments,
+        warnings
+      });
+    } catch (error) {
+      console.error('Auto-assign from file error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to auto-assign substitutes", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
 
   app.get("/api/sms-history", async (req, res) => {
     const history = await storage.getSmsHistory();
