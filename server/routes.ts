@@ -287,60 +287,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/substitute-assignments", async (req, res) => {
     try {
-      // Mock data for testing UI
-      const mockData = {
-        assignments: [
-          {
-            originalTeacher: "Sir Bakir Shah",
-            period: 1,
-            className: "10A",
-            substitute: "Sir Waqar Ali",
-            substitutePhone: "+923113588606"
-          },
-          {
-            originalTeacher: "Sir Bakir Shah",
-            period: 2,
-            className: "10A",
-            substitute: "Sir Waqar Ali",
-            substitutePhone: "+923113588606"
-          },
-          {
-            originalTeacher: "Sir Bakir Shah",
-            period: 7,
-            className: "10A",
-            substitute: "Sir Waqar Ali",
-            substitutePhone: "+923113588606"
-          },
-          {
-            originalTeacher: "Sir Mushtaque Ahmed",
-            period: 1,
-            className: "10B",
-            substitute: "Sir Faisal Ali",
-            substitutePhone: "+923473093995"
-          },
-          {
-            originalTeacher: "Sir Mushtaque Ahmed",
-            period: 2,
-            className: "10B",
-            substitute: "Sir Faisal Ali",
-            substitutePhone: "+923473093995"
-          },
-          {
-            originalTeacher: "Sir Mushtaque Ahmed",
-            period: 8,
-            className: "10B",
-            substitute: "Sir Faisal Ali",
-            substitutePhone: "+923473093995"
-          }
-        ],
-        warnings: [
-          "Sir Waqar Ali exceeded maximum workload (6/6)",
-          "Sir Faisal Ali exceeded maximum workload (6/6)"
-        ]
-      };
-
-      console.log('Sending mock data:', mockData);
-      res.json(mockData);
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const assignedTeacherPath = path.join(__dirname, '../data/assigned_teacher.json');
+      
+      // Check if the file exists
+      if (!fs.existsSync(assignedTeacherPath)) {
+        console.error('Assigned teacher file not found:', assignedTeacherPath);
+        return res.status(404).json({ error: 'Assigned teacher data not found' });
+      }
+      
+      // Read the data from the JSON file
+      const fileContent = fs.readFileSync(assignedTeacherPath, 'utf8');
+      const assignedTeacherData = JSON.parse(fileContent);
+      
+      console.log('Sending assigned teacher data:', assignedTeacherData);
+      res.json(assignedTeacherData);
     } catch (error) {
       console.error('Get substitute assignments error:', error);
       console.error('Error details:', error instanceof Error ? error.stack : String(error));
