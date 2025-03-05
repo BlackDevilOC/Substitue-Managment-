@@ -159,66 +159,51 @@ export class MemStorage implements IStorage {
     // Load fresh data from CSV files every time to ensure we have the latest data
     await manager.loadData();
 
-    const day = await this.getCurrentDay();
-    const assignments = new Map<string, string>();
-
     // Get all absent teachers for today
     const absentTeachers = this.absences
       .filter((absence) => absence.date === date && !absence.substituteId)
       .map((absence) => this.teachers.find(t => t.id === absence.teacherId)?.name || '');
 
     if (absentTeachers.length === 0) {
-      console.log('No absent teachers found for today');
-      return assignments;
+      return new Map<string, string>();
     }
-
-    console.log(`Found ${absentTeachers.length} absent teachers for ${date}: ${absentTeachers.join(', ')}`);
 
     // Clear previous assignments
     manager.clearAssignments();
 
-    // For each absent teacher, find and assign substitutes
-    for (const absentTeacher of absentTeachers) {
-      if (!absentTeacher) continue;
+    // Use the new auto-assign functionality
+    const { assignments, warnings } = await manager.autoAssignSubstitutes(date, absentTeachers);
+    
+    const assignmentsMap = new Map<string, string>();
+    
+    // Record these assignments in our database
+    for (const assignment of assignments) {
+      const key = `${assignment.period}-${assignment.className}`;
+      assignmentsMap.set(key, assignment.substitute);
 
-      console.log(`Processing absent teacher: ${absentTeacher}`);
-      const teacherAssignments = manager.assignSubstitutes(absentTeacher, day);
+      // Find the absence record
+      const absentTeacherId = this.teachers.find(t => 
+        t.name.toLowerCase() === assignment.originalTeacher.toLowerCase())?.id;
 
-      // Record these assignments in our database
-      for (const assignment of teacherAssignments) {
-        const key = `${assignment.period}-${assignment.className}`;
-        assignments.set(key, assignment.substitute);
+      if (!absentTeacherId) continue;
 
-        // Find the absence record
-        const absentTeacherId = this.teachers.find(t => 
-          t.name.toLowerCase() === assignment.originalTeacher.toLowerCase())?.id;
+      const absenceRecord = this.absences.find(
+        a => a.teacherId === absentTeacherId && a.date === date
+      );
 
-        if (!absentTeacherId) continue;
+      if (!absenceRecord) continue;
 
-        const absenceRecord = this.absences.find(
-          a => a.teacherId === absentTeacherId && a.date === date
-        );
+      // Find substitute teacher ID
+      const substituteId = this.teachers.find(t => 
+        t.name.toLowerCase() === assignment.substitute.toLowerCase())?.id;
 
-        if (!absenceRecord) continue;
-
-        // Find substitute teacher ID
-        const substituteId = this.teachers.find(t => 
-          t.name.toLowerCase() === assignment.substitute.toLowerCase())?.id;
-
-        if (substituteId) {
-          // Update the absence record with the substitute
-          await this.assignSubstitute(absenceRecord.id, substituteId);
-          console.log(`Assigned ${assignment.substitute} to cover for ${assignment.originalTeacher}, period ${assignment.period}, class ${assignment.className}`);
-        }
+      if (substituteId) {
+        // Update the absence record with the substitute
+        await this.assignSubstitute(absenceRecord.id, substituteId);
       }
     }
 
-    // Generate and log verification report
-    const report = manager.verifyAssignments();
-    console.log('Substitute assignment verification report:');
-    console.log(JSON.stringify(report, null, 2));
-
-    return assignments;
+    return assignmentsMap;
   }
 
   private getTeacherPeriod(teacherId: number, date: string): number {
@@ -259,73 +244,32 @@ export class MemStorage implements IStorage {
     // Load fresh data from CSV files
     await manager.loadData();
 
-    const day = await this.getCurrentDay();
-    const assignments = [];
-
-    // Get all absent teachers for today
-    const absentTeachers = this.absences
-      .filter((absence) => absence.date === date)
-      .map((absence) => {
-        const teacher = this.teachers.find(t => t.id === absence.teacherId);
-        const substitute = absence.substituteId ? 
-          this.teachers.find(t => t.id === absence.substituteId) : null;
-
-        return {
-          teacherId: absence.teacherId,
-          teacherName: teacher?.name || "Unknown",
-          substituteId: absence.substituteId,
-          substituteName: substitute?.name || null,
-          substitutePhone: substitute?.phoneNumber || null
-        };
-      });
-
-    if (absentTeachers.length === 0) {
-      return assignments;
+    // Get assignments directly from the manager or file
+    const { assignments: managerAssignments } = manager.getSubstituteAssignments();
+    
+    if (managerAssignments && managerAssignments.length > 0) {
+      return managerAssignments.map(assignment => ({
+        period: assignment.period,
+        className: assignment.className,
+        originalTeacherName: assignment.originalTeacher,
+        substituteName: assignment.substitute || "Not assigned",
+        substitutePhone: assignment.substitutePhone || null,
+      }));
     }
-
-    // Get schedules from our database
-    const todaySchedules = this.schedules.filter((s) => s.day === day);
-
-    // For each absent teacher
-    for (const absentTeacher of absentTeachers) {
-      // Find all classes this teacher teaches today
-      const teacherClasses = todaySchedules.filter(
-        (s) => s.teacherId === absentTeacher.teacherId,
-      );
-
-      for (const classInfo of teacherClasses) {
-        assignments.push({
-          period: classInfo.period,
-          className: classInfo.className,
-          originalTeacherName: absentTeacher.teacherName,
-          substituteName: absentTeacher.substituteName || "Not assigned",
-          substitutePhone: absentTeacher.substitutePhone || null,
-        });
-      }
-    }
-
-    // If we have no assignments from the database, try to use the manager's assignments
-    if (assignments.length === 0) {
-      // Try to auto-assign if needed
-      await this.autoAssignSubstitutes(date);
-
-      // Get assignments from manager
-      const managerAssignments = manager.getSubstituteAssignments();
-
-      // Convert to our format
-      for (const key in managerAssignments) {
-        const assignment = managerAssignments[key];
-        assignments.push({
-          period: assignment.period,
-          className: assignment.className,
-          originalTeacherName: assignment.originalTeacher,
-          substituteName: assignment.substitute || "Not assigned",
-          substitutePhone: assignment.substitutePhone || null,
-        });
-      }
-    }
-
-    return assignments;
+    
+    // If no assignments found, try to auto-assign
+    await this.autoAssignSubstitutes(date);
+    
+    // Try to get assignments again
+    const { assignments: newAssignments } = manager.getSubstituteAssignments();
+    
+    return (newAssignments || []).map(assignment => ({
+      period: assignment.period,
+      className: assignment.className,
+      originalTeacherName: assignment.originalTeacher,
+      substituteName: assignment.substitute || "Not assigned",
+      substitutePhone: assignment.substitutePhone || null,
+    }));
   }
 
   async loadData() {
