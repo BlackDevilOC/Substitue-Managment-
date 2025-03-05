@@ -145,17 +145,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const schedules = JSON.parse(fs.readFileSync(schedulePath, 'utf-8'));
-
+      
       // Find the teacher schedule (try exact match first)
       let teacherSchedule = schedules[teacherName];
-
+      
       // If not found, try to find by partial match
       if (!teacherSchedule) {
         // Find keys that are close to the provided name
         const possibleMatches = Object.keys(schedules).filter(key => 
           key.includes(teacherName) || teacherName.includes(key)
         );
-
+        
         if (possibleMatches.length > 0) {
           teacherSchedule = schedules[possibleMatches[0]];
         }
@@ -287,44 +287,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/substitute-assignments", async (req, res) => {
     try {
-      const fs = await import('fs');
-      const path = await import('path');
+      // Mock data for testing UI
+      const mockData = {
+        assignments: [
+          {
+            originalTeacher: "Sir Bakir Shah",
+            period: 1,
+            className: "10A",
+            substitute: "Sir Waqar Ali",
+            substitutePhone: "+923113588606"
+          },
+          {
+            originalTeacher: "Sir Bakir Shah",
+            period: 2,
+            className: "10A",
+            substitute: "Sir Waqar Ali",
+            substitutePhone: "+923113588606"
+          },
+          {
+            originalTeacher: "Sir Bakir Shah",
+            period: 7,
+            className: "10A",
+            substitute: "Sir Waqar Ali",
+            substitutePhone: "+923113588606"
+          },
+          {
+            originalTeacher: "Sir Mushtaque Ahmed",
+            period: 1,
+            className: "10B",
+            substitute: "Sir Faisal Ali",
+            substitutePhone: "+923473093995"
+          },
+          {
+            originalTeacher: "Sir Mushtaque Ahmed",
+            period: 2,
+            className: "10B",
+            substitute: "Sir Faisal Ali",
+            substitutePhone: "+923473093995"
+          },
+          {
+            originalTeacher: "Sir Mushtaque Ahmed",
+            period: 8,
+            className: "10B",
+            substitute: "Sir Faisal Ali",
+            substitutePhone: "+923473093995"
+          }
+        ],
+        warnings: [
+          "Sir Waqar Ali exceeded maximum workload (6/6)",
+          "Sir Faisal Ali exceeded maximum workload (6/6)"
+        ]
+      };
 
-      const filePath = path.join(process.cwd(), 'data', 'assigned_teacher.json');
-
-      if (fs.existsSync(filePath)) {
-        const data = fs.readFileSync(filePath, 'utf8');
-        const assignmentsData = JSON.parse(data);
-        console.log('Sending data from file:', JSON.stringify(assignmentsData, null, 2));
-        res.json(assignmentsData);
-      } else {
-        console.log('File not found, sending mock data:', JSON.stringify(mockAssignmentsData, null, 2));
-        res.json(mockAssignmentsData);
-      }
+      console.log('Sending mock data:', mockData);
+      res.json(mockData);
     } catch (error) {
-      console.error('Error reading assignments file:', error);
-      res.json(mockAssignmentsData);
-    }
-  });
-  
-  // Add endpoint to refresh assignments data
-  app.post("/api/refresh-assignments", async (req, res) => {
-    try {
-      // Read the current assignments from file
-      const fs = await import('fs');
-      const path = await import('path');
-      const filePath = path.join(process.cwd(), 'data', 'assigned_teacher.json');
-      
-      if (fs.existsSync(filePath)) {
-        const data = fs.readFileSync(filePath, 'utf8');
-        const assignmentsData = JSON.parse(data);
-        res.json({ success: true, data: assignmentsData });
-      } else {
-        res.status(404).json({ success: false, error: 'Assignments file not found' });
-      }
-    } catch (error) {
-      console.error('Error refreshing assignments:', error);
-      res.status(500).json({ success: false, error: 'Failed to refresh assignments' });
+      console.error('Get substitute assignments error:', error);
+      console.error('Error details:', error instanceof Error ? error.stack : String(error));
+      res.status(500).json({ 
+        message: "Failed to get substitute assignments",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
@@ -362,16 +385,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const filePath = path.join(__dirname, '../data/teacher_schedules.json');
-
+      
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: 'Teacher schedules file not found' });
       }
 
       const scheduleData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-
+      
       // Find the teacher's schedule (with case insensitive matching)
       const teacherSchedule = scheduleData[teacherName] || [];
-
+      
       res.json(teacherSchedule);
     } catch (error) {
       console.error('Error fetching teacher schedule:', error);

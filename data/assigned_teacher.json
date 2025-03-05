@@ -1,50 +1,49 @@
-
 {
-  "assignments": [
+  assignments: [
     {
-      "originalTeacher": "Sir Bakir Shah",
-      "period": 1,
-      "className": "10A",
-      "substitute": "Sir Waqar Ali",
-      "substitutePhone": "+923113588606"
+      originalTeacher: "Sir Bakir Shah",
+      period: 1,
+      className: "10A",
+      substitute: "Sir Waqar Ali",
+      substitutePhone: "+923113588606"
     },
     {
-      "originalTeacher": "Sir Bakir Shah",
-      "period": 2,
-      "className": "10A",
-      "substitute": "Sir Waqar Ali",
-      "substitutePhone": "+923113588606"
+      originalTeacher: "Sir Bakir Shah",
+      period: 2,
+      className: "10A",
+      substitute: "Sir Waqar Ali",
+      substitutePhone: "+923113588606"
     },
     {
-      "originalTeacher": "Sir Bakir Shah",
-      "period": 7,
-      "className": "10A",
-      "substitute": "Sir Waqar Ali",
-      "substitutePhone": "+923113588606"
+      originalTeacher: "Sir Bakir Shah",
+      period: 7,
+      className: "10A",
+      substitute: "Sir Waqar Ali",
+      substitutePhone: "+923113588606"
     },
     {
-      "originalTeacher": "Sir Mushtaque Ahmed",
-      "period": 1,
-      "className": "10B",
-      "substitute": "Sir Faisal Ali",
-      "substitutePhone": "+923473093995"
+      originalTeacher: "Sir Mushtaque Ahmed",
+      period: 1,
+      className: "10B",
+      substitute: "Sir Faisal Ali",
+      substitutePhone: "+923473093995"
     },
     {
-      "originalTeacher": "Sir Mushtaque Ahmed",
-      "period": 2,
-      "className": "10B",
-      "substitute": "Sir Faisal Ali",
-      "substitutePhone": "+923473093995"
+      originalTeacher: "Sir Mushtaque Ahmed",
+      period: 2,
+      className: "10B",
+      substitute: "Sir Faisal Ali",
+      substitutePhone: "+923473093995"
     },
     {
-      "originalTeacher": "Sir Mushtaque Ahmed",
-      "period": 8,
-      "className": "10B",
-      "substitute": "Sir Faisal Ali",
-      "substitutePhone": "+923473093995"
+      originalTeacher: "Sir Mushtaque Ahmed",
+      period: 8,
+      className: "10B",
+      substitute: "Sir Faisal Ali",
+      substitutePhone: "+923473093995"
     }
   ],
-  "warnings": [
+  warnings: [
     "Sir Waqar Ali exceeded maximum workload (6/6)",
     "Sir Faisal Ali exceeded maximum workload (6/6)"
   ]
