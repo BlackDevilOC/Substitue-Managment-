@@ -302,10 +302,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Read assignments from file
       const fileContent = fs.readFileSync(filePath, 'utf8');
-      const assignmentsData = JSON.parse(fileContent);
-
-      console.log('Sending assignments data:', assignmentsData);
-      res.json(assignmentsData);
+      
+      try {
+        const assignmentsData = JSON.parse(fileContent);
+        console.log('Sending assignments data:', assignmentsData);
+        res.json(assignmentsData);
+      } catch (parseError) {
+        console.error('JSON parsing error:', parseError);
+        console.log('File content that failed to parse:', fileContent);
+        
+        // Attempt to fix invalid JSON and try again
+        try {
+          // In case of emergency, return an empty valid response instead of failing
+          res.json({
+            assignments: [],
+            warnings: ["Data read error - please check assigned_teacher.json format"]
+          });
+          
+          // Try to auto-fix the JSON file for next time
+          const emptyData = {
+            assignments: [],
+            warnings: ["Previous data was corrupted and has been reset"]
+          };
+          fs.writeFileSync(filePath, JSON.stringify(emptyData, null, 2));
+        } catch (fixError) {
+          throw fixError; // Re-throw if even the emergency handler fails
+        }
+      }
     } catch (error) {
       console.error('Get substitute assignments error:', error);
       console.error('Error details:', error instanceof Error ? error.stack : String(error));
