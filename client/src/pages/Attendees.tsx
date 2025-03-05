@@ -14,6 +14,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { queryClient } from "@/lib/queryClient"
 import { useToast } from "@/hooks/use-toast"
 
+interface TeacherWithId extends Teacher {
+  id: number;
+}
+
 export default function Attendees() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [localAttendance, setLocalAttendance] = useState<Record<number, string>>({})
@@ -21,7 +25,7 @@ export default function Attendees() {
   const { toast } = useToast();
 
   // Fetch teachers using React Query
-  const { data: localTeachers = [], isLoading: teachersLoading, refetch: refetchTeachers } = useQuery({
+  const { data: localTeachers = [], isLoading: teachersLoading, refetch: refetchTeachers } = useQuery<TeacherWithId[]>({
     queryKey: ["/api/teachers"],
     queryFn: async () => {
       const response = await fetch("/api/teachers");
@@ -45,7 +49,6 @@ export default function Attendees() {
       toast({
         title: "Success",
         description: `Teacher data refreshed. Found ${localTeachers.length} teachers.`,
-        variant: "success",
       });
     } catch (error) {
       console.error("Error refreshing data:", error);
@@ -64,7 +67,7 @@ export default function Attendees() {
       setLocalAttendance(JSON.parse(storedData));
     } else {
       const initialAttendance: Record<number, string> = {};
-      localTeachers?.forEach(teacher => {
+      localTeachers?.forEach((teacher: TeacherWithId) => {
         initialAttendance[teacher.id] = 'present';
       });
       setLocalAttendance(initialAttendance);
@@ -83,7 +86,7 @@ export default function Attendees() {
       teacherId: number;
       status: string;
     }) => {
-      const teacher = localTeachers.find(t => t.id === teacherId);
+      const teacher = localTeachers.find((t: TeacherWithId) => t.id === teacherId);
       if (!teacher) throw new Error('Teacher not found');
 
       // First update local storage
@@ -154,7 +157,7 @@ export default function Attendees() {
       }
 
       if (status === 'absent') {
-        const teacher = localTeachers.find(t => t.id === teacherId);
+        const teacher = localTeachers.find((t: TeacherWithId) => t.id === teacherId);
         if (!teacher) return;
 
         const existingIndex = absentTeachers.findIndex(
@@ -183,7 +186,6 @@ export default function Attendees() {
         description: status === 'absent'
           ? "Teacher marked as absent and saved to records."
           : "Teacher marked as present and removed from absent records.",
-        variant: "success"
       });
     } catch (error) {
       console.error('Error updating absent teachers in storage:', error);
@@ -209,7 +211,7 @@ export default function Attendees() {
       }
       csvContent += "Total Present,Total Absent\n";
 
-      localTeachers?.forEach(teacher => {
+      localTeachers?.forEach((teacher: TeacherWithId) => {
         csvContent += `${teacher.name},`;
 
         let presentCount = 0;
@@ -317,7 +319,7 @@ export default function Attendees() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {localTeachers?.map((teacher) => {
+        {localTeachers?.map((teacher: TeacherWithId) => {
           const status = localAttendance[teacher.id] || 'present';
           const isAbsent = status === 'absent';
           const isPending = markAttendanceMutation.isPending;

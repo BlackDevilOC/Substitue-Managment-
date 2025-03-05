@@ -250,7 +250,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/absences/:id/substitute", async (req, res) => {
     const { substituteId } = req.body;
-    await storage.assignSubstitute(parseInt(req.params.id), substituteId || null);
+    // Convert substituteId to number or undefined
+    const parsedSubstituteId = substituteId ? parseInt(substituteId) : undefined;
+    await storage.assignSubstitute(parseInt(req.params.id), parsedSubstituteId);
     res.sendStatus(200);
   });
 
