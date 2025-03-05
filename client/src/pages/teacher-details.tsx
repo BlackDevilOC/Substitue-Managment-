@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { AlertCircle, Clock, ArrowLeft } from "lucide-react";
+
 import { useParams, useLocation } from "wouter";
-import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 interface TeacherSchedule {
   day: string;
@@ -48,174 +54,186 @@ export default function TeacherDetailsPage() {
     },
   });
 
-  // Fetch teacher schedule
+  // Find the matching teacher based on name or variations
   useEffect(() => {
-    const fetchTeacherSchedule = async () => {
-      setIsLoading(true);
-      try {
-        // First, try to find the correct teacher name/variation
-        if (teacherData && teacherName) {
-          // Find the teacher in the data by comparing with all possible variations
-          const foundTeacher = teacherData.find((teacher: any) =>
-            teacher.name.toLowerCase() === teacherName.toLowerCase() ||
-            (teacher.variations && teacher.variations.some((v: string) =>
-              v.toLowerCase() === teacherName.toLowerCase()
-            ))
-          );
+    if (!teacherName || teacherDataLoading || !teacherData) return;
 
-          if (foundTeacher) {
-            // Get the normalized name to use for schedule lookup
-            const normalName = foundTeacher.name.toLowerCase();
-            setNormalizedName(normalName);
-
-            // Fetch the actual schedule data
-            const res = await fetch(`/api/teacher-schedule?name=${encodeURIComponent(normalName)}`);
-            if (res.ok) {
-              const data = await res.json();
-              setTeacherSchedule(data);
-            } else {
-              toast({
-                title: "Error",
-                description: "Failed to fetch teacher schedule",
-                variant: "destructive",
-              });
-            }
-          } else {
-            toast({
-              title: "Teacher not found",
-              description: `No matching teacher found for "${teacherName}"`,
-              variant: "destructive",
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching teacher schedule:", error);
-        toast({
-          title: "Error",
-          description: "An error occurred while fetching teacher data",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (teacherData) {
-      fetchTeacherSchedule();
+    // If there's no teacher name or it's empty, show error
+    if (!teacherName.trim()) {
+      toast({
+        title: "No teacher selected",
+        description: "Please select a teacher first",
+        variant: "destructive"
+      });
+      navigate("/manage-absences");
+      return;
     }
-  }, [teacherData, teacherName, toast]);
 
-  // Filter schedule for the selected day
-  const filteredSchedule = React.useMemo(() => {
-    if (!teacherSchedule) return [];
-    return teacherSchedule
-      .filter(item => item.day === selectedDay)
-      .sort((a, b) => a.period - b.period);
-  }, [teacherSchedule, selectedDay]);
+    // Normalize the name for comparison
+    const searchName = teacherName.toLowerCase().trim();
+    
+    // Look for exact match first
+    let foundTeacher = teacherData.find((t: any) => 
+      t.name.toLowerCase() === searchName
+    );
 
-  // Show loading spinner while loading data
-  if (teacherDataLoading || isLoading) {
+    // If no exact match, try to match against variations
+    if (!foundTeacher && Array.isArray(teacherData)) {
+      foundTeacher = teacherData.find((t: any) => {
+        if (t.variations && Array.isArray(t.variations)) {
+          return t.variations.some((v: string) => 
+            v.toLowerCase() === searchName
+          );
+        }
+        return false;
+      });
+    }
+
+    if (foundTeacher) {
+      setNormalizedName(foundTeacher.name);
+      fetchTeacherSchedule(foundTeacher.name);
+    } else {
+      toast({
+        title: "Teacher not found",
+        description: `Could not find a teacher matching "${teacherName}"`,
+        variant: "destructive"
+      });
+      navigate("/manage-absences");
+    }
+  }, [teacherName, teacherData, teacherDataLoading]);
+
+  // Fetch teacher schedule data
+  const fetchTeacherSchedule = async (name: string) => {
+    setIsLoading(true);
+    try {
+      // First try with the normalized name
+      let response = await fetch(`/api/schedule/${selectedDay}?teacherName=${encodeURIComponent(name)}`);
+      
+      if (!response.ok) {
+        // If that fails, try with the original name
+        response = await fetch(`/api/schedule/${selectedDay}?teacherName=${encodeURIComponent(teacherName)}`);
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch teacher schedule");
+        }
+      }
+      
+      const data = await response.json();
+      setTeacherSchedule(data);
+    } catch (error) {
+      console.error("Error fetching teacher schedule:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load teacher schedule",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle day selection change
+  const handleDayChange = (day: string) => {
+    setSelectedDay(day);
+    if (normalizedName) {
+      fetchTeacherSchedule(normalizedName);
+    }
+  };
+
+  const handleGoBack = () => {
+    navigate("/manage-absences");
+  };
+
+  // Show loading state
+  if (isLoading || teacherDataLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-primary rounded-full"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
       </div>
     );
   }
 
-  // Show message if no teacher name was provided
-  if (!teacherName) {
+  // If no teacher found, show error
+  if (!normalizedName && teacherName) {
     return (
       <div className="container mx-auto p-4">
-        <div className="bg-yellow-50 p-4 rounded-md border border-yellow-200 flex items-center mb-4">
-          <AlertCircle className="h-5 w-5 text-yellow-500 mr-2" />
-          <p>No teacher name provided. Please select a teacher first.</p>
-        </div>
-        <Button onClick={() => navigate("/manage-absence")} variant="outline" className="gap-1">
-          <ArrowLeft className="h-4 w-4" /> Back to Absences
-        </Button>
+        <Card>
+          <CardHeader>
+            <Button variant="ghost" size="icon" onClick={handleGoBack}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <CardTitle>Teacher Not Found</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Could not find teacher: {teacherName}</p>
+            <Button className="mt-4" onClick={handleGoBack}>
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto p-4">
-      <div className="mb-4">
-        <Button
-          variant="outline"
-          onClick={() => navigate('/absences')}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Absences
-        </Button>
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={handleGoBack}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <CardTitle>{normalizedName}</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue={selectedDay} className="w-full">
+            <TabsList className="grid grid-cols-7 mb-4">
+              {weekdays.map((day) => (
+                <TabsTrigger
+                  key={day}
+                  value={day}
+                  onClick={() => handleDayChange(day)}
+                >
+                  {day.charAt(0).toUpperCase() + day.slice(1, 3)}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">
-              {teacherName}
-              {normalizedName && normalizedName !== teacherName.toLowerCase() && (
-                <span className="ml-2 text-sm text-muted-foreground">
-                  (Found as: {normalizedName})
-                </span>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {teacherData && teacherName && (
-              <div className="mb-4">
-                {teacherData.find((t: any) =>
-                  t.name.toLowerCase() === teacherName.toLowerCase() ||
-                  (t.variations && t.variations.some((v: string) => v.toLowerCase() === teacherName.toLowerCase()))
-                )?.phoneNumber && (
-                  <p className="text-muted-foreground">
-                    Phone: {teacherData.find((t: any) =>
-                      t.name.toLowerCase() === teacherName.toLowerCase() ||
-                      (t.variations && t.variations.some((v: string) => v.toLowerCase() === teacherName.toLowerCase()))
-                    )?.phoneNumber}
-                  </p>
-                )}
-              </div>
-            )}
-
-            <div>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {weekdays.map(day => (
-                  <Button
-                    key={day}
-                    variant={selectedDay === day ? "default" : "outline"}
-                    onClick={() => setSelectedDay(day)}
-                    className="capitalize"
-                  >
-                    {day}
-                  </Button>
-                ))}
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-2 capitalize">{selectedDay}'s Schedule</h3>
-                {filteredSchedule.length > 0 ? (
-                  <div className="space-y-2">
-                    {filteredSchedule.map((item, idx) => (
-                      <Card key={idx} className="p-4">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <span className="font-medium">Period {item.period}</span>
-                            <p className="text-sm text-muted-foreground">Class: {item.className.toUpperCase()}</p>
-                          </div>
-                          <Clock className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
+            {weekdays.map((day) => (
+              <TabsContent key={day} value={day} className="space-y-4">
+                <h3 className="font-semibold text-lg">
+                  Schedule for {day.charAt(0).toUpperCase() + day.slice(1)}
+                </h3>
+                
+                {teacherSchedule.length === 0 ? (
+                  <p>No classes scheduled for this day.</p>
                 ) : (
-                  <div className="bg-muted p-4 rounded-md text-center">
-                    <p>No schedule found for {teacherName} on {selectedDay}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {teacherSchedule
+                      .sort((a, b) => a.period - b.period)
+                      .map((schedule, index) => (
+                        <Card key={index}>
+                          <CardContent className="p-4 flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">Period {schedule.period}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Class: {schedule.className.toUpperCase()}
+                              </p>
+                            </div>
+                            <Badge variant="outline">
+                              {schedule.period}
+                            </Badge>
+                          </CardContent>
+                        </Card>
+                      ))}
                   </div>
                 )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
