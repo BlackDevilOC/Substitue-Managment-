@@ -42,7 +42,7 @@ export default function TeacherDetailsPage() {
     return new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
   }
 
-  // Fetch teacher variations from total_teacher.json
+  // Fetch teacher data from total_teacher.json
   const { data: teacherData, isLoading: teacherDataLoading } = useQuery({
     queryKey: ["/api/teachers"],
     queryFn: async () => {
@@ -72,33 +72,50 @@ export default function TeacherDetailsPage() {
     // Normalize the name for comparison
     const searchName = teacherName.toLowerCase().trim();
     
-    // Look for exact match first
+    // First check if we can find the teacher in teacherData by name
     let foundTeacher = teacherData.find((t: any) => 
       t.name.toLowerCase() === searchName
     );
 
-    // If no exact match, try to match against variations
-    if (!foundTeacher && Array.isArray(teacherData)) {
-      foundTeacher = teacherData.find((t: any) => {
-        if (t.variations && Array.isArray(t.variations)) {
-          return t.variations.some((v: string) => 
-            v.toLowerCase() === searchName
-          );
-        }
-        return false;
-      });
-    }
+    // If not found, try to find via teacher variations
+    if (!foundTeacher) {
+      // Fetch the total_teacher data to check variations
+      fetch('/data/total_teacher.json')
+        .then(res => res.json())
+        .then(totalTeachers => {
+          // Check if the teacher name matches any variations
+          const matchedTeacher = totalTeachers.find((t: TeacherVariation) => {
+            if (t.name.toLowerCase() === searchName) return true;
+            if (t.variations && Array.isArray(t.variations)) {
+              return t.variations.some(v => v.toLowerCase() === searchName);
+            }
+            return false;
+          });
 
-    if (foundTeacher) {
+          if (matchedTeacher) {
+            setNormalizedName(matchedTeacher.name);
+            fetchTeacherSchedule(matchedTeacher.name);
+          } else {
+            toast({
+              title: "Teacher not found",
+              description: `Could not find a teacher matching "${teacherName}"`,
+              variant: "destructive"
+            });
+            navigate("/manage-absences");
+          }
+        })
+        .catch(error => {
+          console.error("Error fetching total teacher data:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load teacher data",
+            variant: "destructive"
+          });
+        });
+    } else {
+      // If found directly in teacherData
       setNormalizedName(foundTeacher.name);
       fetchTeacherSchedule(foundTeacher.name);
-    } else {
-      toast({
-        title: "Teacher not found",
-        description: `Could not find a teacher matching "${teacherName}"`,
-        variant: "destructive"
-      });
-      navigate("/manage-absences");
     }
   }, [teacherName, teacherData, teacherDataLoading]);
 
@@ -106,20 +123,28 @@ export default function TeacherDetailsPage() {
   const fetchTeacherSchedule = async (name: string) => {
     setIsLoading(true);
     try {
-      // First try with the normalized name
-      let response = await fetch(`/api/schedule/${selectedDay}?teacherName=${encodeURIComponent(name)}`);
+      const dayScheduleResponse = await fetch(`/api/schedule/${selectedDay}`);
       
-      if (!response.ok) {
-        // If that fails, try with the original name
-        response = await fetch(`/api/schedule/${selectedDay}?teacherName=${encodeURIComponent(teacherName)}`);
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch teacher schedule");
-        }
+      if (!dayScheduleResponse.ok) {
+        throw new Error("Failed to fetch schedule data");
       }
       
-      const data = await response.json();
-      setTeacherSchedule(data);
+      const daySchedules = await dayScheduleResponse.json();
+      
+      // Filter schedules for this teacher (considering name variations)
+      const lowerCaseName = name.toLowerCase();
+      const teacherSchedules = daySchedules.filter((schedule: any) => {
+        const scheduleName = schedule.teacherName.toLowerCase();
+        return scheduleName === lowerCaseName || 
+               scheduleName.includes(lowerCaseName) || 
+               lowerCaseName.includes(scheduleName);
+      });
+      
+      // Sort by period
+      teacherSchedules.sort((a: any, b: any) => a.period - b.period);
+      
+      setTeacherSchedule(teacherSchedules);
+      setIsLoading(false);
     } catch (error) {
       console.error("Error fetching teacher schedule:", error);
       toast({
@@ -127,7 +152,6 @@ export default function TeacherDetailsPage() {
         description: "Failed to load teacher schedule",
         variant: "destructive"
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -201,34 +225,35 @@ export default function TeacherDetailsPage() {
             </TabsList>
 
             {weekdays.map((day) => (
-              <TabsContent key={day} value={day} className="space-y-4">
-                <h3 className="font-semibold text-lg">
-                  Schedule for {day.charAt(0).toUpperCase() + day.slice(1)}
-                </h3>
-                
-                {teacherSchedule.length === 0 ? (
-                  <p>No classes scheduled for this day.</p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {teacherSchedule
-                      .sort((a, b) => a.period - b.period)
-                      .map((schedule, index) => (
-                        <Card key={index}>
-                          <CardContent className="p-4 flex items-center justify-between">
-                            <div>
-                              <p className="font-medium">Period {schedule.period}</p>
-                              <p className="text-sm text-muted-foreground">
-                                Class: {schedule.className.toUpperCase()}
-                              </p>
-                            </div>
+              <TabsContent key={day} value={day}>
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">
+                    {day.charAt(0).toUpperCase() + day.slice(1)} Schedule
+                  </h3>
+                  {teacherSchedule.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {teacherSchedule.map((schedule, idx) => (
+                        <div
+                          key={idx}
+                          className="border rounded-lg p-3 bg-muted/30"
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">
+                              Class {schedule.className}
+                            </span>
                             <Badge variant="outline">
-                              {schedule.period}
+                              Period {schedule.period}
                             </Badge>
-                          </CardContent>
-                        </Card>
+                          </div>
+                        </div>
                       ))}
-                  </div>
-                )}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">
+                      No classes scheduled for this day.
+                    </p>
+                  )}
+                </div>
               </TabsContent>
             ))}
           </Tabs>
