@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, UserCheck, Loader2 } from "lucide-react";
+import { User, UserCheck, Loader2, MessageSquare } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface TeacherStatus {
   teacherId: number;
@@ -22,8 +24,35 @@ const SubstituteCardSkeleton = () => (
   </div>
 );
 
+// Function to send SMS using the device's native capabilities
+const sendNativeSMS = async (phoneNumber: string, message: string) => {
+  // Check if we're in a React Native WebView environment
+  if (!(window as any).ReactNativeWebView) {
+    console.error('Not running in React Native WebView');
+    return false;
+  }
+
+  try {
+    // Send message to React Native
+    (window as any).ReactNativeWebView.postMessage(
+      JSON.stringify({
+        type: 'SEND_SMS',
+        payload: {
+          phoneNumber,
+          message
+        }
+      })
+    );
+    return true;
+  } catch (error) {
+    console.error('Failed to send SMS:', error);
+    return false;
+  }
+};
+
 export default function SubstitutesPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [teacherStatuses, setTeacherStatuses] = useState<TeacherStatus[]>([]);
 
   const { data: teachers, isLoading: teachersLoading } = useQuery({
@@ -40,7 +69,7 @@ export default function SubstitutesPage() {
       const res = await apiRequest("GET", "/api/substitute-assignments");
       return res.json();
     },
-    enabled: !!user, // Only run query if user is authenticated
+    enabled: !!user,
   });
 
   const { data: absences, isLoading: absencesLoading } = useQuery({
@@ -49,10 +78,38 @@ export default function SubstitutesPage() {
       const res = await apiRequest("GET", "/api/absences");
       return res.json();
     },
-    enabled: !!user, // Only run query if user is authenticated
+    enabled: !!user,
   });
 
-  // Load statuses from localStorage on component mount
+  // Handler for sending SMS notifications
+  const handleSendSMS = async (teacher: any, status: TeacherStatus) => {
+    if (!teacher.phoneNumber) {
+      toast({
+        title: "No phone number available",
+        description: "Cannot send SMS notification - no phone number provided.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const message = `Dear ${teacher.name},\n\nYou have been assigned to cover for ${status.assignedTo} in Class ${status.className}.\n\nPlease confirm your availability.`;
+
+    const sent = await sendNativeSMS(teacher.phoneNumber, message);
+
+    if (sent) {
+      toast({
+        title: "SMS Notification Sent",
+        description: `Successfully sent SMS notification to ${teacher.name}`,
+      });
+    } else {
+      toast({
+        title: "Failed to Send SMS",
+        description: "Could not send SMS notification. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
     const savedStatuses = localStorage.getItem('teacherStatuses');
     if (savedStatuses) {
@@ -60,7 +117,6 @@ export default function SubstitutesPage() {
     }
   }, []);
 
-  // Update statuses when data changes
   useEffect(() => {
     if (teachers && assignments && absences) {
       const newStatuses: TeacherStatus[] = teachers.map((teacher: any) => {
@@ -92,7 +148,6 @@ export default function SubstitutesPage() {
     }
   }, [teachers, assignments, absences]);
 
-  // Show loading state
   if (teachersLoading || assignmentsLoading || absencesLoading) {
     return (
       <div className="container py-6">
@@ -115,7 +170,6 @@ export default function SubstitutesPage() {
     );
   }
 
-  // Handle the case when API calls fail but we have local data
   const displayTeachers = teachers || [];
 
   return (
@@ -140,7 +194,7 @@ export default function SubstitutesPage() {
 
               return (
                 <div key={teacher.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
+                  <div className="flex-grow">
                     <div className="font-medium">{teacher.name}</div>
                     <div className="text-sm text-muted-foreground mt-1">
                       {status?.status === 'assigned' && (
@@ -160,6 +214,17 @@ export default function SubstitutesPage() {
                       )}
                     </div>
                   </div>
+                  {status?.status === 'assigned' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="ml-4"
+                      onClick={() => handleSendSMS(teacher, status)}
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Send SMS
+                    </Button>
+                  )}
                 </div>
               );
             })}
