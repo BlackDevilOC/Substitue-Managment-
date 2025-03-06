@@ -1,69 +1,74 @@
 import { Teacher, Schedule } from '@shared/schema';
 import { storage } from './storage';
-import axios from 'axios';
 
-// SMS gateway configuration
-const SMS_API_KEY = process.env.SMS_API_KEY || "";
-const SMS_SENDER_ID = process.env.SMS_SENDER_ID || "SubTeacher";
+// Development mode configuration
+const TEST_PHONE_NUMBER = "+923133469238";
 
 interface SMSMessage {
   recipient: string;  // Phone number
   message: string;
-  senderId?: string;
 }
 
 /**
- * Sends an SMS message
+ * Sends an SMS message (development mode)
  * @param phoneNumber The recipient's phone number (with country code)
  * @param message The message to send
  * @returns Promise with the result
  */
 export async function sendSMS(phoneNumber: string, message: string): Promise<boolean> {
-  // Check if phone number is valid format
-  if (!phoneNumber || !phoneNumber.startsWith('+')) {
-    console.error(`Invalid phone number format: ${phoneNumber}`);
+  // Check if phone number is valid format (Pakistan numbers start with +92)
+  if (!phoneNumber || (!phoneNumber.startsWith('+92') && !phoneNumber.startsWith('92'))) {
+    console.error(`Invalid Pakistan phone number format: ${phoneNumber}`);
     return false;
   }
 
   try {
-    // Mobile app compatibility - both server and mobile devices can send messages
-    if (process.env.NODE_ENV === 'production') {
-      // Server-side SMS sending
-      return await sendSMSViaAPI(phoneNumber, message);
-    } else {
-      // In development, just log the message
-      console.log(`[SMS] To: ${phoneNumber}, Message: ${message}`);
-      return true;
-    }
+    // In development mode, just log the message
+    console.log('\n=== SMS Message Log ===');
+    console.log(`To: ${phoneNumber}`);
+    console.log('Message:');
+    console.log(message);
+    console.log('=====================\n');
+
+    // For testing, we'll consider the message as "sent" if it was logged
+    return true;
   } catch (error) {
-    console.error('Failed to send SMS:', error);
+    console.error('Failed to log SMS:', error);
     return false;
   }
 }
 
-/**
- * Server-side SMS sending via API
- */
-async function sendSMSViaAPI(phoneNumber: string, message: string): Promise<boolean> {
-  if (!SMS_API_KEY) {
-    console.error('SMS_API_KEY not configured');
-    return false;
-  }
+export async function sendSubstituteNotification(
+  substitute: Teacher,
+  assignments: {day: string; period: number; className: string; originalTeacher: string}[]
+) {
+  // In development, use the test phone number
+  const phoneNumber = TEST_PHONE_NUMBER;
 
-  try {
-    // This is a placeholder. Replace with your actual SMS gateway API
-    const response = await axios.post('https://api.yoursmsgateway.com/send', {
-      apiKey: SMS_API_KEY,
-      to: phoneNumber,
-      message: message,
-      senderId: SMS_SENDER_ID
-    });
+  const message = `
+Dear ${substitute.name},
 
-    return response.status === 200;
-  } catch (error) {
-    console.error('SMS API error:', error);
-    return false;
-  }
+You have been assigned to cover the following classes:
+
+${assignments.map(a => `
+Date: ${a.day}
+Period: ${a.period}
+Class: ${a.className}
+Covering for: ${a.originalTeacher}
+`).join('\n')}
+
+Please confirm your availability.
+`;
+
+  // Store SMS in history before sending
+  await storage.createSmsHistory({
+    teacherId: substitute.id,
+    message: message
+  });
+
+  const smsSent = await sendSMS(phoneNumber, message);
+  console.log(`SMS logged for ${substitute.name}: ${smsSent ? 'Success' : 'Failed'}`);
+  return message;
 }
 
 /**
@@ -98,40 +103,4 @@ export function setupClientSideSMS() {
       return false;
     }
   };
-}
-
-export async function sendSubstituteNotification(
-  substitute: Teacher,
-  assignments: {day: string; period: number; className: string; originalTeacher: string}[]
-) {
-  if (!substitute.phoneNumber) {
-    console.warn(`No phone number for substitute ${substitute.name}`);
-    return;
-  }
-
-  const message = `
-Dear ${substitute.name},
-
-You have been assigned to cover the following classes:
-
-${assignments.map(a => `
-Date: ${a.day}
-Period: ${a.period}
-Class: ${a.className}
-Covering for: ${a.originalTeacher}
-`).join('\n')}
-
-Please confirm your availability.
-`;
-
-  // Store SMS in history
-  await storage.createSmsHistory({
-    teacherId: substitute.id,
-    message: message,
-    status: 'sent' // We'll update this when we implement actual SMS sending
-  });
-
-  const smsSent = await sendSMS(substitute.phoneNumber, message);
-  console.log('SMS sent successfully:', smsSent);
-  return message;
 }
