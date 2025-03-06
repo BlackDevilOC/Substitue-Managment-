@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { 
@@ -70,68 +69,125 @@ export function MobileNav() {
     }
   ];
 
+  // Function to trigger haptic feedback
+  const triggerHaptic = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50); // Short vibration for feedback
+    }
+  };
+
+  const handleNavigation = (href: string) => {
+    triggerHaptic();
+    setIsOpen(false);
+  };
+
   return (
-    <div className="md:hidden fixed bottom-0 left-0 z-50 w-full h-16 bg-background border-t border-border flex items-center justify-between px-4">
-      <div className="flex items-center justify-between w-full">
-        <Button variant="ghost" size="icon" asChild>
+    <nav className="md:hidden fixed bottom-0 left-0 z-50 w-full h-16 bg-background border-t border-border">
+      <div className="flex items-center justify-between h-full px-4 mx-auto max-w-lg">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          onClick={() => handleNavigation('/dashboard')}
+          asChild
+        >
           <Link href="/dashboard">
             <Clock className="h-6 w-6" />
+            <span className="sr-only">Dashboard</span>
           </Link>
         </Button>
-        
-        <Button variant="ghost" size="icon" asChild>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          onClick={() => handleNavigation('/absent-teachers')}
+          asChild
+        >
           <Link href="/absent-teachers">
             <UserMinus className="h-6 w-6" />
+            <span className="sr-only">Absent Teachers</span>
           </Link>
         </Button>
-        
+
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="rounded-full h-12 w-12"
+              onClick={triggerHaptic}
+            >
               <Menu className="h-6 w-6" />
+              <span className="sr-only">Menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="pt-10 pb-16 h-[80vh] rounded-t-xl">
+          <SheetContent 
+            side="bottom" 
+            className="h-[80vh] rounded-t-xl pb-safe"
+          >
             <div className="absolute right-4 top-4">
-              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => {
+                  triggerHaptic();
+                  setIsOpen(false);
+                }}
+              >
                 <X className="h-6 w-6" />
+                <span className="sr-only">Close</span>
               </Button>
             </div>
             <nav className="grid grid-cols-3 gap-4 pt-4">
               {routes.map((route) => (
-                <Link 
+                <Link
                   key={route.href}
                   href={route.href}
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => handleNavigation(route.href)}
                 >
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className={cn(
-                      "w-full h-24 flex flex-col items-center justify-center gap-2 rounded-lg",
+                      "w-full h-24 flex flex-col items-center justify-center gap-2 rounded-lg transition-colors",
                       location === route.href && "bg-secondary"
                     )}
                   >
                     {route.icon}
-                    <span className="text-xs">{route.label}</span>
+                    <span className="text-xs font-medium">{route.label}</span>
                   </Button>
                 </Link>
               ))}
             </nav>
           </SheetContent>
         </Sheet>
-        
-        <Button variant="ghost" size="icon" asChild>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          onClick={() => handleNavigation('/schedules')}
+          asChild
+        >
           <Link href="/schedules">
             <Calendar className="h-6 w-6" />
+            <span className="sr-only">Schedules</span>
           </Link>
         </Button>
-        
-        <Button variant="ghost" size="icon" asChild>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          onClick={() => handleNavigation('/profile')}
+          asChild
+        >
           <Link href="/profile">
             <User className="h-6 w-6" />
+            <span className="sr-only">Profile</span>
           </Link>
         </Button>
       </div>
-    </div>
+    </nav>
   );
 }
