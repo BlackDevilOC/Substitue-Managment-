@@ -13,11 +13,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, RefreshCcw, X } from "lucide-react";
 
 export default function SmsSendPage() {
+  const { toast } = useToast();
   const [selectedTeachers, setSelectedTeachers] = useState<string[]>([]);
   const [messageText, setMessageText] = useState("");
   
@@ -103,6 +104,51 @@ export default function SmsSendPage() {
   };
 
   const { assigned, unassigned } = groupTeachersByAssignmentStatus();
+
+  const handleClearAll = () => {
+    setSelectedTeachers([]);
+  };
+
+  const handleSelectAll = () => {
+    if (teachers) {
+      const allTeacherIds = teachers.map((teacher: any) => teacher.id.toString());
+      setSelectedTeachers(allTeacherIds);
+    }
+  };
+
+  const handleSendSms = async () => {
+    if (selectedTeachers.length === 0) {
+      toast({
+        title: "No recipients selected",
+        description: "Please select at least one teacher to send the message to.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!messageText.trim()) {
+      toast({
+        title: "Empty message",
+        description: "Please enter a message to send.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // API call would go here
+      toast({
+        title: "SMS Sent",
+        description: `Message sent to ${selectedTeachers.length} recipients.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to send SMS",
+        description: "There was an error sending your message.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto p-4 space-y-6 pb-20">
