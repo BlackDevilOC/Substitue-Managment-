@@ -49,6 +49,12 @@ export default function SecondaryNavPage() {
       name: "Communication",
       items: [
         {
+          title: "SMS Send",
+          icon: <MessageSquare className="h-5 w-5" />,
+          href: "/sms-send",
+          description: "Send SMS messages to teachers"
+        },
+        {
           title: "SMS History",
           icon: <MessageSquare className="h-5 w-5" />,
           href: "/sms-history",
