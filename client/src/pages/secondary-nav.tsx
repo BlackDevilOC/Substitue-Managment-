@@ -68,7 +68,7 @@ export default function SecondaryNavPage() {
         {
           title: "Substitutes",
           icon: <Users className="h-5 w-5" />,
-          href: "/substitutes-page",
+          href: "/assigned-substitutes",
           description: "Manage substitute teachers"
         },
         {
