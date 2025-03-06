@@ -21,6 +21,8 @@ import { ProtectedRoute } from "./lib/protected-route";
 import BottomNav from "./components/bottom-nav";
 import NotificationsPage from "@/pages/notifications";
 import ExperimentScreen from "@/pages/experiment-screen";
+// Added import for the new page
+import SMSSendPage from "@/pages/sms-send"; // Assuming this component exists
 
 function Router() {
   return (
@@ -40,6 +42,7 @@ function Router() {
       <ProtectedRoute path="/assigned-substitutes" component={AssignedSubstitutesPage} />
       <ProtectedRoute path="/experiments" component={ExperimentScreen} />
       <Route path="/notifications" component={NotificationsPage} />
+      <Route path="/sms-send" component={SMSSendPage} /> {/* Added SMS Send route */}
       <Route component={NotFound} />
     </Switch>
   );

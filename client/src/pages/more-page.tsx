@@ -2,6 +2,8 @@ import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { BarChart3, Calendar, Clock, FileUp, Flask, Settings } from "lucide-react";
 
+import { Beaker } from "lucide-react";
+
 function MorePage() {
   const menuItems = [
     {
@@ -27,7 +29,7 @@ function MorePage() {
     },
     {
       title: "Experiments",
-      icon: <Flask className="h-6 w-6" />,
+      icon: <Beaker className="h-6 w-6" />,
       path: "/experiments",
       color: "bg-yellow-100",
       description: "Explore experimental features"
