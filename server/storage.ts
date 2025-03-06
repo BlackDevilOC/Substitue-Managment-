@@ -336,11 +336,12 @@ async function getSmsHistory(): Promise<SmsHistoryEntry[]> {
   }
 }
 
-export const storage = new MemStorage();
-
+// SMS history storage interface
 interface SmsHistory {
   id: number;
   teacherId: number;
   message: string;
   sentAt: Date;
 }
+
+export const storage = new MemStorage();
