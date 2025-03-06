@@ -2,7 +2,7 @@ import { Teacher, Schedule } from '@shared/schema';
 import { storage } from './storage';
 
 // Development mode configuration
-const TEST_PHONE_NUMBER = "+923133469238";
+const TEST_PHONE_NUMBER = "+923124406273";
 
 interface SMSMessage {
   recipient: string;  // Phone number
@@ -63,10 +63,19 @@ Please confirm your availability.
   // Store SMS in history before sending
   await storage.createSmsHistory({
     teacherId: substitute.id,
-    message: message
+    message: message,
+    status: 'pending'
   });
 
   const smsSent = await sendSMS(phoneNumber, message);
+
+  // Update SMS status after sending
+  if (smsSent) {
+    await storage.updateSmsStatus(substitute.id, 'sent');
+  } else {
+    await storage.updateSmsStatus(substitute.id, 'failed');
+  }
+
   console.log(`SMS logged for ${substitute.name}: ${smsSent ? 'Success' : 'Failed'}`);
   return message;
 }
