@@ -2,36 +2,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Bell, 
   MessageSquare, 
-  User,
   Settings,
   Calendar,
-  Phone,
-  UserMinus,
-  ClipboardList,
-  Clock
+  Clock,
+  Upload,
+  FileText,
+  Users,
+  School
 } from "lucide-react";
 import { Link } from "wouter";
+import { motion } from "framer-motion";
 
 export default function SecondaryNavPage() {
   const navItems = [
-    {
-      title: "Profile Settings",
-      icon: <User className="h-5 w-5" />,
-      href: "/profile",
-      description: "Manage your account settings"
-    },
-    {
-      title: "Attendee Tracking",
-      icon: <UserMinus className="h-5 w-5" />,
-      href: "/absences",
-      description: "Mark attendees as present or absent"
-    },
-    {
-      title: "Class Assignments",
-      icon: <ClipboardList className="h-5 w-5" />,
-      href: "/manage-absences",
-      description: "Assign teachers to classes"
-    },
     {
       title: "Schedule",
       icon: <Calendar className="h-5 w-5" />,
@@ -45,49 +28,99 @@ export default function SecondaryNavPage() {
       description: "Configure period start and end times"
     },
     {
+      title: "File Upload",
+      icon: <Upload className="h-5 w-5" />,
+      href: "/file-upload",
+      description: "Upload timetable and schedule files"
+    },
+    {
       title: "SMS History",
       icon: <MessageSquare className="h-5 w-5" />,
       href: "/sms-history",
       description: "View message history and notifications"
     },
     {
-      title: "System Settings",
-      icon: <Settings className="h-5 w-5" />,
-      href: "/settings",
-      description: "Configure system preferences"
-    },
-    {
-      title: "Emergency Contacts",
-      icon: <Phone className="h-5 w-5" />,
-      href: "/emergency-contacts",
-      description: "Manage emergency contact information"
+      title: "Substitutes",
+      icon: <Users className="h-5 w-5" />,
+      href: "/substitutes-page",
+      description: "Manage substitute teachers"
     },
     {
       title: "Notifications",
       icon: <Bell className="h-5 w-5" />,
       href: "/notifications",
       description: "Manage notification preferences"
+    },
+    {
+      title: "Settings",
+      icon: <Settings className="h-5 w-5" />,
+      href: "/settings",
+      description: "Configure system preferences"
+    },
+    {
+      title: "Teacher Details",
+      icon: <School className="h-5 w-5" />,
+      href: "/teacher-details",
+      description: "View and manage teacher information"
     }
   ];
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <h1 className="text-2xl font-bold">Settings & More</h1>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {navItems.map((item) => (
-          <Link key={item.href} href={item.href}>
-            <Card className="h-full hover:bg-accent/5 transition-colors cursor-pointer">
-              <CardHeader className="flex flex-row items-center gap-2">
-                {item.icon}
-                <CardTitle className="text-base">{item.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">{item.description}</p>
-              </CardContent>
-            </Card>
-          </Link>
+    <div className="container mx-auto p-4 min-h-screen bg-gradient-to-b from-background to-background/80">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-8"
+      >
+        <h1 className="text-3xl font-bold text-primary">Settings & More</h1>
+        <p className="text-muted-foreground mt-2">Manage your school system preferences and access additional features</p>
+      </motion.div>
+
+      <motion.div 
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+      >
+        {navItems.map((item, index) => (
+          <motion.div
+            key={item.href}
+            variants={item}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Link href={item.href}>
+              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary/20">
+                <CardHeader className="flex flex-row items-center gap-3 pb-2">
+                  <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                    {item.icon}
+                  </div>
+                  <CardTitle className="text-lg">{item.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                </CardContent>
+              </Card>
+            </Link>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }
