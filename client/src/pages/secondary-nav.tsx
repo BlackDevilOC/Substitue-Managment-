@@ -9,7 +9,7 @@ import {
   FileText,
   Users,
   School,
-  Flask
+  Beaker
 } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -66,7 +66,7 @@ export default function SecondaryNavPage() {
     },
     {
       title: "Experiments",
-      icon: <Flask className="h-5 w-5" />,
+      icon: <Beaker className="h-5 w-5" />,
       href: "/experiments",
       description: "Test and validate code changes"
     }
