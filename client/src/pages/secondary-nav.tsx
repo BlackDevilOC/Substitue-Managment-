@@ -40,7 +40,7 @@ export default function SecondaryNavPage() {
         {
           title: "File Upload",
           icon: <Upload className="h-5 w-5" />,
-          href: "/file-upload",
+          href: "/upload",
           description: "Upload timetable and schedule files"
         }
       ]
