@@ -8,7 +8,8 @@ import {
   Upload,
   FileText,
   Users,
-  School
+  School,
+  Flask
 } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -62,6 +63,12 @@ export default function SecondaryNavPage() {
       icon: <School className="h-5 w-5" />,
       href: "/teacher-details",
       description: "View and manage teacher information"
+    },
+    {
+      title: "Experiments",
+      icon: <Flask className="h-5 w-5" />,
+      href: "/experiments",
+      description: "Test and validate code changes"
     }
   ];
 
@@ -96,9 +103,9 @@ export default function SecondaryNavPage() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
       >
-        {navItems.map((item, index) => (
+        {navItems.map((item) => (
           <motion.div
             key={item.href}
             variants={item}

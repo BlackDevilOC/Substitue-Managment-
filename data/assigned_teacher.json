@@ -1,33 +1,4 @@
 {
-  "assignments": [
-    {
-      "originalTeacher": "Sir Bakir Shah",
-      "period": 1,
-      "className": "10A",
-      "substitute": "Sir Waqar Ali",
-      "substitutePhone": "+923113588606"
-    },
-    {
-      "originalTeacher": "Sir Bakir Shah",
-      "period": 2,
-      "className": "10A",
-      "substitute": "Sir Faisal Ali",
-      "substitutePhone": "+923473093995"
-    },
-    {
-      "originalTeacher": "Sir Bakir Shah",
-      "period": 4,
-      "className": "10B",
-      "substitute": "Sir Irshad Qureshi",
-      "substitutePhone": "+923123131179"
-    },
-    {
-      "originalTeacher": "Sir Bakir Shah",
-      "period": 5,
-      "className": "10A",
-      "substitute": "Sir Muhammad Taha",
-      "substitutePhone": "+923163745043"
-    }
-  ],
+  "assignments": [],
   "warnings": []
 }
