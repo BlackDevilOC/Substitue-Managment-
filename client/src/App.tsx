@@ -1,3 +1,4 @@
+
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -24,36 +25,32 @@ import ExperimentScreen from "@/pages/experiment-screen";
 // Added import for the new page
 import SMSSendPage from "@/pages/sms-send";
 
-function Router() {
-  return (
-    <Switch>
-      <Route path="/auth" component={AuthPage} />
-      <ProtectedRoute path="/" component={HomePage} />
-      <ProtectedRoute path="/schedule" component={SchedulePage} />
-      <ProtectedRoute path="/attendees" component={Attendees} />
-      <ProtectedRoute path="/upload" component={FileUploadPage} />
-      <ProtectedRoute path="/profile" component={ProfilePage} />
-      <ProtectedRoute path="/manage-absences" component={ManageAbsencesPage} />
-      <ProtectedRoute path="/teacher-details/:name" component={TeacherDetailsPage} />
-      <ProtectedRoute path="/more" component={SecondaryNavPage} />
-      <ProtectedRoute path="/sms-history" component={SMSHistoryPage} />
-      <ProtectedRoute path="/settings" component={SettingsPage} />
-      <ProtectedRoute path="/periods" component={PeriodsPage} />
-      <ProtectedRoute path="/assigned-substitutes" component={AssignedSubstitutesPage} />
-      <ProtectedRoute path="/experiments" component={ExperimentScreen} />
-      <Route path="/notifications" component={NotificationsPage} />
-      <Route path="/sms-send" component={SMSSendPage} /> {/* Added SMS Send route */}
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
-
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="min-h-screen pb-16">
-          <Router />
+        <div className="flex flex-col min-h-screen">
+          <div className="flex-1">
+            <Switch>
+              <Route path="/auth" component={AuthPage} />
+              <Route path="/" component={HomePage} />
+              <Route path="/schedule" component={SchedulePage} />
+              <Route path="/attendees" component={Attendees} />
+              <Route path="/file-upload" component={FileUploadPage} />
+              <Route path="/profile" component={ProfilePage} />
+              <Route path="/manage-absences" component={ManageAbsencesPage} />
+              <Route path="/teacher/:id" component={TeacherDetailsPage} />
+              <Route path="/secondary-nav" component={SecondaryNavPage} />
+              <Route path="/sms-history" component={SMSHistoryPage} />
+              <Route path="/sms-send" component={SMSSendPage} />
+              <Route path="/settings" component={SettingsPage} />
+              <Route path="/periods" component={PeriodsPage} />
+              <Route path="/assigned-substitutes" component={AssignedSubstitutesPage} />
+              <Route path="/notifications" component={NotificationsPage} />
+              <Route path="/experiment" component={ExperimentScreen} />
+              <Route component={NotFound} />
+            </Switch>
+          </div>
           <BottomNav />
         </div>
         <Toaster />
