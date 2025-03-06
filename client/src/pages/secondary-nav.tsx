@@ -55,7 +55,7 @@ export default function SecondaryNavPage() {
         },
         {
           title: "SMS History",
-          icon: <MessageSquare className="h-5 w-5" />,
+          icon: <MessageSquare className="h-5 w-5" />, //Using MessageSquare as no HistoryIcon is provided
           href: "/sms-history",
           description: "View message history and notifications"
         },

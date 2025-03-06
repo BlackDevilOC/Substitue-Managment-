@@ -22,7 +22,8 @@ import BottomNav from "./components/bottom-nav";
 import NotificationsPage from "@/pages/notifications";
 import ExperimentScreen from "@/pages/experiment-screen";
 // Added import for the new page
-import SMSSendPage from "@/pages/sms-send"; // Assuming this component exists
+import SMSSendPage from "@/pages/sms-send";
+import SMSHistoryPage from "@/pages/sms-history"; // Assuming this component exists
 
 function Router() {
   return (
@@ -43,6 +44,7 @@ function Router() {
       <ProtectedRoute path="/experiments" component={ExperimentScreen} />
       <Route path="/notifications" component={NotificationsPage} />
       <Route path="/sms-send" component={SMSSendPage} /> {/* Added SMS Send route */}
+      <Route path="/sms-history" component={SMSHistoryPage} /> {/* Added SMS History route */}
       <Route component={NotFound} />
     </Switch>
   );
