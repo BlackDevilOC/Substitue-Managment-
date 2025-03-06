@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, date, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, date, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -71,6 +71,29 @@ export const smsHistory = pgTable("sms_history", {
   status: text("status").notNull(),
 });
 
+// New experiment-related tables
+export const experiments = pgTable("experiments", {
+  id: serial("id").primaryKey(),
+  changeType: text("change_type").notNull(),
+  targetFile: text("target_file").notNull(),
+  codeSnippet: text("code_snippet"),
+  description: text("description").notNull(),
+  androidCompatibilityCheck: boolean("android_compatibility_check").default(true).notNull(),
+  status: text("status").notNull(), // 'pending', 'validated', 'failed', 'applied'
+  submittedAt: timestamp("submitted_at").notNull().defaultNow(),
+  submittedBy: text("submitted_by").notNull(),
+});
+
+export const versionControl = pgTable("version_control", {
+  id: serial("id").primaryKey(),
+  experimentId: integer("experiment_id").notNull(),
+  previousState: text("previous_state").notNull(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  androidCompatibilityStatus: text("android_compatibility_status").notNull(),
+  buildStatus: text("build_status").notNull(),
+  validationErrors: jsonb("validation_errors"),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -94,6 +117,18 @@ export const insertHistoricalTimetableSchema = createInsertSchema(historicalTime
 export const insertHistoricalTeacherSchema = createInsertSchema(historicalTeachers);
 export const insertTeacherAttendanceSchema = createInsertSchema(teacherAttendance);
 export const insertUploadedFileSchema = createInsertSchema(uploadedFiles);
+export const insertExperimentSchema = createInsertSchema(experiments);
+export const insertVersionControlSchema = createInsertSchema(versionControl);
+
+// Experiment submission schema
+export const experimentSubmissionSchema = z.object({
+  change_type: z.enum(["add", "modify", "delete"]),
+  target_file: z.string().min(1, "Target file path is required"),
+  code_snippet: z.string().optional(),
+  description: z.string().min(1, "Description is required"),
+  android_compatibility_check: z.boolean().default(true)
+});
+
 
 // Types
 export type User = typeof users.$inferSelect;
@@ -105,3 +140,7 @@ export type TeacherAttendance = typeof teacherAttendance.$inferSelect;
 export type SmsHistory = typeof smsHistory.$inferSelect;
 export type UploadedFile = typeof uploadedFiles.$inferSelect;
 export type ChangePassword = z.infer<typeof changePasswordSchema>;
+export type Experiment = typeof experiments.$inferSelect;
+export type InsertExperiment = z.infer<typeof insertExperimentSchema>;
+export type VersionControl = typeof versionControl.$inferSelect;
+export type ExperimentSubmission = z.infer<typeof experimentSubmissionSchema>;

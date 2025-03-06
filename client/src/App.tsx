@@ -20,6 +20,7 @@ import AssignedSubstitutesPage from "@/pages/assigned-substitutes";
 import { ProtectedRoute } from "./lib/protected-route";
 import BottomNav from "./components/bottom-nav";
 import NotificationsPage from "@/pages/notifications";
+import ExperimentScreen from "@/pages/experiment-screen";
 
 function Router() {
   return (
@@ -37,6 +38,7 @@ function Router() {
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/periods" component={PeriodsPage} />
       <ProtectedRoute path="/assigned-substitutes" component={AssignedSubstitutesPage} />
+      <ProtectedRoute path="/experiments" component={ExperimentScreen} />
       <Route path="/notifications" component={NotificationsPage} />
       <Route component={NotFound} />
     </Switch>
