@@ -2,8 +2,6 @@ import { IStorage } from "./types";
 import type { User, InsertUser, Teacher, Schedule, Absence, TeacherAttendance, InsertTeacherAttendance } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
-import * as fs from 'fs';
-import * as path from 'path';
 
 const MemoryStore = createMemoryStore(session);
 
@@ -177,61 +175,6 @@ export class MemStorage implements IStorage {
     const { assignments, warnings } = await manager.autoAssignSubstitutes(date, absentTeachers);
     
     const assignmentsMap = new Map<string, string>();
-
-    // SMS history storage interface
-    const storeSmsHistory = async (entry: {
-      id: number;
-      teacherId: number;
-      teacherName: string;
-      message: string;
-      sentAt: string;
-      status: 'sent' | 'failed' | 'pending';
-    }): Promise<void> => {
-  try {
-    const historyFilePath = path.join(DATA_DIR, 'sms_history.json');
-    let existingHistory: SmsHistoryEntry[] = [];
-    
-    // Check if file exists and read it
-    if (fs.existsSync(historyFilePath)) {
-      const historyData = await fs.promises.readFile(historyFilePath, 'utf-8');
-      existingHistory = JSON.parse(historyData);
-    }
-    
-    // Add new entry
-    existingHistory.push(entry);
-    
-    // Write updated history back to file
-    await fs.promises.writeFile(
-      historyFilePath, 
-      JSON.stringify(existingHistory, null, 2)
-    );
-    
-    console.log(`SMS history entry stored for teacher ID ${entry.teacherId}`);
-  } catch (error) {
-    console.error('Failed to store SMS history:', error);
-    throw error;
-  }
-}
-
-// Function to get SMS history
-    const getSmsHistoryFromFile = async (): Promise<any[]> => {
-      try {
-        const historyFilePath = path.join(__dirname, '../data/sms_history.json');
-        
-        // Check if file exists
-        if (!fs.existsSync(historyFilePath)) {
-          return [];
-        }
-        
-        // Read and parse history file
-        const historyData = await fs.promises.readFile(historyFilePath, 'utf-8');
-        return JSON.parse(historyData);
-      } catch (error) {
-        console.error('Failed to get SMS history:', error);
-        return [];
-      }
-    }
-
     
     // Record these assignments in our database
     for (const assignment of assignments) {
@@ -335,12 +278,11 @@ export class MemStorage implements IStorage {
   }
 }
 
-// SMS history storage interface
+export const storage = new MemStorage();
+
 interface SmsHistory {
   id: number;
   teacherId: number;
   message: string;
   sentAt: Date;
 }
-
-export const storage = new MemStorage();

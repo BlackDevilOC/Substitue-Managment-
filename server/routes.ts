@@ -152,17 +152,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const schedules = JSON.parse(fs.readFileSync(schedulePath, 'utf-8'));
-
+      
       // Find the teacher schedule (try exact match first)
       let teacherSchedule = schedules[teacherName];
-
+      
       // If not found, try to find by partial match
       if (!teacherSchedule) {
         // Find keys that are close to the provided name
         const possibleMatches = Object.keys(schedules).filter(key => 
           key.includes(teacherName) || teacherName.includes(key)
         );
-
+        
         if (possibleMatches.length > 0) {
           teacherSchedule = schedules[possibleMatches[0]];
         }
@@ -279,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
+  
   app.post("/api/mark-attendance", async (req, res) => {
     try {
       const { status, teacherName, phoneNumber } = req.body;
@@ -439,8 +439,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileContent = fs.readFileSync(filePath, 'utf8');
       const absentTeachers = JSON.parse(fileContent);
 
+      // Filter out teachers that already have substitutes assigned
+      const unassignedTeachers = absentTeachers.filter((t: any) => !t.assignedSubstitute);
+
       // Sort by timestamp to get latest entries first
-      const sortedTeachers = absentTeachers.sort((a: any, b: any) => {
+      const sortedTeachers = unassignedTeachers.sort((a: any, b: any) => {
         return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
       });
 
@@ -482,7 +485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Read assignments from file
       const fileContent = fs.readFileSync(filePath, 'utf8');
-
+      
       try {
         const assignmentsData = JSON.parse(fileContent);
         console.log('Sending assignments data:', assignmentsData);
@@ -490,7 +493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (parseError) {
         console.error('JSON parsing error:', parseError);
         console.log('File content that failed to parse:', fileContent);
-
+        
         // Attempt to fix invalid JSON and try again
         try {
           // In case of emergency, return an empty valid response instead of failing
@@ -498,7 +501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             assignments: [],
             warnings: ["Data read error - please check assigned_teacher.json format"]
           });
-
+          
           // Try to auto-fix the JSON file for next time
           const emptyData = {
             assignments: [],
@@ -553,16 +556,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const filePath = path.join(__dirname, '../data/teacher_schedules.json');
-
+      
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: 'Teacher schedules file not found' });
       }
 
       const scheduleData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-
+      
       // Find the teacher's schedule (with case insensitive matching)
       const teacherSchedule = scheduleData[teacherName] || [];
-
+      
       res.json(teacherSchedule);
     } catch (error) {
       console.error('Error fetching teacher schedule:', error);
@@ -773,140 +776,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error reading class schedules:', error);
       res.status(500).json({ error: 'Failed to read class schedules' });
-    }
-  });
-
-  // Send the current list of assignments
-  app.get('/api/substitute-assignments', (req, res) => {
-    const assignmentsFilePath = path.join(DATA_DIR, 'assigned_teacher.json');
-
-    try {
-      const data = fs.readFileSync(assignmentsFilePath, 'utf8');
-      const assignments = JSON.parse(data);
-      console.log('Sending assignments data:', assignments);
-      res.json(assignments);
-    } catch (error) {
-      console.error('Error reading assignments:', error);
-      res.status(500).json({ error: 'Failed to read assignments' });
-    }
-  });
-
-  // Get SMS history
-  app.get('/api/sms-history', async (req, res) => {
-    try {
-      const historyFilePath = path.join(DATA_DIR, 'sms_history.json');
-
-      // Check if file exists
-      if (!fs.existsSync(historyFilePath)) {
-        return res.json([]);
-      }
-
-      const data = fs.readFileSync(historyFilePath, 'utf8');
-      const history = JSON.parse(data);
-      res.json(history);
-    } catch (error) {
-      console.error('Error reading SMS history:', error);
-      res.status(500).json({ error: 'Failed to read SMS history' });
-    }
-  });
-
-  // Store SMS message
-  app.post('/api/send-sms', async (req, res) => {
-    try {
-      const { teacherId, message, teacherName } = req.body;
-
-      if (!teacherId || !message) {
-        return res.status(400).json({ error: 'Missing required fields' });
-      }
-
-      const smsEntry = {
-        id: Date.now(),
-        teacherId,
-        teacherName,
-        message,
-        sentAt: new Date().toISOString(),
-        status: 'sent'
-      };
-
-      // Store in SMS history file
-      const historyFilePath = path.join(DATA_DIR, 'sms_history.json');
-      let existingHistory = [];
-
-      // Check if file exists and read it
-      if (fs.existsSync(historyFilePath)) {
-        const historyData = fs.readFileSync(historyFilePath, 'utf8');
-        existingHistory = JSON.parse(historyData);
-      }
-
-      // Add new entry
-      existingHistory.push(smsEntry);
-
-      // Write updated history back to file
-      fs.writeFileSync(
-        historyFilePath, 
-        JSON.stringify(existingHistory, null, 2)
-      );
-
-      // Log message in dev mode
-      console.log('\n=== SMS Message Log ===');
-      console.log(`To: ${teacherName} (ID: ${teacherId})`);
-      console.log('Message:');
-      console.log(message);
-      console.log('=====================\n');
-
-      res.json({ success: true, message: 'SMS sent and saved to history' });
-    } catch (error) {
-      console.error('Error sending SMS:', error);
-      res.status(500).json({ error: 'Failed to send SMS' });
-    }
-  });
-
-  // Resend SMS
-  app.post('/api/resend-sms', async (req, res) => {
-    try {
-      const { id, teacherId, message, teacherName } = req.body;
-
-      if (!teacherId || !message) {
-        return res.status(400).json({ error: 'Missing required fields' });
-      }
-
-      // Create a new SMS history entry
-      const smsEntry = {
-        id: Date.now(),
-        teacherId,
-        teacherName: teacherName || 'Unknown Teacher',
-        message,
-        sentAt: new Date().toISOString(),
-        status: 'sent'
-      };
-
-      // Store in SMS history file
-      const historyFilePath = path.join(DATA_DIR, 'sms_history.json');
-      let existingHistory = [];
-
-      if (fs.existsSync(historyFilePath)) {
-        const historyData = fs.readFileSync(historyFilePath, 'utf8');
-        existingHistory = JSON.parse(historyData);
-      }
-
-      existingHistory.push(smsEntry);
-
-      fs.writeFileSync(
-        historyFilePath, 
-        JSON.stringify(existingHistory, null, 2)
-      );
-
-      // Log resent message
-      console.log('\n=== Resent SMS Message Log ===');
-      console.log(`To: ${teacherName || 'Unknown'} (ID: ${teacherId})`);
-      console.log('Message:');
-      console.log(message);
-      console.log('=====================\n');
-
-      res.json({ success: true, message: 'SMS resent and saved to history' });
-    } catch (error) {
-      console.error('Error resending SMS:', error);
-      res.status(500).json({ error: 'Failed to resend SMS' });
     }
   });
 
