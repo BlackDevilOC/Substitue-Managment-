@@ -44,47 +44,6 @@ export default function SmsSendPage() {
     },
   });
 
-  const handleSendMessage = async () => {
-    if (selectedTeachers.length === 0) {
-      toast.error("Please select at least one teacher");
-      return;
-    }
-
-    if (!messageText.trim()) {
-      toast.error("Please enter a message");
-      return;
-    }
-
-    try {
-      // Here would be the API call to send SMS
-      // For now, we'll just simulate success
-      toast.success(`Message sent to ${selectedTeachers.length} teachers!`);
-      setMessageText("");
-    } catch (error) {
-      toast.error("Failed to send message");
-      console.error(error);
-    }
-  };
-
-  const handleSelectTeacher = (teacherName: string) => {
-    if (selectedTeachers.includes(teacherName)) {
-      setSelectedTeachers(selectedTeachers.filter(name => name !== teacherName));
-    } else {
-      setSelectedTeachers([...selectedTeachers, teacherName]);
-    }
-  };
-
-  const handleSelectAll = () => {
-    if (teachers) {
-      const allTeacherNames = teachers.map((teacher: any) => teacher.name);
-      setSelectedTeachers(allTeacherNames);
-    }
-  };
-
-  const handleClearAll = () => {
-    setSelectedTeachers([]);
-  };
-
   const groupTeachersByAssignmentStatus = () => {
     if (!teachers || !assignments) return { assigned: [], unassigned: [] };
     
@@ -173,129 +132,158 @@ export default function SmsSendPage() {
         </div>
       </div>
 
+      <Tabs defaultValue="assigned">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="assigned">
+            Assigned Teachers
+            {assigned.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {assigned.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="unassigned">
+            Unassigned Teachers
+            {unassigned.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {unassigned.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="assigned" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Assigned Substitute Teachers</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {assignmentsLoading ? (
+                <p>Loading...</p>
+              ) : assigned.length === 0 ? (
+                <p className="text-muted-foreground">No assigned teachers found</p>
+              ) : (
+                <div className="space-y-2">
+                  {assigned.map((teacher: any) => (
+                    <div
+                      key={teacher.id}
+                      className={`flex items-center justify-between p-3 rounded-lg border ${
+                        selectedTeachers.includes(teacher.id.toString())
+                          ? "bg-primary/10 border-primary"
+                          : ""
+                      }`}
+                      onClick={() => {
+                        if (selectedTeachers.includes(teacher.id.toString())) {
+                          setSelectedTeachers(selectedTeachers.filter(id => id !== teacher.id.toString()));
+                        } else {
+                          setSelectedTeachers([...selectedTeachers, teacher.id.toString()]);
+                        }
+                      }}
+                    >
+                      <div>
+                        <p className="font-medium">{teacher.name}</p>
+                        <p className="text-sm text-muted-foreground">{teacher.phone}</p>
+                      </div>
+                      <div className="h-5 w-5 rounded-full border flex items-center justify-center">
+                        {selectedTeachers.includes(teacher.id.toString()) && (
+                          <div className="h-3 w-3 rounded-full bg-primary" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="unassigned" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Unassigned Substitute Teachers</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {teachersLoading ? (
+                <p>Loading...</p>
+              ) : unassigned.length === 0 ? (
+                <p className="text-muted-foreground">No unassigned teachers found</p>
+              ) : (
+                <div className="space-y-2">
+                  {unassigned.map((teacher: any) => (
+                    <div
+                      key={teacher.id}
+                      className={`flex items-center justify-between p-3 rounded-lg border ${
+                        selectedTeachers.includes(teacher.id.toString())
+                          ? "bg-primary/10 border-primary"
+                          : ""
+                      }`}
+                      onClick={() => {
+                        if (selectedTeachers.includes(teacher.id.toString())) {
+                          setSelectedTeachers(selectedTeachers.filter(id => id !== teacher.id.toString()));
+                        } else {
+                          setSelectedTeachers([...selectedTeachers, teacher.id.toString()]);
+                        }
+                      }}
+                    >
+                      <div>
+                        <p className="font-medium">{teacher.name}</p>
+                        <p className="text-sm text-muted-foreground">{teacher.phone}</p>
+                      </div>
+                      <div className="h-5 w-5 rounded-full border flex items-center justify-center">
+                        {selectedTeachers.includes(teacher.id.toString()) && (
+                          <div className="h-3 w-3 rounded-full bg-primary" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
       <Card>
         <CardHeader>
-          <CardTitle>Compose Message</CardTitle>
+          <CardTitle className="text-lg">Compose Message</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div>
-              <h3 className="text-sm font-medium mb-2">Recipients ({selectedTeachers.length})</h3>
-              <div className="flex flex-wrap gap-2 min-h-10 p-2 border rounded-md bg-secondary/20">
-                {selectedTeachers.map(teacher => (
-                  <Badge key={teacher} variant="secondary" className="flex items-center gap-1">
-                    {teacher}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => handleSelectTeacher(teacher)}
-                    />
-                  </Badge>
-                ))}
-                {selectedTeachers.length === 0 && (
-                  <span className="text-sm text-muted-foreground">No teachers selected</span>
-                )}
+              <div className="flex justify-between mb-2">
+                <p className="text-sm font-medium">Selected Recipients: {selectedTeachers.length}</p>
+                <Select>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Message Template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="assignment">Assignment Notification</SelectItem>
+                    <SelectItem value="reminder">Class Reminder</SelectItem>
+                    <SelectItem value="meeting">Staff Meeting</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-medium mb-2">Message</h3>
-              <Textarea 
+              <Textarea
                 placeholder="Type your message here..."
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
-                className="min-h-32"
+                className="min-h-[120px]"
               />
+              <div className="flex justify-between mt-2">
+                <p className="text-xs text-muted-foreground">
+                  {messageText.length} characters
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {Math.ceil(messageText.length / 160)} SMS
+                </p>
+              </div>
             </div>
-            
-            <Button 
-              className="w-full"
-              onClick={handleSendMessage}
-              disabled={selectedTeachers.length === 0 || !messageText.trim()}
-            >
-              <Send className="mr-2 h-4 w-4" /> Send Message
+            <Button className="w-full" onClick={handleSendSms}>
+              <Send className="h-4 w-4 mr-2" /> Send Message
             </Button>
           </div>
         </CardContent>
       </Card>
-
-      <Tabs defaultValue="all">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="all">All Teachers</TabsTrigger>
-          <TabsTrigger value="assigned">Assigned</TabsTrigger>
-          <TabsTrigger value="unassigned">Unassigned</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="all" className="space-y-4 mt-4">
-          {teachersLoading ? (
-            <div className="text-center p-4">Loading teachers...</div>
-          ) : (
-            teachers?.map((teacher: any) => (
-              <TeacherCard 
-                key={teacher.id}
-                teacher={teacher}
-                isSelected={selectedTeachers.includes(teacher.name)}
-                onSelect={() => handleSelectTeacher(teacher.name)}
-              />
-            ))
-          )}
-        </TabsContent>
-        
-        <TabsContent value="assigned" className="space-y-4 mt-4">
-          {assignmentsLoading || teachersLoading ? (
-            <div className="text-center p-4">Loading...</div>
-          ) : assigned.length === 0 ? (
-            <div className="text-center p-4 text-muted-foreground">No assigned teachers</div>
-          ) : (
-            assigned.map((teacher: any) => (
-              <TeacherCard 
-                key={teacher.id}
-                teacher={teacher}
-                isSelected={selectedTeachers.includes(teacher.name)}
-                onSelect={() => handleSelectTeacher(teacher.name)}
-              />
-            ))
-          )}
-        </TabsContent>
-        
-        <TabsContent value="unassigned" className="space-y-4 mt-4">
-          {assignmentsLoading || teachersLoading ? (
-            <div className="text-center p-4">Loading...</div>
-          ) : unassigned.length === 0 ? (
-            <div className="text-center p-4 text-muted-foreground">No unassigned teachers</div>
-          ) : (
-            unassigned.map((teacher: any) => (
-              <TeacherCard 
-                key={teacher.id}
-                teacher={teacher}
-                isSelected={selectedTeachers.includes(teacher.name)}
-                onSelect={() => handleSelectTeacher(teacher.name)}
-              />
-            ))
-          )}
-        </TabsContent>
-      </Tabs>
     </div>
-  );
-}
-
-function TeacherCard({ teacher, isSelected, onSelect }: any) {
-  return (
-    <Card className={`transition-colors ${isSelected ? 'border-primary' : ''}`}>
-      <CardContent className="p-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="font-medium">{teacher.name}</h3>
-            <p className="text-sm text-muted-foreground">{teacher.phoneNumber || 'No phone number'}</p>
-          </div>
-          <Button
-            variant={isSelected ? "default" : "outline"} 
-            size="sm"
-            onClick={onSelect}
-          >
-            {isSelected ? 'Selected' : 'Select'}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
