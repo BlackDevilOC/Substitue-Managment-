@@ -9,7 +9,7 @@ export default function BottomNav() {
     { icon: UserMinus, label: "Attendee", href: "/attendees" },
     { icon: MessageSquare, label: "SMS", href: "/sms-send" },
     { icon: ClipboardList, label: "Class", href: "/manage-absences" },
-    { icon: MoreHorizontal, label: "More", href: "/more" },
+    { icon: MoreHorizontal, label: "More", href: "/secondary-nav" },
   ];
 
   return (
