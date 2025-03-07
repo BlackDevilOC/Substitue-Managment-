@@ -700,6 +700,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Removed ${teacherName} from absent teachers list`);
       }
 
+  app.get("/api/absent-teachers-count", (req, res) => {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/absent_teachers.json');
+
+      if (!fs.existsSync(filePath)) {
+        return res.json({ count: 0 });
+      }
+
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      let absentTeachers = [];
+      
+      try {
+        absentTeachers = JSON.parse(fileContent);
+      } catch (err) {
+        console.error('Error parsing absent_teachers.json:', err);
+        return res.json({ count: 0 });
+      }
+      
+      // Only return the count and names, avoiding timestamp processing
+      const simpleList = absentTeachers.map(teacher => ({
+        name: teacher.name,
+        phoneNumber: teacher.phoneNumber,
+        hasAssignedSubstitute: teacher.assignedSubstitute || false
+      }));
+
+      res.json({ 
+        count: simpleList.length,
+        teachers: simpleList
+      });
+    } catch (error) {
+      console.error('Error getting absent teachers count:', error);
+      res.status(500).json({ error: 'Failed to get absent teachers count', count: 0 });
+    }
+  });
+
+
+
       fs.writeFileSync(filePath, JSON.stringify(currentAbsentTeachers, null, 2));
       res.json({ success: true, absentTeachers: currentAbsentTeachers });
     } catch (error) {

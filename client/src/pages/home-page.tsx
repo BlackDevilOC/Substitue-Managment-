@@ -100,16 +100,20 @@ export default function HomePage() {
     }
   });
 
-  const { data: absentTeachers, isLoading: loadingAbsentTeachers, refetch: refetchAbsentTeachers } = useQuery({
-    queryKey: ["/api/get-absent-teachers"],
+  const { data: absentTeachersData, isLoading: loadingAbsentTeachers, refetch: refetchAbsentTeachers } = useQuery({
+    queryKey: ["/api/absent-teachers-count"],
     queryFn: async () => {
-      const res = await fetch('/api/get-absent-teachers');
+      const res = await fetch('/api/absent-teachers-count');
       if (!res.ok) {
-        throw new Error('Failed to fetch absent teachers');
+        throw new Error('Failed to fetch absent teachers count');
       }
       return res.json();
     }
   });
+  
+  // Use a safe default if data is not available
+  const absentTeachers = absentTeachersData?.teachers || [];
+  const absentTeachersCount = absentTeachersData?.count || 0;
 
 
   const { data: periodSchedules, isLoading: loadingPeriodSchedules, refetch: refetchPeriodSchedules } = useQuery({
