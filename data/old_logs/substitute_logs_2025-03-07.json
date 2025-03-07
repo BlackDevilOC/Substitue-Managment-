@@ -1,7 +1,7 @@
 {
   "2025-03-07": [
     {
-      "timestamp": "2025-03-07T22:03:57.612Z",
+      "timestamp": "2025-03-07T22:03:22.316Z",
       "action": "ProcessStart",
       "details": "Initializing substitute assignment system",
       "status": "info",
@@ -11,14 +11,14 @@
       "durationMs": 0
     },
     {
-      "timestamp": "2025-03-07T22:03:57.612Z",
+      "timestamp": "2025-03-07T22:03:22.316Z",
       "action": "DataLoading",
       "details": "Using 1 provided absent teachers",
       "status": "info",
       "durationMs": 0
     },
     {
-      "timestamp": "2025-03-07T22:03:57.612Z",
+      "timestamp": "2025-03-07T22:03:22.316Z",
       "action": "DataLoading",
       "details": "Loading source files",
       "status": "info",
@@ -33,7 +33,7 @@
       "durationMs": 0
     },
     {
-      "timestamp": "2025-03-07T22:03:57.613Z",
+      "timestamp": "2025-03-07T22:03:22.327Z",
       "action": "ProcessError",
       "details": "Error in autoAssignSubstitutes: ReferenceError: csv is not defined",
       "status": "error",
@@ -41,7 +41,7 @@
         "errorMessage": "csv is not defined",
         "stack": "ReferenceError: csv is not defined\n    at SubstituteManager.loadTimetable (/home/runner/workspace/server/substitute-manager.ts:1119:5)\n    at SubstituteManager.autoAssignSubstitutes (/home/runner/workspace/server/substitute-manager.ts:250:14)\n    at <anonymous> (/home/runner/workspace/server/routes.ts:409:36)"
       },
-      "durationMs": 1
+      "durationMs": 11
     }
   ]
 }
