@@ -1,0 +1,276 @@
+async autoAssignSubstitutes(
+  date: string,
+  absentTeacherNames?: string[]
+): Promise<{ assignments: SubstituteAssignment[]; warnings: string[]; logs: ProcessLog[] }> {
+  const logs: ProcessLog[] = [];
+  const startTime = Date.now();
+
+  // Logging helper function
+  const addLog = (action: string, details: string, status: 'info' | 'warning' | 'error' = 'info') => {
+    logs.push({
+      timestamp: new Date().toISOString(),
+      action,
+      details,
+      status,
+      durationMs: Date.now() - startTime
+    });
+  };
+
+  try {
+    // Initialize phase
+    addLog('Initialization', 'Starting substitute assignment process');
+
+    // Load data phase
+    addLog('DataLoading', 'Loading teachers, schedules, and existing assignments');
+    const [teachers, teacherSchedules, assignedTeachers, timetable] = await Promise.all([
+      this.loadTeachers(DEFAULT_TEACHERS_PATH),
+      this.loadSchedules(DEFAULT_SCHEDULES_PATH),
+      this.loadAssignedTeachers(DEFAULT_ASSIGNED_TEACHERS_PATH),
+      this.loadTimetable(DEFAULT_TIMETABLE_PATH)
+    ]);
+    addLog('DataLoading', `Loaded ${teachers.length} teachers, ${teacherSchedules.size} schedules`);
+
+    // Setup tracking structures
+    const day = this.getDayFromDate(date);
+    const assignments: SubstituteAssignment[] = [];
+    const warnings: string[] = [];
+    const workloadMap = new Map<string, number>();
+    const assignedPeriodsMap = new Map<string, Set<number>>();
+    const allPeriodsMap = new Map<string, { period: number; className: string }[]>();
+
+    // Track existing assignments and workload
+    assignedTeachers.forEach(({ substitutePhone, period }) => {
+      workloadMap.set(substitutePhone, (workloadMap.get(substitutePhone) || 0) + 1);
+      const periods = assignedPeriodsMap.get(substitutePhone) || new Set<number>();
+      periods.add(period);
+      assignedPeriodsMap.set(substitutePhone, periods);
+    });
+
+    // Create lookup maps
+    const teacherMap = this.createTeacherMap(teachers);
+    const scheduleMap = new Map(Object.entries(teacherSchedules));
+
+    // Resolve absent teachers with enhanced validation
+    addLog('TeacherResolution', 'Resolving absent teachers');
+    let absentTeachers: Teacher[] = [];
+    if (!absentTeacherNames) {
+      absentTeachers = await this.loadAbsentTeachersFromFile();
+    } else {
+      absentTeachers = this.resolveTeacherNamesWithLogging(
+        absentTeacherNames, 
+        teacherMap,
+        (msg) => {
+          warnings.push(msg);
+          addLog('TeacherResolution', msg, 'warning');
+        }
+      );
+    }
+    addLog('TeacherResolution', `Resolved ${absentTeachers.length} absent teachers`);
+
+    // Precompute all required periods for absent teachers
+    addLog('PeriodCalculation', 'Calculating required periods');
+    absentTeachers.forEach(teacher => {
+      const periods = this.getAllPeriodsForTeacher(teacher.name, day, timetable, teacherSchedules);
+      allPeriodsMap.set(teacher.name, periods);
+      addLog('PeriodCalculation', 
+        `${teacher.name} has ${periods.length} periods on ${day}`);
+    });
+
+    // Substitute eligibility pre-check
+    addLog('SubstitutePreparation', 'Filtering available substitutes');
+    const conflictSubstitutes = this.findConflictSubstitutes(assignedTeachers, absentTeachers);
+    let availableSubstitutes = this.getAvailableSubstitutes(
+      teachers,
+      absentTeachers,
+      assignedTeachers,
+      conflictSubstitutes
+    );
+    addLog('SubstitutePreparation', 
+      `Available substitutes: ${availableSubstitutes.length} after filtering`);
+
+    // Core assignment logic
+    addLog('AssignmentStart', 'Beginning main assignment process');
+    for (const teacher of absentTeachers) {
+      const requiredPeriods = allPeriodsMap.get(teacher.name) || [];
+      addLog('TeacherProcessing', 
+        `Processing ${teacher.name} with ${requiredPeriods.length} periods`);
+
+      for (const { period, className } of requiredPeriods) {
+        const assignmentKey = `${teacher.name}-${period}-${className}`;
+        addLog('PeriodProcessing', 
+          `Attempting assignment for ${assignmentKey}`, 'info');
+
+        const { candidates, warnings: periodWarnings } = this.findSuitableSubstitutes({
+          className,
+          period,
+          day,
+          substitutes: availableSubstitutes,
+          teachers: teacherMap,
+          schedules: scheduleMap,
+          currentWorkload: workloadMap,
+          assignedPeriodsMap
+        });
+
+        warnings.push(...periodWarnings);
+        periodWarnings.forEach(w => 
+          addLog('PeriodProcessing', w, 'warning'));
+
+        if (candidates.length === 0) {
+          addLog('PeriodProcessing', 
+            `No substitutes found for ${assignmentKey}`, 'error');
+          warnings.push(`No substitute found for ${className} period ${period}`);
+          continue;
+        }
+
+        const selected = this.selectOptimalCandidate(candidates, workloadMap);
+        addLog('CandidateSelection', 
+          `Selected ${selected.name} for ${assignmentKey}`, 'info');
+
+        assignments.push({
+          originalTeacher: teacher.name,
+          period,
+          className,
+          substitute: selected.name,
+          substitutePhone: selected.phone
+        });
+
+        // Update tracking maps
+        workloadMap.set(selected.phone, (workloadMap.get(selected.phone) || 0) + 1);
+        const periods = assignedPeriodsMap.get(selected.phone) || new Set<number>();
+        periods.add(period);
+        assignedPeriodsMap.set(selected.phone, periods);
+      }
+    }
+
+    // Post-assignment validation and cleanup
+    addLog('PostValidation', 'Starting post-assignment verification');
+    const validationResult = this.validateAssignments({
+      assignments,
+      workloadMap,
+      teachers: teacherMap,
+      maxWorkload: MAX_DAILY_WORKLOAD,
+      allPeriodsMap,
+      day
+    });
+
+    warnings.push(...validationResult.warnings);
+    validationResult.warnings.forEach(w => 
+      addLog('PostValidation', w, 'warning'));
+
+    // Final check for unassigned periods
+    const unassigned = this.findUnassignedPeriods(assignments, allPeriodsMap);
+    if (unassigned.length > 0) {
+      warnings.push(`${unassigned.length} periods remain unassigned`);
+      addLog('PostValidation', 
+        `${unassigned.length} unassigned periods remaining`, 'error');
+    }
+
+    // Save results
+    addLog('DataPersistence', 'Saving assignments to file');
+    this.saveAssignmentsToFile(assignments, warnings);
+
+    addLog('Completion', 
+      `Process completed successfully. Assigned ${assignments.length} periods`);
+    
+    return {
+      assignments,
+      warnings,
+      logs
+    };
+
+  } catch (error) {
+    addLog('ProcessFailure', `Critical error: ${error.message}`, 'error');
+    return {
+      assignments: [],
+      warnings: [`Critical error: ${error.message}`],
+      logs
+    };
+  }
+}
+
+// New interface for process logs
+interface ProcessLog {
+  timestamp: string;
+  action: string;
+  details: string;
+  status: 'info' | 'warning' | 'error';
+  durationMs: number;
+}
+
+// New helper methods
+private getAllPeriodsForTeacher(
+  teacherName: string,
+  day: string,
+  timetable: any[],
+  teacherSchedules: Map<string, any[]>
+): { period: number; className: string }[] {
+  // Get periods from timetable
+  const timetablePeriods = timetable
+    .filter(entry => 
+      entry.Day.toLowerCase() === day.toLowerCase() &&
+      entry.Teacher.toLowerCase() === teacherName.toLowerCase())
+    .map(entry => ({
+      period: parseInt(entry.Period),
+      className: entry.Class
+    }));
+
+  // Get periods from teacher schedules
+  const schedulePeriods = (teacherSchedules.get(teacherName.toLowerCase()) || [])
+    .filter(schedule => schedule.day.toLowerCase() === day.toLowerCase())
+    .map(schedule => ({
+      period: schedule.period,
+      className: schedule.className
+    }));
+
+  // Merge and deduplicate
+  const merged = [...timetablePeriods, ...schedulePeriods];
+  return Array.from(new Map(merged.map(item => 
+    [`${item.period}-${item.className}`, item])).map(([,v]) => v);
+}
+
+private validateAssignments({
+  assignments,
+  workloadMap,
+  teachers,
+  maxWorkload,
+  allPeriodsMap,
+  day
+}: {
+  assignments: SubstituteAssignment[];
+  workloadMap: Map<string, number>;
+  teachers: Map<string, Teacher>;
+  maxWorkload: number;
+  allPeriodsMap: Map<string, { period: number; className: string }[]>;
+  day: string;
+}): { warnings: string[] } {
+  const warnings: string[] = [];
+  
+  // Check workload limits
+  workloadMap.forEach((count, phone) => {
+    if (count > maxWorkload) {
+      const teacher = teachers.get(phone);
+      warnings.push(`${teacher?.name} exceeded max workload (${count}/${maxWorkload})`);
+    }
+  });
+
+  // Check for duplicate assignments
+  const assignmentKeys = new Set();
+  assignments.forEach(assignment => {
+    const key = `${assignment.substitutePhone}-${assignment.period}`;
+    if (assignmentKeys.has(key)) {
+      warnings.push(`Duplicate assignment: ${assignment.substitute} in period ${assignment.period}`);
+    }
+    assignmentKeys.add(key);
+  });
+
+  // Check for unassigned periods
+  allPeriodsMap.forEach((periods, teacherName) => {
+    const assignedCount = assignments.filter(a => 
+      a.originalTeacher === teacherName).length;
+    if (assignedCount < periods.length) {
+      warnings.push(`${teacherName} has ${periods.length - assignedCount} unassigned periods`);
+    }
+  });
+
+  return { warnings };
+}
