@@ -51,24 +51,10 @@ function getCurrentPeriodFromConfig(periodConfigs: PeriodConfig[]): number | nul
   const now = new Date();
   const currentTimeStr = format(now, 'HH:mm');
 
-  // Convert current time to minutes for easier comparison
-  const [currentHours, currentMinutes] = currentTimeStr.split(':').map(Number);
-  const currentTotalMinutes = currentHours * 60 + currentMinutes;
-
+  // Simple string comparison of times should work since they're in HH:mm format
   for (const config of periodConfigs) {
-    try {
-      // Convert period times to minutes
-      const [startHours, startMinutes] = config.startTime.split(':').map(Number);
-      const [endHours, endMinutes] = config.endTime.split(':').map(Number);
-
-      const startTotalMinutes = startHours * 60 + startMinutes;
-      const endTotalMinutes = endHours * 60 + endMinutes;
-
-      if (currentTotalMinutes >= startTotalMinutes && currentTotalMinutes <= endTotalMinutes) {
-        return config.periodNumber;
-      }
-    } catch (error) {
-      console.error(`Error checking period ${config.periodNumber}:`, error);
+    if (config.startTime <= currentTimeStr && currentTimeStr <= config.endTime) {
+      return config.periodNumber;
     }
   }
 
