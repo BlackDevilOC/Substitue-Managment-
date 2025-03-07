@@ -111,7 +111,14 @@ export default function HomePage() {
       const res = await fetch('/api/absent-teachers');
       if (!res.ok) throw new Error('Failed to fetch absent teachers');
       const data = await res.json();
-      return { count: Array.isArray(data) ? data.length : 0 };
+
+      // Filter for today's absences only
+      const today = new Date().toISOString().split('T')[0];
+      const todayAbsences = Array.isArray(data) 
+        ? data.filter((teacher: any) => teacher.date === today)
+        : [];
+
+      return { count: todayAbsences.length };
     }
   });
 

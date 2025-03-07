@@ -160,6 +160,7 @@ export default function Attendees() {
       const dateStr = selectedDate.toISOString().split('T')[0];
 
       let absentTeachers: Array<{
+        id: number;
         teacherId: number;
         teacherName: string;
         phoneNumber?: string;
@@ -181,7 +182,13 @@ export default function Attendees() {
         );
 
         if (existingIndex === -1) {
+          // Get the last ID or start from 1
+          const lastId = absentTeachers.length > 0 
+            ? Math.max(...absentTeachers.map(t => t.id)) 
+            : 0;
+
           absentTeachers.push({
+            id: lastId + 1,
             teacherId: teacher.id,
             teacherName: teacher.name,
             phoneNumber: teacher.phoneNumber || undefined,
