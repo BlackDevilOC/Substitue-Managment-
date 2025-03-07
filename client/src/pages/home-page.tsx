@@ -49,20 +49,26 @@ function getCurrentPeriodFromConfig(periodConfigs: PeriodConfig[]): number | nul
   if (!periodConfigs?.length) return null;
 
   const now = new Date();
-  const currentTime = format(now, 'HH:mm');
+  const currentTimeStr = format(now, 'HH:mm');
+
+  // Convert current time to minutes for easier comparison
+  const [currentHours, currentMinutes] = currentTimeStr.split(':').map(Number);
+  const currentTotalMinutes = currentHours * 60 + currentMinutes;
 
   for (const config of periodConfigs) {
     try {
-      const baseDate = new Date();
-      const startTime = parse(config.startTime, 'HH:mm', baseDate);
-      const endTime = parse(config.endTime, 'HH:mm', baseDate);
-      const currentDateTime = parse(currentTime, 'HH:mm', baseDate);
+      // Convert period times to minutes
+      const [startHours, startMinutes] = config.startTime.split(':').map(Number);
+      const [endHours, endMinutes] = config.endTime.split(':').map(Number);
 
-      if (isWithinInterval(currentDateTime, { start: startTime, end: endTime })) {
+      const startTotalMinutes = startHours * 60 + startMinutes;
+      const endTotalMinutes = endHours * 60 + endMinutes;
+
+      if (currentTotalMinutes >= startTotalMinutes && currentTotalMinutes <= endTotalMinutes) {
         return config.periodNumber;
       }
     } catch (error) {
-      console.error(`Error parsing time for period ${config.periodNumber}:`, error);
+      console.error(`Error checking period ${config.periodNumber}:`, error);
     }
   }
 
