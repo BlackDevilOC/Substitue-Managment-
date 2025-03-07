@@ -52,12 +52,17 @@ function getCurrentPeriodFromConfig(periodConfigs: PeriodConfig[]): number | nul
   const currentTime = format(now, 'HH:mm');
 
   for (const config of periodConfigs) {
-    const start = parse(config.startTime, 'HH:mm', new Date());
-    const end = parse(config.endTime, 'HH:mm', new Date());
-    const current = parse(currentTime, 'HH:mm', new Date());
+    try {
+      const baseDate = new Date();
+      const startTime = parse(config.startTime, 'HH:mm', baseDate);
+      const endTime = parse(config.endTime, 'HH:mm', baseDate);
+      const currentDateTime = parse(currentTime, 'HH:mm', baseDate);
 
-    if (isWithinInterval(current, { start, end })) {
-      return config.periodNumber;
+      if (isWithinInterval(currentDateTime, { start: startTime, end: endTime })) {
+        return config.periodNumber;
+      }
+    } catch (error) {
+      console.error(`Error parsing time for period ${config.periodNumber}:`, error);
     }
   }
 
