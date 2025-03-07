@@ -834,10 +834,23 @@ private saveLogs(logs: ProcessLog[], date: string): void {
       // Try to load existing logs
       if (fs.existsSync(logsPath)) {
         try {
-          existingLogs = JSON.parse(fs.readFileSync(logsPath, 'utf-8'));
+          const fileContent = fs.readFileSync(logsPath, 'utf-8');
+          if (fileContent && fileContent.trim()) {
+            existingLogs = JSON.parse(fileContent);
+          } else {
+            // Empty file, start with empty object
+            console.log("Log file exists but is empty, initializing with empty object");
+          }
         } catch (error) {
           console.error("Error reading existing logs:", error);
-          // If file is corrupted, we'll just overwrite it
+          // If file is corrupted, we'll just overwrite it with a new object
+          console.log("Initializing logs file with fresh data");
+          // Create a backup of the corrupted file
+          if (fs.existsSync(logsPath)) {
+            const backupPath = `${logsPath}.bak.${Date.now()}`;
+            fs.copyFileSync(logsPath, backupPath);
+            console.log(`Backed up corrupted logs to ${backupPath}`);
+          }
         }
       }
       
@@ -866,10 +879,23 @@ private saveLogs(logs: ProcessLog[], date: string): void {
       // Try to load existing warnings
       if (fs.existsSync(warningsPath)) {
         try {
-          existingWarnings = JSON.parse(fs.readFileSync(warningsPath, 'utf-8'));
+          const fileContent = fs.readFileSync(warningsPath, 'utf-8');
+          if (fileContent && fileContent.trim()) {
+            existingWarnings = JSON.parse(fileContent);
+          } else {
+            // Empty file, start with empty object
+            console.log("Warnings file exists but is empty, initializing with empty object");
+          }
         } catch (error) {
           console.error("Error reading existing warnings:", error);
-          // If file is corrupted, we'll just overwrite it
+          // If file is corrupted, we'll just overwrite it with a new object
+          console.log("Initializing warnings file with fresh data");
+          // Create a backup of the corrupted file
+          if (fs.existsSync(warningsPath)) {
+            const backupPath = `${warningsPath}.bak.${Date.now()}`;
+            fs.copyFileSync(warningsPath, backupPath);
+            console.log(`Backed up corrupted warnings to ${backupPath}`);
+          }
         }
       }
       
