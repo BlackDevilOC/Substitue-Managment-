@@ -30,6 +30,7 @@ interface Absence {
   teacherId: number;
   date: string;
   substituteId?: number;
+  hasAssignedSubstitute?: boolean; // Added for pendingAssignments calculation
 }
 
 interface ClassInfo {
@@ -81,6 +82,30 @@ const item = {
   show: { opacity: 1, y: 0 }
 };
 
+// Added StatsCard component
+const StatsCard = ({ title, value, icon, description, variant, onClick, className }: {
+  title: string;
+  value: number;
+  icon: React.ReactElement;
+  description: string;
+  variant: string;
+  onClick?: () => void;
+  className?: string;
+}) => (
+  <Card className={`h-full hover:bg-accent/5 transition-colors border-2 hover:${variant === 'danger' ? 'border-destructive' : variant === 'success' ? 'border-success' : variant === 'warning' ? 'border-warning' : 'border-primary'} ${className || ''}`}>
+    <CardHeader className="pb-2">
+      <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+        {icon}
+        {title}
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <p className="text-2xl font-bold">{value}</p>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </CardContent>
+  </Card>
+);
+
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
@@ -110,7 +135,7 @@ export default function HomePage() {
       return res.json();
     }
   });
-  
+
   // Use a safe default if data is not available
   const absentTeachers = absentTeachersData?.teachers || [];
   const absentTeachersCount = absentTeachersData?.count || 0;
@@ -236,6 +261,11 @@ export default function HomePage() {
     return absentTeachers.filter(teacher => !teacher.hasAssignedSubstitute).length;
   }, [absentTeachers, teachers]);
 
+  const handleAbsentClick = () => {
+    // Redirect to the absences management page.
+    window.location.href = '/absences';
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <NetworkStatus />
@@ -319,70 +349,30 @@ export default function HomePage() {
       <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <motion.div variants={item}>
           <Link href="/schedule" className="block">
-            <Card className="h-full hover:bg-accent/5 transition-colors border-2 hover:border-primary">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  Today's Schedule
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{totalClasses}</p>
-                <p className="text-sm text-muted-foreground">total classes today</p>
-              </CardContent>
-            </Card>
+            <StatsCard title="Today's Schedule" value={totalClasses} icon={<Calendar className="h-5 w-5 text-primary" />} description="total classes today" variant="primary" />
           </Link>
         </motion.div>
 
         <motion.div variants={item}>
-          <Link href="/absences" className="block">
-            <Card className="h-full hover:bg-accent/5 transition-colors border-2 hover:border-destructive">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <UserMinus className="h-5 w-5 text-destructive" />
-                  Absent Teachers
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{absentTeachersCount}</p>
-                <p className="text-sm text-muted-foreground">teachers absent today</p>
-              </CardContent>
-            </Card>
-          </Link>
+          <StatsCard
+            title="Absent Teachers"
+            value={absentTeachersCount}
+            icon={<UserMinus className="h-5 w-5 text-destructive" />}
+            description="teachers absent today"
+            variant="danger"
+            onClick={handleAbsentClick}
+            className="cursor-pointer hover:bg-red-50 transition-colors"
+          />
         </motion.div>
 
         {/* Replace substitute teacher card with total periods */}
         <motion.div variants={item}>
-          <Card className="h-full hover:bg-accent/5 transition-colors border-2 hover:border-success">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                <Clock className="h-5 w-5 text-success" />
-                Period Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{periodConfigs?.length || 0}</p>
-              <p className="text-sm text-muted-foreground">total periods configured</p>
-            </CardContent>
-          </Card>
+          <StatsCard title="Period Overview" value={periodConfigs?.length || 0} icon={<Clock className="h-5 w-5 text-success" />} description="total periods configured" variant="success" />
         </motion.div>
 
         <motion.div variants={item}>
           <Link href="/notifications" className="block">
-            <Card className="h-full hover:bg-accent/5 transition-colors border-2 hover:border-warning">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-warning" />
-                  Active Classes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">
-                  {currentTeachers.length}
-                </p>
-                <p className="text-sm text-muted-foreground">classes this period</p>
-              </CardContent>
-            </Card>
+            <StatsCard title="Active Classes" value={currentTeachers.length} icon={<Bell className="h-5 w-5 text-warning" />} description="classes this period" variant="warning" />
           </Link>
         </motion.div>
       </motion.div>
