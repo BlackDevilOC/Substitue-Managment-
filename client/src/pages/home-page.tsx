@@ -22,6 +22,7 @@ import { queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { PeriodStatusWidget } from "@/components/period-status-widget";
 
 // Types
 interface Teacher {
@@ -298,11 +299,7 @@ export default function HomePage() {
           <Link href="/schedule">
             <Card className="hover:bg-accent/5 transition-colors cursor-pointer">
               <CardContent className="pt-6">
-                <div className="flex flex-col gap-2">
-                  <Clock className="h-8 w-8 text-primary" />
-                  <div className="text-2xl font-bold">{periodConfigs?.length || 0}</div>
-                  <p className="text-sm text-muted-foreground">total periods configured</p>
-                </div>
+                <PeriodStatusWidget />
               </CardContent>
             </Card>
           </Link>
