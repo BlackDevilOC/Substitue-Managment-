@@ -262,8 +262,8 @@ export default function HomePage() {
   }, [absentTeachers, teachers]);
 
   const handleAbsentClick = () => {
-    // Redirect to the absences management page.
-    window.location.href = '/absences';
+    // Redirect to the attendees management page.
+    window.location.href = '/attendees';
   };
 
   return (
