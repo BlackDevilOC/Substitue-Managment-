@@ -788,10 +788,7 @@ export class SubstituteManager {
     // Temporarily wrapping with legacy interface for smoother transition
     return this.allAssignments;
   }
-}
-
-
-  private saveLogs(logs: ProcessLog[], date: string): void {
+private saveLogs(logs: ProcessLog[], date: string): void {
     try {
       const logsPath = path.join(__dirname, '../data/substitute_logs.json');
       let existingLogs: Record<string, ProcessLog[]> = {};
@@ -860,3 +857,4 @@ export class SubstituteManager {
     // Implement according to your actual data loading needs
     return null;
   }
+}

@@ -404,7 +404,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await manager.loadData();
 
       // Pass the teacher names to autoAssignSubstitutes 
-      const { assignments, warnings } = await manager.autoAssignSubstitutes(today, teacherNames);
+      const result = await manager.autoAssignSubstitutes(today, teacherNames);
+      const { assignments, warnings } = result;
 
       // Update absent teachers file to mark teachers as assigned
       if (assignments.length > 0) {
