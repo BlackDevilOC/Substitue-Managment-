@@ -1018,23 +1018,31 @@ export class SubstituteManager {
   private saveLogs(logs: ProcessLog[], date: string): void {
     try {
       const logsPath = path.join(__dirname, '../data/substitute_logs.json');
-      let existingLogs: Record<string, ProcessLog[]> = {};
-
-      // Try to load existing logs
+      const oldLogsDir = path.join(__dirname, '../data/old_logs');
+      
+      // Ensure the old logs directory exists
+      if (!fs.existsSync(oldLogsDir)) {
+        fs.mkdirSync(oldLogsDir, { recursive: true });
+      }
+      
+      // Archive existing logs before updating
       if (fs.existsSync(logsPath)) {
         try {
           const fileContent = fs.readFileSync(logsPath, 'utf-8');
           if (fileContent && fileContent.trim()) {
-            existingLogs = JSON.parse(fileContent);
-          } else {
-            // Empty file, start with empty object
-            console.log("Log file exists but is empty, initializing with empty object");
+            // Format date for filename
+            const now = new Date();
+            const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const archivePath = path.join(oldLogsDir, `substitute_logs_${formattedDate}.json`);
+            
+            // Save old logs to archive file
+            fs.writeFileSync(archivePath, fileContent);
+            console.log(`Archived previous logs to ${archivePath}`);
           }
         } catch (error) {
-          console.error("Error reading existing logs:", error);
-          // If file is corrupted, we'll just overwrite it with a new object
-          console.log("Initializing logs file with fresh data");
-          // Create a backup of the corrupted file
+          console.error("Error archiving existing logs:", error);
+          
+          // Create a backup if file is corrupted
           if (fs.existsSync(logsPath)) {
             const backupPath = `${logsPath}.bak.${Date.now()}`;
             fs.copyFileSync(logsPath, backupPath);
@@ -1043,8 +1051,9 @@ export class SubstituteManager {
         }
       }
 
-      // Add/update logs for this date
-      existingLogs[date] = logs;
+      // Create new logs object with current date's logs
+      const newLogs: Record<string, ProcessLog[]> = {};
+      newLogs[date] = logs;
 
       // Ensure the directory exists
       const dirPath = path.dirname(logsPath);
@@ -1052,8 +1061,8 @@ export class SubstituteManager {
         fs.mkdirSync(dirPath, { recursive: true });
       }
 
-      // Write back to file
-      fs.writeFileSync(logsPath, JSON.stringify(existingLogs, null, 2));
+      // Write new logs to file
+      fs.writeFileSync(logsPath, JSON.stringify(newLogs, null, 2));
       console.log(`Saved ${logs.length} logs for ${date} to ${logsPath}`);
     } catch (error) {
       console.error("Error saving logs:", error);

@@ -917,6 +917,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return httpServer;
 }
 
+// Import express and create app instance
+import express from 'express';
+const app = express();
+
 //Added SubstituteManager Class
 class SubstituteManager {
   private timetable: any[] = [];
@@ -1098,18 +1102,43 @@ app.get('/api/autoassign', async (req, res) => {
     }
   });
 
-  // Endpoint to clear log file
-  app.post('/api/clear-logs', async (req, res) => {
+  // Endpoint to archive log file 
+  app.get('/api/archive-logs', async (req, res) => {
     try {
       const logsPath = path.join(__dirname, '../data/substitute_logs.json');
-
-      // Write empty object to clear logs
-      fs.writeFileSync(logsPath, JSON.stringify({}, null, 2));
-
-      console.log("Cleared logs file");
-      res.json({ success: true, message: "Log file cleared successfully" });
+      const oldLogsDir = path.join(__dirname, '../data/old_logs');
+      
+      // Ensure the old logs directory exists
+      if (!fs.existsSync(oldLogsDir)) {
+        fs.mkdirSync(oldLogsDir, { recursive: true });
+      }
+      
+      if (fs.existsSync(logsPath)) {
+        // Format date for filename
+        const now = new Date();
+        const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${now.getHours()}-${now.getMinutes()}`;
+        const archivePath = path.join(oldLogsDir, `substitute_logs_${formattedDate}.json`);
+        
+        // Copy current logs to archive
+        fs.copyFileSync(logsPath, archivePath);
+        
+        // Create empty log file
+        fs.writeFileSync(logsPath, JSON.stringify({}, null, 2));
+        
+        console.log(`Archived logs to ${archivePath}`);
+        res.json({ 
+          success: true, 
+          message: "Logs archived successfully", 
+          archivePath: archivePath 
+        });
+      } else {
+        res.json({ 
+          success: true, 
+          message: "No logs file found to archive" 
+        });
+      }
     } catch (error) {
-      console.error('Error clearing logs:', error);
-      res.status(500).json({ error: 'Failed to clear logs' });
+      console.error('Error archiving logs:', error);
+      res.status(500).json({ error: 'Failed to archive logs' });
     }
   });
