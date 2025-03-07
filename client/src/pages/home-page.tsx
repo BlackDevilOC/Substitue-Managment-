@@ -23,6 +23,7 @@ interface Schedule {
   period: number;
   teacherId: number;
   className: string;
+  teacherName: string; // Added teacherName field
 }
 
 interface Absence {
@@ -44,20 +45,19 @@ interface PeriodConfig {
 }
 
 // Helper functions
-function getCurrentPeriodFromConfig(periodConfigs: PeriodConfig[]): number {
+function getCurrentPeriodFromConfig(periodConfigs: PeriodConfig[]): number | null {
+  if (!periodConfigs?.length) return null;
+
   const now = new Date();
   const currentTime = format(now, 'HH:mm');
 
   for (const config of periodConfigs) {
-    const start = parse(config.startTime, 'HH:mm', new Date());
-    const end = parse(config.endTime, 'HH:mm', new Date());
-
-    if (isWithinInterval(now, { start, end })) {
+    if (currentTime >= config.startTime && currentTime <= config.endTime) {
       return config.periodNumber;
     }
   }
 
-  return 1; // Default to first period if no match
+  return null; // Return null if no active period
 }
 
 function getDayOfWeek(): string {
@@ -84,7 +84,7 @@ export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
   const currentDay = getDayOfWeek();
-  const [currentPeriod, setCurrentPeriod] = useState(1);
+  const [currentPeriod, setCurrentPeriod] = useState<number | null>(null);
 
   // Enhanced queries with error handling
   const { data: periodConfigs, isLoading: loadingPeriodConfigs } = useQuery({
@@ -174,22 +174,24 @@ export default function HomePage() {
   const isLoading = loadingAbsences || loadingTeachers || loadingPeriodSchedules || loadingPeriodConfigs;
 
   const currentTeachers = React.useMemo((): ClassInfo[] => {
-    if (!periodSchedules) return [];
+    if (!periodSchedules || !currentPeriod) return [];
+
     const daySchedule = periodSchedules[currentDay] || {};
     const periodData = daySchedule[currentPeriod] || [];
 
-    return periodData.map((schedule: any) => {
-      const className = schedule.className;
-      const teacherName = schedule.teacherName;
+    return periodData.map((schedule: { className: string; teacherName: string }) => {
+      const { className, teacherName } = schedule;
+      const teacher = teachers?.find(t => t.name === teacherName);
+
       const isAbsent = absences?.some(
-        a => a.teacherId === teachers?.find(t => t.name === teacherName)?.id &&
+        a => a.teacherId === teacher?.id &&
         format(new Date(a.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
       );
 
       let substituteTeacher = null;
       if (isAbsent && absences) {
         const absence = absences.find(
-          a => a.teacherId === teachers?.find(t => t.name === teacherName)?.id &&
+          a => a.teacherId === teacher?.id &&
           format(new Date(a.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
         );
         if (absence?.substituteId) {
@@ -208,8 +210,29 @@ export default function HomePage() {
           ? substituteTeacher ? 'substitute' : 'absent'
           : 'present'
       };
-    }).sort((a, b) => a.className.localeCompare(b.className));
+    }).sort((a: ClassInfo, b: ClassInfo) => a.className.localeCompare(b.className));
   }, [periodSchedules, currentDay, currentPeriod, absences, teachers]);
+
+  // Stats calculations
+  const absentTeachersToday = React.useMemo(() => {
+    if (!absences) return 0;
+    return absences.filter(a =>
+      format(new Date(a.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
+    ).length;
+  }, [absences]);
+
+  const availableSubstitutes = React.useMemo(() => {
+    if (!teachers) return 0;
+    return teachers.filter(t => t.isSubstitute).length;
+  }, [teachers]);
+
+  const pendingAssignments = React.useMemo(() => {
+    if (!absences || !teachers) return 0;
+    const todayAbsences = absences.filter(a =>
+      format(new Date(a.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
+    );
+    return todayAbsences.filter(a => !a.substituteId).length;
+  }, [absences, teachers]);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -274,9 +297,14 @@ export default function HomePage() {
               <div className="flex items-center gap-3">
                 <BookOpen className="h-8 w-8 text-primary" />
                 <div>
-                  <div className="text-2xl font-bold">Period {currentPeriod}</div>
+                  <div className="text-2xl font-bold">
+                    {currentPeriod ? `Period ${currentPeriod}` : 'No Active Period'}
+                  </div>
                   <div className="text-sm text-muted-foreground">
-                    {periodConfigs?.[currentPeriod - 1]?.startTime} - {periodConfigs?.[currentPeriod - 1]?.endTime}
+                    {currentPeriod && periodConfigs?.[currentPeriod - 1]
+                      ? `${periodConfigs[currentPeriod - 1].startTime} - ${periodConfigs[currentPeriod - 1].endTime}`
+                      : 'Outside school hours'
+                    }
                   </div>
                 </div>
               </div>
@@ -285,13 +313,8 @@ export default function HomePage() {
         </Card>
       </motion.div>
 
-      {/* Stats Grid */}
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6"
-      >
+      {/* Stats Grid with updated counts */}
+      <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <motion.div variants={item}>
           <Link href="/schedule" className="block">
             <Card className="h-full hover:bg-accent/5 transition-colors border-2 hover:border-primary">
@@ -319,7 +342,7 @@ export default function HomePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{absences?.length || 0}</p>
+                <p className="text-2xl font-bold">{absentTeachersToday}</p>
                 <p className="text-sm text-muted-foreground">teachers marked absent today</p>
               </CardContent>
             </Card>
@@ -336,9 +359,7 @@ export default function HomePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">
-                  {teachers?.filter((t: Teacher) => t.isSubstitute)?.length || 0}
-                </p>
+                <p className="text-2xl font-bold">{availableSubstitutes}</p>
                 <p className="text-sm text-muted-foreground">available substitutes</p>
               </CardContent>
             </Card>
@@ -355,9 +376,7 @@ export default function HomePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">
-                  {currentTeachers.filter(t => t.status === 'absent').length}
-                </p>
+                <p className="text-2xl font-bold">{pendingAssignments}</p>
                 <p className="text-sm text-muted-foreground">pending assignments</p>
               </CardContent>
             </Card>
@@ -365,7 +384,7 @@ export default function HomePage() {
         </motion.div>
       </motion.div>
 
-      {/* Current Classes Section */}
+      {/* Current Classes Section with better period handling */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -397,18 +416,18 @@ export default function HomePage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPeriod(p => p === 1 ? 8 : p - 1)}
+                onClick={() => setCurrentPeriod(p => p === 1 ? (periodConfigs?.length || 8) : (p || 1) - 1)}
                 className="w-full sm:w-auto"
               >
                 Previous Period
               </Button>
               <div className="text-sm text-center text-muted-foreground">
-                {format(new Date(), "EEEE, MMMM d")} - Period {currentPeriod}
+                {format(new Date(), "EEEE, MMMM d")} - {currentPeriod ? `Period ${currentPeriod}` : 'No Active Period'}
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPeriod(p => p === 8 ? 1 : p + 1)}
+                onClick={() => setCurrentPeriod(p => !p ? 1 : p === (periodConfigs?.length || 8) ? 1 : p + 1)}
                 className="w-full sm:w-auto"
               >
                 Next Period
@@ -421,26 +440,32 @@ export default function HomePage() {
               animate="show"
               className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             >
-              {currentTeachers.map(({ className, teacher, status }) => (
-                <motion.div
-                  key={className}
-                  variants={item}
-                  className={`p-4 rounded-lg border-2 ${
-                    status === 'absent' ? "bg-destructive/5 border-destructive/20" :
-                      status === 'substitute' ? "bg-warning/5 border-warning/20" :
-                        "bg-card hover:bg-accent/5"
-                  }`}
-                >
-                  <div className="font-medium text-lg mb-2">{className.toUpperCase()}</div>
-                  <div className={`text-sm ${
-                    status === 'absent' ? "text-destructive" :
-                      status === 'substitute' ? "text-warning-foreground" :
-                        "text-muted-foreground"
-                  }`}>
-                    {teacher}
-                  </div>
-                </motion.div>
-              ))}
+              {currentTeachers.length > 0 ? (
+                currentTeachers.map(({ className, teacher, status }) => (
+                  <motion.div
+                    key={className}
+                    variants={item}
+                    className={`p-4 rounded-lg border-2 ${
+                      status === 'absent' ? "bg-destructive/5 border-destructive/20" :
+                        status === 'substitute' ? "bg-warning/5 border-warning/20" :
+                          "bg-card hover:bg-accent/5"
+                    }`}
+                  >
+                    <div className="font-medium text-lg mb-2">{className.toUpperCase()}</div>
+                    <div className={`text-sm ${
+                      status === 'absent' ? "text-destructive" :
+                        status === 'substitute' ? "text-warning-foreground" :
+                          "text-muted-foreground"
+                    }`}>
+                      {teacher}
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="col-span-2 text-center text-muted-foreground py-8">
+                  No classes scheduled for this period
+                </div>
+              )}
             </motion.div>
           </CardContent>
         </Card>
