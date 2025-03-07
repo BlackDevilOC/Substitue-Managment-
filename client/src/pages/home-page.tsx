@@ -37,10 +37,15 @@ interface PeriodConfig {
   endTime: string;
 }
 
-interface ClassInfo {
-  className: string;
-  teacher: string;
-  status: 'absent' | 'substitute' | 'present';
+interface Notification {
+  id: string;
+  type: 'info' | 'warning' | 'error' | 'success';
+  title: string;
+  description: string;
+  note?: string;
+  sourcePage?: string;
+  actionLink?: string;
+  timestamp: string;
 }
 
 // Animation variants
@@ -73,6 +78,17 @@ function getCurrentPeriodFromConfig(periodConfigs: PeriodConfig[]): number | nul
   return null;
 }
 
+function calculateTotalClasses(scheduleData: any): number {
+  if (!scheduleData) return 0;
+
+  const today = format(new Date(), 'EEEE').toLowerCase();
+  const daySchedule = scheduleData[today] || {};
+
+  return Object.values(daySchedule).reduce((total: number, classes: any[]) => {
+    return total + (Array.isArray(classes) ? classes.length : 0);
+  }, 0);
+}
+
 export default function HomePage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -89,14 +105,25 @@ export default function HomePage() {
   });
 
   // Fetch absent teachers count
-  const { data: absentData, isLoading: loadingAbsent } = useQuery({
-    queryKey: ["/api/absent-teachers-count"],
+  const { data: absentTeachersData } = useQuery({
+    queryKey: ["/api/absent-teachers"],
     queryFn: async () => {
-      const res = await fetch('/api/absent-teachers-count');
-      if (!res.ok) throw new Error('Failed to fetch absent teachers count');
+      const res = await fetch('/api/absent-teachers');
+      if (!res.ok) throw new Error('Failed to fetch absent teachers');
       return res.json() as Promise<{ count: number }>;
     }
   });
+
+  // Fetch notifications
+  const { data: notifications } = useQuery({
+    queryKey: ["/api/notifications"],
+    queryFn: async () => {
+      const res = await fetch('/api/notifications');
+      if (!res.ok) throw new Error('Failed to fetch notifications');
+      return res.json() as Promise<Notification[]>;
+    }
+  });
+
 
   // Fetch schedule data
   const { data: scheduleData, isLoading: loadingSchedule } = useQuery({
@@ -123,12 +150,10 @@ export default function HomePage() {
     return () => clearInterval(timer);
   }, [periodConfigs]);
 
-  const isLoading = loadingPeriodConfigs || loadingAbsent || loadingSchedule;
+  const isLoading = loadingPeriodConfigs || loadingSchedule;
 
-  // Calculate total classes for today
-  const totalClasses = scheduleData ? Object.values(scheduleData).reduce((total: number, periods: any) => {
-    return total + Object.values(periods).reduce((sum: number, classes: any[]) => sum + classes.length, 0);
-  }, 0) : 0;
+  // Calculate total classes correctly
+  const totalClasses = calculateTotalClasses(scheduleData);
 
   const refreshData = async () => {
     toast({
@@ -251,7 +276,7 @@ export default function HomePage() {
               <CardContent className="pt-6">
                 <div className="flex flex-col gap-2">
                   <Users className="h-8 w-8 text-primary" />
-                  <div className="text-2xl font-bold">{absentData?.count || 0}</div>
+                  <div className="text-2xl font-bold">{absentTeachersData?.count || 0}</div>
                   <p className="text-sm text-muted-foreground">teachers absent today</p>
                 </div>
               </CardContent>
@@ -280,9 +305,9 @@ export default function HomePage() {
                 <div className="flex flex-col gap-2">
                   <Bell className="h-8 w-8 text-primary" />
                   <div className="text-2xl font-bold">
-                    {currentPeriod ? scheduleData?.[format(new Date(), 'EEEE').toLowerCase()]?.[currentPeriod]?.length || 0 : 0}
+                    {notifications?.length || 0}
                   </div>
-                  <p className="text-sm text-muted-foreground">active classes this period</p>
+                  <p className="text-sm text-muted-foreground">new notifications</p>
                 </div>
               </CardContent>
             </Card>
@@ -300,7 +325,7 @@ export default function HomePage() {
           {navigationItems.map((item) => (
             <Link key={item.href} href={item.href}>
               <Button
-                variant={location === item.href ? "secondary" : "ghost"}
+                variant={location.pathname === item.href ? "secondary" : "ghost"}
                 className="flex flex-col items-center gap-1"
               >
                 {item.icon}
@@ -339,7 +364,7 @@ export default function HomePage() {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {scheduleData?.[format(new Date(), 'EEEE').toLowerCase()]?.[currentPeriod || 1]?.map((schedule: any, index: number) => (
                 <Card key={index} className="bg-accent/5">
                   <CardContent className="pt-4">
@@ -348,7 +373,7 @@ export default function HomePage() {
                   </CardContent>
                 </Card>
               )) || (
-                <div className="col-span-full text-center py-8 text-muted-foreground">
+                <div className="col-span-2 text-center py-8 text-muted-foreground">
                   No classes scheduled for this period
                 </div>
               )}
