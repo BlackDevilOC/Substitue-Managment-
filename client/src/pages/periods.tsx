@@ -106,7 +106,7 @@ export default function PeriodConfigPage() {
       // Save to localStorage
       localStorage.setItem('period_config', JSON.stringify(periods));
 
-      // Try to save to server
+      // Save to server (which also saves to data folder)
       const response = await fetch('/api/period-config', {
         method: 'POST',
         headers: {

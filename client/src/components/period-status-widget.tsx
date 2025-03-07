@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock } from "lucide-react";
+import { Clock, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 interface PeriodConfig {
   periodNumber: number;
@@ -14,9 +15,35 @@ export function PeriodStatusWidget() {
   const [periods, setPeriods] = useState<PeriodConfig[]>([]);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [currentPeriod, setCurrentPeriod] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Load period config from server
+  const loadPeriodConfig = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/period-config');
+      if (response.ok) {
+        const serverPeriods = await response.json();
+        setPeriods(serverPeriods);
+      }
+    } catch (error) {
+      console.warn('Could not fetch from server, falling back to localStorage');
+      // Fall back to localStorage if server is unavailable
+      const savedPeriods = localStorage.getItem('period_config');
+      if (savedPeriods) {
+        setPeriods(JSON.parse(savedPeriods));
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Update current time and detect current period
   useEffect(() => {
-    // Update current time every minute
+    // Initial time set
+    setCurrentTime(new Date());
+    
+    // Update time every minute
     const intervalId = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
@@ -24,34 +51,15 @@ export function PeriodStatusWidget() {
     return () => clearInterval(intervalId);
   }, []);
 
+  // Initial data load
   useEffect(() => {
-    const loadPeriodConfig = async () => {
-      try {
-        // Try to load from the server first
-        const response = await fetch('/api/period-config');
-        if (response.ok) {
-          const serverPeriods = await response.json();
-          setPeriods(serverPeriods);
-          return;
-        }
-      } catch (error) {
-        console.warn('Could not fetch from server, falling back to localStorage');
-      }
-
-      // Fall back to localStorage if server is unavailable
-      const savedPeriods = localStorage.getItem('period_config');
-      if (savedPeriods) {
-        setPeriods(JSON.parse(savedPeriods));
-      }
-    };
-
     loadPeriodConfig();
   }, []);
 
+  // Determine current period when time changes
   useEffect(() => {
-    // Get current period based on time
     const getCurrentPeriod = () => {
-      if (!periods.length) return null;
+      if (!periods || !periods.length) return null;
       
       const currentTimeStr = format(currentTime, 'HH:mm');
       
@@ -66,9 +74,26 @@ export function PeriodStatusWidget() {
     setCurrentPeriod(getCurrentPeriod());
   }, [currentTime, periods]);
 
+  // Handle refresh click
+  const handleRefresh = () => {
+    setCurrentTime(new Date());
+    loadPeriodConfig();
+  };
+
   return (
     <div className="flex flex-col gap-2">
-      <Clock className="h-8 w-8 text-primary" />
+      <div className="flex justify-between items-center">
+        <Clock className="h-8 w-8 text-primary" />
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleRefresh} 
+          disabled={isLoading}
+          className="p-1 h-8 w-8"
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
       <div>
         {currentPeriod ? (
           <>

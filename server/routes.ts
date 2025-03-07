@@ -152,17 +152,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const schedules = JSON.parse(fs.readFileSync(schedulePath, 'utf-8'));
-      
+
       // Find the teacher schedule (try exact match first)
       let teacherSchedule = schedules[teacherName];
-      
+
       // If not found, try to find by partial match
       if (!teacherSchedule) {
         // Find keys that are close to the provided name
         const possibleMatches = Object.keys(schedules).filter(key => 
           key.includes(teacherName) || teacherName.includes(key)
         );
-        
+
         if (possibleMatches.length > 0) {
           teacherSchedule = schedules[possibleMatches[0]];
         }
@@ -279,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
+
   app.post('/api/mark-attendance', (req, res) => {
     try {
       const { status, teacherName, phoneNumber } = req.body;
@@ -316,19 +316,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (status === 'present') {
         // Remove teacher from absent list
         absentTeachers = absentTeachers.filter((t: any) => t.name !== teacherName);
-        
+
         // Also remove from assigned teachers list if they exist there
         if (fs.existsSync(assignedFilePath)) {
           try {
             const assignedFileContent = fs.readFileSync(assignedFilePath, 'utf8');
             const assignedData = JSON.parse(assignedFileContent);
-            
+
             if (assignedData && assignedData.assignments) {
               // Filter out assignments for this teacher
               const filteredAssignments = assignedData.assignments.filter(
                 (assignment: any) => assignment.originalTeacher !== teacherName
               );
-              
+
               // Update the file with filtered assignments
               assignedData.assignments = filteredAssignments;
               fs.writeFileSync(assignedFilePath, JSON.stringify(assignedData, null, 2));
@@ -450,11 +450,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileContent = fs.readFileSync(filePath, 'utf8');
       const absentTeachers = JSON.parse(fileContent);
 
-      // Filter out teachers that already have substitutes assigned
-      const unassignedTeachers = absentTeachers.filter((t: any) => !t.assignedSubstitute);
-
       // Sort by timestamp to get latest entries first
-      const sortedTeachers = unassignedTeachers.sort((a: any, b: any) => {
+      const sortedTeachers = absentTeachers.sort((a: any, b: any) => {
         return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
       });
 
@@ -496,7 +493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Read assignments from file
       const fileContent = fs.readFileSync(filePath, 'utf8');
-      
+
       try {
         const assignmentsData = JSON.parse(fileContent);
         console.log('Sending assignments data:', assignmentsData);
@@ -504,7 +501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (parseError) {
         console.error('JSON parsing error:', parseError);
         console.log('File content that failed to parse:', fileContent);
-        
+
         // Attempt to fix invalid JSON and try again
         try {
           // In case of emergency, return an empty valid response instead of failing
@@ -512,7 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             assignments: [],
             warnings: ["Data read error - please check assigned_teacher.json format"]
           });
-          
+
           // Try to auto-fix the JSON file for next time
           const emptyData = {
             assignments: [],
@@ -567,16 +564,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const filePath = path.join(__dirname, '../data/teacher_schedules.json');
-      
+
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: 'Teacher schedules file not found' });
       }
 
       const scheduleData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-      
+
       // Find the teacher's schedule (with case insensitive matching)
       const teacherSchedule = scheduleData[teacherName] || [];
-      
+
       res.json(teacherSchedule);
     } catch (error) {
       console.error('Error fetching teacher schedule:', error);
@@ -731,14 +728,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const fileContent = fs.readFileSync(filePath, 'utf8');
       let absentTeachers = [];
-      
+
       try {
         absentTeachers = JSON.parse(fileContent);
       } catch (err) {
         console.error('Error parsing absent_teachers.json:', err);
         return res.json({ count: 0 });
       }
-      
+
       // Only return the count and names, avoiding timestamp processing
       const simpleList = absentTeachers.map(teacher => ({
         name: teacher.name,
@@ -864,6 +861,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error assigning substitute:', error);
       res.status(500).json({ error: 'Failed to assign substitute' });
+    }
+  });
+
+  app.get("/api/period-config", async (req, res) => {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/period_config.json');
+
+      if (!fs.existsSync(filePath)) {
+        // Initialize with default periods
+        const defaultPeriods = [
+          { periodNumber: 1, startTime: "08:00", endTime: "08:45" },
+          { periodNumber: 2, startTime: "08:45", endTime: "09:30" },
+          { periodNumber: 3, startTime: "09:45", endTime: "10:30" },
+          { periodNumber: 4, startTime: "10:30", endTime: "11:15" },
+          { periodNumber: 5, startTime: "11:30", endTime: "12:15" },
+          { periodNumber: 6, startTime: "12:15", endTime: "13:00" },
+          { periodNumber: 7, startTime: "13:00", endTime: "13:45" },
+          { periodNumber: 8, startTime: "13:45", endTime: "14:30" }
+        ];
+        fs.writeFileSync(filePath, JSON.stringify(defaultPeriods, null, 2));
+        return res.json(defaultPeriods);
+      }
+
+      const periods = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      res.json(periods);
+    } catch (error) {
+      console.error('Error reading period config:', error);
+      res.status(500).json({ error: 'Failed to read period config' });
+    }
+  });
+
+  app.post("/api/period-config", async (req, res) => {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/period_config.json');
+
+      fs.writeFileSync(filePath, JSON.stringify(req.body, null, 2));
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error saving period config:', error);
+      res.status(500).json({ error: 'Failed to save period config' });
     }
   });
 
