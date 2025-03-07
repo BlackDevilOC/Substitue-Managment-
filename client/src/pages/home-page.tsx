@@ -224,8 +224,6 @@ export default function HomePage() {
   }, [periodSchedules, currentDay, currentPeriod, absentTeachers, teachers]);
 
   // Stats calculations
-  const absentTeachersCount = absentTeachers?.length || 0;
-
   const totalClasses = React.useMemo(() => {
     if (!periodSchedules || !currentDay) return 0;
     const daySchedule = periodSchedules[currentDay] || {};
@@ -234,10 +232,8 @@ export default function HomePage() {
 
   const pendingAssignments = React.useMemo(() => {
     if (!absentTeachers || !teachers) return 0;
-    const todayAbsences = absentTeachers.filter(a =>
-      format(new Date(a.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
-    );
-    return todayAbsences.filter(a => !a.substituteId).length;
+    // Simplified logic - just count teachers without substitutes
+    return absentTeachers.filter(teacher => !teacher.hasAssignedSubstitute).length;
   }, [absentTeachers, teachers]);
 
   return (
