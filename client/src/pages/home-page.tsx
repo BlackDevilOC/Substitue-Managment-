@@ -110,7 +110,8 @@ export default function HomePage() {
     queryFn: async () => {
       const res = await fetch('/api/absent-teachers');
       if (!res.ok) throw new Error('Failed to fetch absent teachers');
-      return res.json() as Promise<{ count: number }>;
+      const data = await res.json();
+      return { count: Array.isArray(data) ? data.length : 0 };
     }
   });
 
@@ -364,11 +365,11 @@ export default function HomePage() {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {scheduleData?.[format(new Date(), 'EEEE').toLowerCase()]?.[currentPeriod || 1]?.map((schedule: any, index: number) => (
                 <Card key={index} className="bg-accent/5">
                   <CardContent className="pt-4">
-                    <h3 className="font-semibold">{schedule.className}</h3>
+                    <h3 className="font-semibold">{schedule.className?.toUpperCase()}</h3>
                     <p className="text-sm text-muted-foreground">{schedule.teacherName}</p>
                   </CardContent>
                 </Card>
