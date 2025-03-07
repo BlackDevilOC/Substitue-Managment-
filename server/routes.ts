@@ -424,7 +424,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Auto-assignment completed successfully",
         assignmentsCount: assignments.length,
         assignments,
-        warnings
+        warnings,
+        logs: result.logs || []
       });
     } catch (error) {
       console.error('Auto-assign from file error:', error);

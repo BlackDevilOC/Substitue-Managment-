@@ -27,3 +27,11 @@ export interface VerificationReport {
   status: "PASS" | "FAIL";
   details: string;
 }
+// Add ProcessLog interface for detailed logging
+export interface ProcessLog {
+  timestamp: string;
+  action: string;
+  details: string;
+  status: 'info' | 'warning' | 'error';
+  durationMs: number;
+}
