@@ -1,0 +1,256 @@
+interface SubstituteAssignment {
+  originalTeacher: string;
+  period: number;
+  className: string;
+  substitute: string;
+  substitutePhone: string;
+}
+
+interface ProcessLog {
+  timestamp: string;
+  action: string;
+  details: string;
+  data?: object;
+  status: 'info' | 'warning' | 'error';
+  durationMs: number;
+}
+
+const MAX_DAILY_WORKLOAD = 5; // Example maximum workload
+
+async autoAssignSubstitutes(
+  date: string,
+  absentTeacherNames?: string[]
+): Promise<{ assignments: SubstituteAssignment[]; warnings: string[]; logs: ProcessLog[] }> {
+  const logs: ProcessLog[] = [];
+  const startTime = Date.now();
+
+  const addLog = (
+    action: string,
+    details: string,
+    status: 'info' | 'warning' | 'error' = 'info',
+    data?: object
+  ) => {
+    logs.push({
+      timestamp: new Date().toISOString(),
+      action,
+      details,
+      status,
+      data,
+      durationMs: Date.now() - startTime
+    });
+  };
+
+  try {
+    addLog('ProcessStart', 'Initializing substitute assignment system');
+
+    // Load all required data
+    addLog('DataLoading', 'Loading all required datasets');
+    const [teachers, teacherSchedules, assignedTeachers, timetable] = await Promise.all([
+      this.loadTeachers(DEFAULT_TEACHERS_PATH),
+      this.loadSchedules(DEFAULT_SCHEDULES_PATH),
+      this.loadAssignedTeachers(DEFAULT_ASSIGNED_TEACHERS_PATH),
+      this.loadTimetable(DEFAULT_TIMETABLE_PATH)
+    ]);
+    addLog('DataLoading', `Loaded ${teachers.length} teachers, ${timetable.length} timetable entries`);
+
+    // Core functionality
+    const day = this.getDayFromDate(date);
+    const assignments: SubstituteAssignment[] = [];
+    const warnings: string[] = [];
+    const workloadMap = new Map<string, number>();
+    const assignedPeriodsMap = new Map<string, Set<number>>();
+
+    // Initialize tracking maps
+    assignedTeachers.forEach(({ substitutePhone, period }) => {
+      workloadMap.set(substitutePhone, (workloadMap.get(substitutePhone) || 0 + 1);
+      const periods = assignedPeriodsMap.get(substitutePhone) || new Set<number>();
+      periods.add(period);
+      assignedPeriodsMap.set(substitutePhone, periods);
+    });
+
+    // Resolve absent teachers with enhanced validation
+    addLog('TeacherResolution', 'Validating absent teacher list');
+    const absentTeachers = this.resolveTeachersWithLogging(
+      absentTeacherNames || [],
+      teachers,
+      (msg) => {
+        warnings.push(msg);
+        addLog('TeacherResolution', msg, 'warning');
+      }
+    );
+
+    // Process each absent teacher
+    absentTeachers.forEach(teacher => {
+      addLog('TeacherProcessing', `Processing ${teacher.name}`, 'info', {
+        teacherId: teacher.phone
+      });
+
+      // Get all periods with enhanced detection
+      const periods = this.getAllPeriodsForTeacher(
+        teacher.name,
+        day,
+        timetable,
+        teacherSchedules
+      );
+      
+      addLog('PeriodDetection', `Discovered periods for ${teacher.name}`, 'info', {
+        totalPeriods: periods.length,
+        periodDetails: periods
+      });
+
+      // Assignment logic
+      periods.forEach(({ period, className }) => {
+        const assignmentKey = `${teacher.name}-${period}-${className}`;
+        addLog('PeriodAssignment', `Processing ${assignmentKey}`, 'info');
+
+        // Substitute selection logic
+        const { candidates, warnings: periodWarnings } = this.findSuitableSubstitutes({
+          className,
+          period,
+          day,
+          substitutes: this.getAvailableSubstitutes(teachers, absentTeachers, assignedTeachers),
+          teachers: new Map(teachers.map(t => [t.phone, t])),
+          schedules: teacherSchedules,
+          currentWorkload: workloadMap,
+          assignedPeriodsMap
+        });
+
+        // Handle candidate selection
+        if (candidates.length > 0) {
+          const selected = this.selectOptimalCandidate(candidates, workloadMap);
+          assignments.push({
+            originalTeacher: teacher.name,
+            period,
+            className,
+            substitute: selected.name,
+            substitutePhone: selected.phone
+          });
+          
+          // Update tracking
+          workloadMap.set(selected.phone, (workloadMap.get(selected.phone) || 0) + 1);
+          const periods = assignedPeriodsMap.get(selected.phone) || new Set<number>();
+          periods.add(period);
+          assignedPeriodsMap.set(selected.phone, periods);
+          
+          addLog('AssignmentSuccess', `Assigned ${selected.name} to ${assignmentKey}`, 'info', {
+            substituteWorkload: workloadMap.get(selected.phone)
+          });
+        } else {
+          warnings.push(`No substitute found for ${assignmentKey}`);
+          addLog('AssignmentFailure', `Failed to assign ${assignmentKey}`, 'error', {
+            availableSubstitutes: this.getAvailableSubstitutes(teachers, absentTeachers, assignedTeachers).map(s => s.name)
+          });
+        }
+      });
+    });
+
+    // Post-assignment validation
+    addLog('Validation', 'Starting final assignment validation');
+    const validationResult = this.validateAssignments(
+      assignments,
+      workloadMap,
+      new Map(teachers.map(t => [t.phone, t])),
+      MAX_DAILY_WORKLOAD
+    );
+    warnings.push(...validationResult.warnings);
+    validationResult.warnings.forEach(w => 
+      addLog('Validation', w, 'warning'));
+
+    // Final save
+    addLog('DataSave', 'Saving assignments to storage');
+    this.saveAssignments(assignments);
+
+    addLog('ProcessComplete', 'Substitute assignment completed successfully', 'info', {
+      totalAssignments: assignments.length,
+      unassignedPeriods: warnings.filter(w => w.includes('No substitute found')).length
+    });
+
+    return {
+      assignments,
+      warnings,
+      logs
+    };
+
+  } catch (error) {
+    addLog('ProcessError', 'Critical process failure', 'error', {
+      errorMessage: error.message,
+      stack: error.stack
+    });
+    return {
+      assignments: [],
+      warnings: [`Critical error: ${error.message}`],
+      logs
+    };
+  }
+}
+
+// Helper Methods
+private getAllPeriodsForTeacher(
+  teacherName: string,
+  day: string,
+  timetable: any[],
+  schedules: Map<string, any[]>
+): { period: number; className: string }[] {
+  const normalizedDay = day.toLowerCase().trim();
+  const normalizedName = teacherName.toLowerCase().trim();
+
+  // Timetable periods with validation
+  const timetablePeriods = timetable
+    .filter(entry => 
+      entry.Day?.toLowerCase().trim() === normalizedDay &&
+      entry.Teacher?.toLowerCase().trim() === normalizedName
+    )
+    .map(entry => ({
+      period: Number(entry.Period),
+      className: entry.Class?.trim().toUpperCase()
+    }))
+    .filter(p => !isNaN(p.period));
+
+  // Schedule periods with validation
+  const schedulePeriods = (schedules.get(normalizedName) || [])
+    .filter(schedule => 
+      schedule.day?.toLowerCase().trim() === normalizedDay
+    )
+    .map(schedule => ({
+      period: Number(schedule.period),
+      className: schedule.className?.trim().toUpperCase()
+    }))
+    .filter(p => !isNaN(p.period));
+
+  // Merge and deduplicate
+  const merged = [...timetablePeriods, ...schedulePeriods];
+  return merged.filter((p, index) => 
+    merged.findIndex(sp => 
+      sp.period === p.period && 
+      sp.className === p.className
+    ) === index
+  );
+}
+
+private validateAssignments(
+  assignments: SubstituteAssignment[],
+  workload: Map<string, number>,
+  teachers: Map<string, Teacher>,
+  maxWorkload: number
+): { warnings: string[] } {
+  const warnings: string[] = [];
+  
+  // Workload validation
+  workload.forEach((count, phone) => {
+    if (count > maxWorkload) {
+      warnings.push(`${teachers.get(phone)?.name} exceeded maximum workload (${count}/${maxWorkload})`);
+    }
+  });
+
+  // Duplicate assignment check
+  const assignmentKeys = new Set();
+  assignments.forEach(assignment => {
+    const key = `${assignment.substitutePhone}-${assignment.period}`;
+    if (assignmentKeys.has(key)) {
+      warnings.push(`Duplicate assignment: ${assignment.substitute} in period ${assignment.period}`);
+    }
+    assignmentKeys.add(key);
+  });
+
+  return { warnings };
+}

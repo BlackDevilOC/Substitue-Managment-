@@ -1,11 +1,130 @@
 {
   "2025-03-07": [
     {
-      "timestamp": "2025-03-07T21:19:46.860Z",
-      "action": "Test",
-      "details": "Testing log functionality",
+      "timestamp": "2025-03-07T21:23:02.390Z",
+      "action": "Initialization",
+      "details": "Starting substitute assignment process",
       "status": "info",
       "durationMs": 0
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.390Z",
+      "action": "DataLoading",
+      "details": "Loading teachers, schedules, and existing assignments",
+      "status": "info",
+      "durationMs": 0
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.390Z",
+      "action": "DataLoading",
+      "details": "Using 1 provided absent teachers",
+      "status": "info",
+      "durationMs": 0
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.391Z",
+      "action": "DataLoading",
+      "details": "Loaded 35 teachers, 36 schedules, 0 existing assignments",
+      "status": "info",
+      "durationMs": 1
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.391Z",
+      "action": "Processing",
+      "details": "Processing for day: friday",
+      "status": "info",
+      "durationMs": 1
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.391Z",
+      "action": "Processing",
+      "details": "Processed 0 existing assignments with workload tracking",
+      "status": "info",
+      "durationMs": 1
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.391Z",
+      "action": "Processing",
+      "details": "Created teacher lookup map with 39 entries",
+      "status": "info",
+      "durationMs": 1
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.391Z",
+      "action": "Processing",
+      "details": "Created schedule lookup map with 36 entries",
+      "status": "info",
+      "durationMs": 1
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.391Z",
+      "action": "Processing",
+      "details": "Resolved 1 absent teachers out of 1 provided names",
+      "status": "info",
+      "durationMs": 1
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.391Z",
+      "action": "Processing",
+      "details": "Found 28 available substitutes out of 28 total",
+      "status": "info",
+      "durationMs": 1
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.391Z",
+      "action": "Assignment",
+      "details": "Processing absent teacher: Sir Mushtaque Ahmed",
+      "status": "info",
+      "durationMs": 1
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.392Z",
+      "action": "Assignment",
+      "details": "Found 2 affected periods for Sir Mushtaque Ahmed",
+      "status": "info",
+      "durationMs": 2
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.392Z",
+      "action": "Assignment",
+      "details": "Finding substitute for Sir Mushtaque Ahmed, period 1, class 10B",
+      "status": "info",
+      "durationMs": 2
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.392Z",
+      "action": "Assignment",
+      "details": "Selected Sir Waqar Ali for 10B period 1 (current workload: 0)",
+      "status": "info",
+      "durationMs": 2
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.392Z",
+      "action": "Assignment",
+      "details": "Finding substitute for Sir Mushtaque Ahmed, period 5, class 10C",
+      "status": "info",
+      "durationMs": 2
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.392Z",
+      "action": "Assignment",
+      "details": "Selected Sir Irshad Qureshi for 10C period 5 (current workload: 0)",
+      "status": "info",
+      "durationMs": 2
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.392Z",
+      "action": "Validation",
+      "details": "Validating 2 assignments",
+      "status": "info",
+      "durationMs": 2
+    },
+    {
+      "timestamp": "2025-03-07T21:23:02.393Z",
+      "action": "Completion",
+      "details": "Saved 2 assignments to file",
+      "status": "info",
+      "durationMs": 3
     }
   ]
-}
+} 

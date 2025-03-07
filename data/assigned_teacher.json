@@ -1,4 +1,18 @@
 {
-  "assignments": [],
-  "warnings": []
+  "assignments": [
+    {
+      "originalTeacher": "Sir Mushtaque Ahmed",
+      "period": 1,
+      "className": "10B",
+      "substitute": "Sir Waqar Ali",
+      "substitutePhone": "+923113588606"
+    },
+    {
+      "originalTeacher": "Sir Mushtaque Ahmed",
+      "period": 5,
+      "className": "10C",
+      "substitute": "Sir Irshad Qureshi",
+      "substitutePhone": "+923123131179"
+    }
+  ]
 }
