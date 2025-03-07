@@ -1,5 +1,5 @@
 {
   "2025-03-07": [
-    "Error in autoAssignSubstitutes: ReferenceError: csv is not defined"
+    "Error in autoAssignSubstitutes: TypeError: csv is not a function"
   ]
 }
