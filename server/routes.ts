@@ -285,16 +285,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { status, teacherName, phoneNumber } = req.body;
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
-      const filePath = path.join(__dirname, '../data/absent_teachers.json');
+      const absentFilePath = path.join(__dirname, '../data/absent_teachers.json');
+      const assignedFilePath = path.join(__dirname, '../data/assigned_teacher.json');
 
       // Create file if it doesn't exist
-      if (!fs.existsSync(filePath)) {
-        fs.writeFileSync(filePath, JSON.stringify([], null, 2));
+      if (!fs.existsSync(absentFilePath)) {
+        fs.writeFileSync(absentFilePath, JSON.stringify([], null, 2));
       }
 
       // Read current absent teachers
-      const fileContent = fs.readFileSync(filePath, 'utf8');
-      let absentTeachers = JSON.parse(fileContent);
+      const absentFileContent = fs.readFileSync(absentFilePath, 'utf8');
+      let absentTeachers = JSON.parse(absentFileContent);
 
       if (status === 'absent') {
         // Add teacher if not already in list
@@ -315,10 +316,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (status === 'present') {
         // Remove teacher from absent list
         absentTeachers = absentTeachers.filter((t: any) => t.name !== teacherName);
+        
+        // Also remove from assigned teachers list if they exist there
+        if (fs.existsSync(assignedFilePath)) {
+          try {
+            const assignedFileContent = fs.readFileSync(assignedFilePath, 'utf8');
+            const assignedData = JSON.parse(assignedFileContent);
+            
+            if (assignedData && assignedData.assignments) {
+              // Filter out assignments for this teacher
+              const filteredAssignments = assignedData.assignments.filter(
+                (assignment: any) => assignment.originalTeacher !== teacherName
+              );
+              
+              // Update the file with filtered assignments
+              assignedData.assignments = filteredAssignments;
+              fs.writeFileSync(assignedFilePath, JSON.stringify(assignedData, null, 2));
+              console.log(`Removed ${teacherName} from assigned_teacher.json`);
+            }
+          } catch (assignedError) {
+            console.error('Error updating assigned_teacher.json:', assignedError);
+            // Continue processing even if there's an error with the assigned teacher file
+          }
+        }
       }
 
       // Write back to file
-      fs.writeFileSync(filePath, JSON.stringify(absentTeachers, null, 2));
+      fs.writeFileSync(absentFilePath, JSON.stringify(absentTeachers, null, 2));
 
       res.json({ success: true });
     } catch (error) {
