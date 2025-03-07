@@ -1,130 +1,158 @@
 {
   "2025-03-07": [
     {
-      "timestamp": "2025-03-07T21:23:02.390Z",
-      "action": "Initialization",
-      "details": "Starting substitute assignment process",
+      "timestamp": "2025-03-07T21:36:13.826Z",
+      "action": "ProcessStart",
+      "details": "Initializing substitute assignment system",
       "status": "info",
       "durationMs": 0
     },
     {
-      "timestamp": "2025-03-07T21:23:02.390Z",
-      "action": "DataLoading",
-      "details": "Loading teachers, schedules, and existing assignments",
-      "status": "info",
-      "durationMs": 0
-    },
-    {
-      "timestamp": "2025-03-07T21:23:02.390Z",
+      "timestamp": "2025-03-07T21:36:13.826Z",
       "action": "DataLoading",
       "details": "Using 1 provided absent teachers",
       "status": "info",
       "durationMs": 0
     },
     {
-      "timestamp": "2025-03-07T21:23:02.391Z",
+      "timestamp": "2025-03-07T21:36:13.826Z",
+      "action": "DataLoading",
+      "details": "Loading all required datasets",
+      "status": "info",
+      "durationMs": 0
+    },
+    {
+      "timestamp": "2025-03-07T21:36:13.827Z",
       "action": "DataLoading",
       "details": "Loaded 35 teachers, 36 schedules, 0 existing assignments",
       "status": "info",
       "durationMs": 1
     },
     {
-      "timestamp": "2025-03-07T21:23:02.391Z",
+      "timestamp": "2025-03-07T21:36:13.827Z",
       "action": "Processing",
       "details": "Processing for day: friday",
       "status": "info",
       "durationMs": 1
     },
     {
-      "timestamp": "2025-03-07T21:23:02.391Z",
+      "timestamp": "2025-03-07T21:36:13.827Z",
       "action": "Processing",
       "details": "Processed 0 existing assignments with workload tracking",
       "status": "info",
       "durationMs": 1
     },
     {
-      "timestamp": "2025-03-07T21:23:02.391Z",
+      "timestamp": "2025-03-07T21:36:13.827Z",
       "action": "Processing",
       "details": "Created teacher lookup map with 39 entries",
       "status": "info",
       "durationMs": 1
     },
     {
-      "timestamp": "2025-03-07T21:23:02.391Z",
+      "timestamp": "2025-03-07T21:36:13.828Z",
       "action": "Processing",
       "details": "Created schedule lookup map with 36 entries",
       "status": "info",
-      "durationMs": 1
+      "durationMs": 2
     },
     {
-      "timestamp": "2025-03-07T21:23:02.391Z",
-      "action": "Processing",
+      "timestamp": "2025-03-07T21:36:13.828Z",
+      "action": "TeacherResolution",
+      "details": "Validating absent teacher list",
+      "status": "info",
+      "durationMs": 2
+    },
+    {
+      "timestamp": "2025-03-07T21:36:13.828Z",
+      "action": "TeacherResolution",
       "details": "Resolved 1 absent teachers out of 1 provided names",
       "status": "info",
-      "durationMs": 1
+      "durationMs": 2
     },
     {
-      "timestamp": "2025-03-07T21:23:02.391Z",
+      "timestamp": "2025-03-07T21:36:13.828Z",
       "action": "Processing",
       "details": "Found 28 available substitutes out of 28 total",
       "status": "info",
-      "durationMs": 1
+      "durationMs": 2
     },
     {
-      "timestamp": "2025-03-07T21:23:02.391Z",
-      "action": "Assignment",
+      "timestamp": "2025-03-07T21:36:13.828Z",
+      "action": "TeacherProcessing",
       "details": "Processing absent teacher: Sir Mushtaque Ahmed",
       "status": "info",
-      "durationMs": 1
+      "data": {
+        "teacherId": ""
+      },
+      "durationMs": 2
     },
     {
-      "timestamp": "2025-03-07T21:23:02.392Z",
-      "action": "Assignment",
+      "timestamp": "2025-03-07T21:36:13.828Z",
+      "action": "PeriodDetection",
       "details": "Found 2 affected periods for Sir Mushtaque Ahmed",
       "status": "info",
+      "data": {
+        "periodDetails": [
+          {
+            "period": 1,
+            "className": "10B"
+          },
+          {
+            "period": 5,
+            "className": "10C"
+          }
+        ]
+      },
       "durationMs": 2
     },
     {
-      "timestamp": "2025-03-07T21:23:02.392Z",
-      "action": "Assignment",
-      "details": "Finding substitute for Sir Mushtaque Ahmed, period 1, class 10B",
+      "timestamp": "2025-03-07T21:36:13.828Z",
+      "action": "PeriodAssignment",
+      "details": "Processing Sir Mushtaque Ahmed-1-10B",
       "status": "info",
       "durationMs": 2
     },
     {
-      "timestamp": "2025-03-07T21:23:02.392Z",
-      "action": "Assignment",
-      "details": "Selected Sir Waqar Ali for 10B period 1 (current workload: 0)",
+      "timestamp": "2025-03-07T21:36:13.829Z",
+      "action": "AssignmentSuccess",
+      "details": "Assigned Sir Waqar Ali to Sir Mushtaque Ahmed-1-10B",
       "status": "info",
-      "durationMs": 2
+      "data": {
+        "substituteWorkload": 1
+      },
+      "durationMs": 3
     },
     {
-      "timestamp": "2025-03-07T21:23:02.392Z",
-      "action": "Assignment",
-      "details": "Finding substitute for Sir Mushtaque Ahmed, period 5, class 10C",
+      "timestamp": "2025-03-07T21:36:13.829Z",
+      "action": "PeriodAssignment",
+      "details": "Processing Sir Mushtaque Ahmed-5-10C",
       "status": "info",
-      "durationMs": 2
+      "durationMs": 3
     },
     {
-      "timestamp": "2025-03-07T21:23:02.392Z",
-      "action": "Assignment",
-      "details": "Selected Sir Irshad Qureshi for 10C period 5 (current workload: 0)",
+      "timestamp": "2025-03-07T21:36:13.829Z",
+      "action": "AssignmentSuccess",
+      "details": "Assigned Sir Irshad Qureshi to Sir Mushtaque Ahmed-5-10C",
       "status": "info",
-      "durationMs": 2
+      "data": {
+        "substituteWorkload": 1
+      },
+      "durationMs": 3
     },
     {
-      "timestamp": "2025-03-07T21:23:02.392Z",
+      "timestamp": "2025-03-07T21:36:13.829Z",
       "action": "Validation",
       "details": "Validating 2 assignments",
       "status": "info",
-      "durationMs": 2
+      "durationMs": 3
     },
     {
-      "timestamp": "2025-03-07T21:23:02.393Z",
-      "action": "Completion",
+      "timestamp": "2025-03-07T21:36:13.831Z",
+      "action": "DataSave",
       "details": "Saved 2 assignments to file",
       "status": "info",
-      "durationMs": 3
+      "durationMs": 5
     }
   ]
-} 
+}
