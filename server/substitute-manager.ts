@@ -899,7 +899,7 @@ export class SubstituteManager {
         JSON.stringify(data, null, 2)
       );
 
-      console.log("Assignments saved successfully");
+      console.log(""Assignments saved successfully");
         } catch (error) {
       console.error("Error saving assignments:", error);
       throw new Error(`Error saving assignments: ${error}`);
@@ -1119,8 +1119,10 @@ export class SubstituteManager {
   private async loadTimetable(timetablePath: string): Promise<any[]> {
     return new Promise((resolve, reject) => {
       const data: any[] = [];
+      const csvParser = require('csv-parser');
+
       fs.createReadStream(timetablePath)
-        .pipe(csv())
+        .pipe(csvParser())
         .on('data', (row) => data.push(row))
         .on('end', () => {
           this.timetable = data;
