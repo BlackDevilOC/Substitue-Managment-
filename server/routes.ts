@@ -362,12 +362,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const absentTeachersPath = path.join(__dirname, '../data/absent_teachers.json');
+      const timetablePath = path.join(__dirname, '../data/timetable_file.csv');
+      const substitutePath = path.join(__dirname, '../data/Substitude_file.csv');
 
-      // Check if absent_teachers.json exists
+      // Check if all required files exist
       if (!fs.existsSync(absentTeachersPath)) {
         return res.status(404).json({ 
           success: false, 
-          message: "Absent teachers file not found" 
+          message: "Absent teachers file not found at: " + absentTeachersPath 
+        });
+      }
+
+      if (!fs.existsSync(timetablePath)) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Timetable file not found at: " + timetablePath 
+        });
+      }
+
+      if (!fs.existsSync(substitutePath)) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Substitute file not found at: " + substitutePath 
         });
       }
 
@@ -403,7 +419,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Run auto-assign functionality
       const { SubstituteManager } = await import('./substitute-manager.js');
       const manager = new SubstituteManager();
-      await manager.loadData();
+      
+      // Make sure to load data from the right files
+      await manager.loadData(timetablePath, substitutePath);
 
       // Pass the teacher names to autoAssignSubstitutes 
       const result = await manager.autoAssignSubstitutes(today, teacherNames);
@@ -418,6 +436,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return teacher;
         });
         fs.writeFileSync(absentTeachersPath, JSON.stringify(updatedAbsentTeachers, null, 2));
+        
+        // Save the assignments to the assigned_teacher.json file
+        const assignedTeachersPath = path.join(__dirname, '../data/assigned_teacher.json');
+        const assignmentData = {
+          assignments: assignments,
+          warnings: warnings
+        };
+        fs.writeFileSync(assignedTeachersPath, JSON.stringify(assignmentData, null, 2));
       }
 
       console.log(`Auto-assigned ${assignments.length} substitutes for absent teachers`);

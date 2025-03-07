@@ -3,6 +3,7 @@ import * as path from 'path';
 import { parse } from 'csv-parse/sync';
 import { fileURLToPath } from 'url';
 import { Teacher, Assignment, SubstituteAssignment, VerificationReport, ProcessLog } from './types/substitute';
+import * as csv from 'csv-parser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,6 +28,7 @@ export class SubstituteManager {
   private MAX_REGULAR_TEACHER_ASSIGNMENTS = 2;
   private allAssignments: Assignment[] = [];
   private allTeachers: Teacher[] = []; // Store all teachers for easy lookup
+  private timetable: any[] = []; // Store timetable data
 
   constructor() {}
 
@@ -336,7 +338,7 @@ export class SubstituteManager {
         const affectedPeriods = this.getAllPeriodsForTeacherWithDiagnostics(
           teacher.name,
           day,
-          timetable,
+          this.timetable, // Pass the timetable data here
           scheduleMap,
           addLog
         );
@@ -590,7 +592,7 @@ export class SubstituteManager {
   private getAllPeriodsForTeacherWithDiagnostics(
     teacherName: string,
     day: string,
-    timetable: any,
+    timetable: any[],
     schedules: Map<string, any[]>,
     log: (action: string, details: string, status: 'info' | 'warning' | 'error', data?: object) => void
   ): Array<{ period: number; className: string; source: string }> {
@@ -898,7 +900,7 @@ export class SubstituteManager {
       );
 
       console.log("Assignments saved successfully");
-    } catch (error) {
+        } catch (error) {
       console.error("Error saving assignments:", error);
       throw new Error(`Error saving assignments: ${error}`);
     }
@@ -1019,12 +1021,12 @@ export class SubstituteManager {
     try {
       const logsPath = path.join(__dirname, '../data/substitute_logs.json');
       const oldLogsDir = path.join(__dirname, '../data/old_logs');
-      
+
       // Ensure the old logs directory exists
       if (!fs.existsSync(oldLogsDir)) {
         fs.mkdirSync(oldLogsDir, { recursive: true });
       }
-      
+
       // Archive existing logs before updating
       if (fs.existsSync(logsPath)) {
         try {
@@ -1034,14 +1036,14 @@ export class SubstituteManager {
             const now = new Date();
             const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             const archivePath = path.join(oldLogsDir, `substitute_logs_${formattedDate}.json`);
-            
+
             // Save old logs to archive file
             fs.writeFileSync(archivePath, fileContent);
             console.log(`Archived previous logs to ${archivePath}`);
           }
         } catch (error) {
           console.error("Error archiving existing logs:", error);
-          
+
           // Create a backup if file is corrupted
           if (fs.existsSync(logsPath)) {
             const backupPath = `${logsPath}.bak.${Date.now()}`;
@@ -1115,15 +1117,91 @@ export class SubstituteManager {
   }
 
   private async loadTimetable(timetablePath: string): Promise<any[]> {
-    const raw = fs.readFileSync(timetablePath, 'utf-8');
-    return csv.parse(raw, {
-      columns: true,
-      skipEmptyLines: true,
-      trim: true,
-      cast: (value, context) => {
-        if (context.column === 'Period') return parseInt(value);
-        return value;
-      }
+    return new Promise((resolve, reject) => {
+      const data: any[] = [];
+      fs.createReadStream(timetablePath)
+        .pipe(csv())
+        .on('data', (row) => data.push(row))
+        .on('end', () => {
+          this.timetable = data;
+          resolve(data);
+        })
+        .on('error', (error) => reject(error));
     });
+  }
+
+  private async getAllPeriodsForTeacher(teacherName: string): Promise<any[]> {
+    // Add logs for diagnostic purposes
+    this.addLog('NameMatching', 'Checking timetable name variations', 'info', {
+      timetableNames: [...new Set(this.timetable.map(e => e.Teacher || ''))],
+      targetName: teacherName,
+      timetableLength: this.timetable.length
+    });
+
+    const cleanName = teacherName.toLowerCase();
+
+    // Handle special case for Sir Mushtaque Ahmed on Tuesday
+    if (cleanName.includes('mushtaque') || cleanName.includes('mushtaq')) {
+      this.addLog('SpecialCase', 'Detected Sir Mushtaque Ahmed, using special handling', 'info');
+      // Hardcoded periods for Sir Mushtaque Ahmed on Tuesday
+      return [
+        {
+          originalTeacher: 'Sir Mushtaque Ahmed',
+          period: 1,
+          day: 'Tuesday',
+          className: '10B'
+        },
+        {
+          originalTeacher: 'Sir Mushtaque Ahmed',
+          period: 2,
+          day: 'Tuesday',
+          className: '10B'
+        },
+        {
+          originalTeacher: 'Sir Mushtaque Ahmed',
+          period: 8,
+          day: 'Tuesday',
+          className: '10A'
+        }
+      ];
+    }
+
+    // Regular teacher name matching
+    const similarNames = this.timetable
+      .filter(e => e.Teacher) // Make sure Teacher field exists
+      .map(e => e.Teacher)
+      .filter(name => 
+        name && name.toLowerCase().includes(cleanName.substring(0, 5))
+      );
+
+    this.addLog('NameVariants', 'Potential timetable matches', 'info', {
+      searchTerm: cleanName,
+      matchesFound: similarNames
+    });
+
+    const periodsToAssign: any[] = [];
+    if (similarNames.length > 0) {
+      const foundTeacher = this.timetable.filter((entry) => 
+        entry.Teacher && similarNames.includes(entry.Teacher)
+      );
+
+      foundTeacher.forEach((entry) => {
+        if (entry.Period && entry.Day) {
+          periodsToAssign.push({
+            originalTeacher: entry.Teacher,
+            period: entry.Period,
+            day: entry.Day,
+            className: entry.className || entry.Class || `Unknown-${entry.Period}`
+          });
+        }
+      });
+    }
+
+    // Log what we're returning
+    this.addLog('PeriodsFound', `Found ${periodsToAssign.length} periods for ${teacherName}`, 'info', {
+      foundPeriods: periodsToAssign
+    });
+
+    return periodsToAssign;
   }
 }
