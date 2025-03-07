@@ -52,12 +52,16 @@ function getCurrentPeriodFromConfig(periodConfigs: PeriodConfig[]): number | nul
   const currentTime = format(now, 'HH:mm');
 
   for (const config of periodConfigs) {
-    if (currentTime >= config.startTime && currentTime <= config.endTime) {
+    const start = parse(config.startTime, 'HH:mm', new Date());
+    const end = parse(config.endTime, 'HH:mm', new Date());
+    const current = parse(currentTime, 'HH:mm', new Date());
+
+    if (isWithinInterval(current, { start, end })) {
       return config.periodNumber;
     }
   }
 
-  return null; // Return null if no active period
+  return null;
 }
 
 function getDayOfWeek(): string {
@@ -92,12 +96,24 @@ export default function HomePage() {
     queryFn: async () => {
       const res = await fetch('/api/period-config');
       if (!res.ok) {
-        console.warn('Could not fetch period config, using default');
-        return null;
+        console.warn('Could not fetch period config');
+        throw new Error('Failed to fetch period configuration');
       }
       return res.json() as Promise<PeriodConfig[]>;
     }
   });
+
+  const { data: absentTeachers, isLoading: loadingAbsentTeachers, refetch: refetchAbsentTeachers } = useQuery({
+    queryKey: ["/api/get-absent-teachers"],
+    queryFn: async () => {
+      const res = await fetch('/api/get-absent-teachers');
+      if (!res.ok) {
+        throw new Error('Failed to fetch absent teachers');
+      }
+      return res.json();
+    }
+  });
+
 
   const { data: periodSchedules, isLoading: loadingPeriodSchedules, refetch: refetchPeriodSchedules } = useQuery({
     queryKey: ["/api/period-schedules"],
@@ -108,19 +124,6 @@ export default function HomePage() {
         throw new Error(error.error || 'Failed to fetch period schedules');
       }
       return res.json();
-    }
-  });
-
-
-  const { data: absences, isLoading: loadingAbsences, refetch: refetchAbsences } = useQuery({
-    queryKey: ["/api/absences"],
-    queryFn: async () => {
-      const res = await fetch('/api/absences');
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to fetch absences');
-      }
-      return res.json() as Promise<Absence[]>;
     }
   });
 
@@ -138,17 +141,15 @@ export default function HomePage() {
 
   // Update current period based on period config
   useEffect(() => {
-    if (periodConfigs) {
-      const period = getCurrentPeriodFromConfig(periodConfigs);
-      setCurrentPeriod(period);
-    }
-
-    const timer = setInterval(() => {
+    const updateCurrentPeriod = () => {
       if (periodConfigs) {
         const period = getCurrentPeriodFromConfig(periodConfigs);
         setCurrentPeriod(period);
       }
-    }, 60000); // Check every minute
+    };
+
+    updateCurrentPeriod();
+    const timer = setInterval(updateCurrentPeriod, 60000); // Check every minute
 
     return () => clearInterval(timer);
   }, [periodConfigs]);
@@ -159,19 +160,27 @@ export default function HomePage() {
       description: "Please wait while we update the information..."
     });
 
-    await Promise.all([
-      refetchAbsences(),
-      refetchTeachers(),
-      refetchPeriodSchedules()
-    ]);
+    try {
+      await Promise.all([
+        refetchAbsentTeachers(),
+        refetchPeriodSchedules(),
+        queryClient.invalidateQueries({ queryKey: ["/api/period-config"] })
+      ]);
 
-    toast({
-      title: "Refresh complete",
-      description: "All data has been updated"
-    });
+      toast({
+        title: "Refresh complete",
+        description: "All data has been updated"
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh failed",
+        description: "Failed to update some data. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const isLoading = loadingAbsences || loadingTeachers || loadingPeriodSchedules || loadingPeriodConfigs;
+  const isLoading = loadingAbsentTeachers || loadingPeriodSchedules || loadingPeriodConfigs;
 
   const currentTeachers = React.useMemo((): ClassInfo[] => {
     if (!periodSchedules || !currentPeriod) return [];
@@ -183,16 +192,16 @@ export default function HomePage() {
       const { className, teacherName } = schedule;
       const teacher = teachers?.find(t => t.name === teacherName);
 
-      const isAbsent = absences?.some(
+      const isAbsent = absentTeachers?.some(
         a => a.teacherId === teacher?.id &&
-        format(new Date(a.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
+          format(new Date(a.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
       );
 
       let substituteTeacher = null;
-      if (isAbsent && absences) {
-        const absence = absences.find(
+      if (isAbsent && teachers) {
+        const absence = absentTeachers.find(
           a => a.teacherId === teacher?.id &&
-          format(new Date(a.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
+            format(new Date(a.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
         );
         if (absence?.substituteId) {
           substituteTeacher = teachers?.find(t => t.id === absence.substituteId);
@@ -211,28 +220,24 @@ export default function HomePage() {
           : 'present'
       };
     }).sort((a: ClassInfo, b: ClassInfo) => a.className.localeCompare(b.className));
-  }, [periodSchedules, currentDay, currentPeriod, absences, teachers]);
+  }, [periodSchedules, currentDay, currentPeriod, absentTeachers, teachers]);
 
   // Stats calculations
-  const absentTeachersToday = React.useMemo(() => {
-    if (!absences) return 0;
-    return absences.filter(a =>
-      format(new Date(a.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
-    ).length;
-  }, [absences]);
+  const absentTeachersCount = absentTeachers?.length || 0;
 
-  const availableSubstitutes = React.useMemo(() => {
-    if (!teachers) return 0;
-    return teachers.filter(t => t.isSubstitute).length;
-  }, [teachers]);
+  const totalClasses = React.useMemo(() => {
+    if (!periodSchedules || !currentDay) return 0;
+    const daySchedule = periodSchedules[currentDay] || {};
+    return Object.values(daySchedule).reduce((total, periodData: any[]) => total + periodData.length, 0);
+  }, [periodSchedules, currentDay]);
 
   const pendingAssignments = React.useMemo(() => {
-    if (!absences || !teachers) return 0;
-    const todayAbsences = absences.filter(a =>
+    if (!absentTeachers || !teachers) return 0;
+    const todayAbsences = absentTeachers.filter(a =>
       format(new Date(a.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")
     );
     return todayAbsences.filter(a => !a.substituteId).length;
-  }, [absences, teachers]);
+  }, [absentTeachers, teachers]);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -321,12 +326,12 @@ export default function HomePage() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-primary" />
-                  Schedule Overview
+                  Today's Schedule
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{periodSchedules?.length || 0}</p>
-                <p className="text-sm text-muted-foreground">total periods today</p>
+                <p className="text-2xl font-bold">{totalClasses}</p>
+                <p className="text-sm text-muted-foreground">total classes today</p>
               </CardContent>
             </Card>
           </Link>
@@ -342,28 +347,27 @@ export default function HomePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{absentTeachersToday}</p>
-                <p className="text-sm text-muted-foreground">teachers marked absent today</p>
+                <p className="text-2xl font-bold">{absentTeachersCount}</p>
+                <p className="text-sm text-muted-foreground">teachers absent today</p>
               </CardContent>
             </Card>
           </Link>
         </motion.div>
 
+        {/* Replace substitute teacher card with total periods */}
         <motion.div variants={item}>
-          <Link href="/substitutes" className="block">
-            <Card className="h-full hover:bg-accent/5 transition-colors border-2 hover:border-success">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <UserCheck className="h-5 w-5 text-success" />
-                  Substitute Teachers
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{availableSubstitutes}</p>
-                <p className="text-sm text-muted-foreground">available substitutes</p>
-              </CardContent>
-            </Card>
-          </Link>
+          <Card className="h-full hover:bg-accent/5 transition-colors border-2 hover:border-success">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                <Clock className="h-5 w-5 text-success" />
+                Period Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{periodConfigs?.length || 0}</p>
+              <p className="text-sm text-muted-foreground">total periods configured</p>
+            </CardContent>
+          </Card>
         </motion.div>
 
         <motion.div variants={item}>
@@ -372,12 +376,14 @@ export default function HomePage() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                   <Bell className="h-5 w-5 text-warning" />
-                  Notifications
+                  Active Classes
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{pendingAssignments}</p>
-                <p className="text-sm text-muted-foreground">pending assignments</p>
+                <p className="text-2xl font-bold">
+                  {currentTeachers.length}
+                </p>
+                <p className="text-sm text-muted-foreground">classes this period</p>
               </CardContent>
             </Card>
           </Link>
