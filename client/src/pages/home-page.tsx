@@ -112,10 +112,12 @@ export default function HomePage() {
       if (!res.ok) throw new Error('Failed to fetch absent teachers');
       const data = await res.json();
 
-      // Filter for today's absences only
+      // Get today's date
       const today = new Date().toISOString().split('T')[0];
+
+      // Filter for today's absences only
       const todayAbsences = Array.isArray(data) 
-        ? data.filter((teacher: any) => teacher.date === today)
+        ? data.filter((teacher: any) => new Date(teacher.timestamp).toISOString().split('T')[0] === today)
         : [];
 
       return { count: todayAbsences.length };

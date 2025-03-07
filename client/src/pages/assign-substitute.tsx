@@ -8,23 +8,28 @@ import { format } from "date-fns";
 interface LocalStorageData {
   absences: any[];
   substitutes: {
-    classId: string;
+    teacherId: number;
     substituteId: string;
     date: string;
   }[];
 }
 
 export default function AssignSubstitutePage() {
-  const { classId } = useParams();
-  const [setLocation] = useLocation(); //removed unused location variable
+  const { teacherId } = useParams();
+  const [setLocation] = useLocation();
   const today = format(new Date(), 'yyyy-MM-dd');
-
-  const { data: schedule } = useQuery({
-    queryKey: ["/api/schedule"],
-  });
 
   const { data: teachers } = useQuery({
     queryKey: ["/api/teachers"],
+  });
+
+  const { data: absentTeachers } = useQuery({
+    queryKey: ["/api/absent-teachers"],
+    queryFn: async () => {
+      const res = await fetch('/api/absent-teachers');
+      if (!res.ok) throw new Error('Failed to fetch absent teachers');
+      return res.json();
+    }
   });
 
   const getLocalStorageData = (): LocalStorageData => {
@@ -36,16 +41,17 @@ export default function AssignSubstitutePage() {
     localStorage.setItem('teacherAbsenceData', JSON.stringify(data));
   };
 
-  const classInfo = schedule?.find(s => s.id === parseInt(classId || "0"));
-  const teacher = teachers?.find(t => t.id === classInfo?.teacherId);
+  const absentTeacher = absentTeachers?.find((t: any) => t.id === parseInt(teacherId || "0"));
   const availableSubstitutes = teachers?.filter(t => t.isSubstitute) || [];
 
-  const handleAssignSubstitute = (substituteId: string) => {
+  const handleAssignSubstitute = async (substituteId: string) => {
+    if (!absentTeacher) return;
+
     const localData = getLocalStorageData();
 
     // Add new substitute assignment
     localData.substitutes.push({
-      classId: classId!,
+      teacherId: parseInt(teacherId!),
       substituteId,
       date: today
     });
@@ -53,9 +59,32 @@ export default function AssignSubstitutePage() {
     // Update local storage
     setLocalStorageData(localData);
 
+    // Update the absent teacher record
+    try {
+      await fetch(`/api/absent-teachers/${absentTeacher.id}/substitute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ substituteId })
+      });
+    } catch (error) {
+      console.error('Failed to update absent teacher:', error);
+    }
+
     // Navigate back to absences page
     setLocation('/manage-absences');
   };
+
+  if (!absentTeacher) {
+    return (
+      <div className="container py-6">
+        <Card>
+          <CardContent className="p-6 text-center text-muted-foreground">
+            Teacher not found or no longer absent
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-6 space-y-6">
@@ -66,13 +95,15 @@ export default function AssignSubstitutePage() {
         <CardContent>
           <div className="space-y-4">
             <div>
-              <h3 className="font-medium">Class Details</h3>
+              <h3 className="font-medium">Absent Teacher Details</h3>
               <p className="text-sm text-muted-foreground">
-                {classInfo?.className} - Period {classInfo?.period}
+                {absentTeacher.name}
               </p>
-              <p className="text-sm text-muted-foreground">
-                Absent Teacher: {teacher?.name}
-              </p>
+              {absentTeacher.phoneNumber && (
+                <p className="text-sm text-muted-foreground">
+                  Phone: {absentTeacher.phoneNumber}
+                </p>
+              )}
             </div>
 
             <div>
@@ -90,7 +121,7 @@ export default function AssignSubstitutePage() {
                       key={substitute.id}
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={() => handleAssignSubstitute(substitute.id)}
+                      onClick={() => handleAssignSubstitute(substitute.id.toString())}
                       disabled={isAssignedToday}
                     >
                       {substitute.name}

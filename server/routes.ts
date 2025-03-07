@@ -280,13 +280,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  app.post("/api/mark-attendance", async (req, res) => {
+  app.post('/api/mark-attendance', (req, res) => {
     try {
       const { status, teacherName, phoneNumber } = req.body;
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const filePath = path.join(__dirname, '../data/absent_teachers.json');
-      const assignedTeachersPath = path.join(__dirname, '../data/assigned_teacher.json');
 
       // Create file if it doesn't exist
       if (!fs.existsSync(filePath)) {
@@ -300,7 +299,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (status === 'absent') {
         // Add teacher if not already in list
         if (!absentTeachers.find((t: any) => t.name === teacherName)) {
+          // Get the last ID or start from 1
+          const lastId = absentTeachers.length > 0 
+            ? Math.max(...absentTeachers.map((t: any) => t.id || 0)) 
+            : 0;
+
           absentTeachers.push({
+            id: lastId + 1,
             name: teacherName,
             phoneNumber: phoneNumber,
             timestamp: new Date().toISOString(),
@@ -308,24 +313,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       } else if (status === 'present') {
-        // Check if teacher had substitutes assigned
-        const teacher = absentTeachers.find((t: any) => t.name === teacherName);
-        if (teacher?.assignedSubstitute) {
-          // Remove assignments for this teacher
-          if (fs.existsSync(assignedTeachersPath)) {
-            const assignedContent = fs.readFileSync(assignedTeachersPath, 'utf8');
-            let assignedData = JSON.parse(assignedContent);
-
-            // Filter out assignments for this teacher
-            assignedData.assignments = assignedData.assignments.filter(
-              (a: any) => a.originalTeacher !== teacherName
-            );
-
-            // Save updated assignments
-            fs.writeFileSync(assignedTeachersPath, JSON.stringify(assignedData, null, 2));
-          }
-        }
-
         // Remove teacher from absent list
         absentTeachers = absentTeachers.filter((t: any) => t.name !== teacherName);
       }
@@ -454,7 +441,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/sms-history", async (req, res) => {
+  app.post("/api/sms-history", async (req, res) => {
     const history = await storage.getSmsHistory();
     const enrichedHistory = await Promise.all(
       history.map(async (sms) => {
@@ -700,6 +687,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Removed ${teacherName} from absent teachers list`);
       }
 
+      fs.writeFileSync(filePath, JSON.stringify(currentAbsentTeachers, null, 2));
+      res.json({ success: true, absentTeachers: currentAbsentTeachers });
+    } catch (error) {
+      console.error('Error updating absent teachers file:', error);
+      res.status(500).json({ error: 'Failed to update absent teachers file' });
+    }
+  });
+
   app.get("/api/absent-teachers-count", (req, res) => {
     try {
       const __filename = fileURLToPath(import.meta.url);
@@ -737,15 +732,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
-
-      fs.writeFileSync(filePath, JSON.stringify(currentAbsentTeachers, null, 2));
-      res.json({ success: true, absentTeachers: currentAbsentTeachers });
-    } catch (error) {
-      console.error('Error updating absent teachers file:', error);
-      res.status(500).json({ error: 'Failed to update absent teachers file' });
-    }
-  });
 
   app.post("/api/process-timetables", async (req, res) => {
     try {
@@ -815,6 +801,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error reading class schedules:', error);
       res.status(500).json({ error: 'Failed to read class schedules' });
+    }
+  });
+
+  // Add this endpoint to handle substitute assignments
+  app.post("/api/absent-teachers/:id/substitute", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { substituteId } = req.body;
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/absent_teachers.json');
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Absent teachers file not found' });
+      }
+
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      let absentTeachers = JSON.parse(fileContent);
+
+      // Find and update the teacher's record
+      const teacherIndex = absentTeachers.findIndex((t: any) => t.id === parseInt(id));
+      if (teacherIndex === -1) {
+        return res.status(404).json({ error: 'Teacher not found' });
+      }
+
+      // Update the teacher's record
+      absentTeachers[teacherIndex] = {
+        ...absentTeachers[teacherIndex],
+        assignedSubstitute: true,
+        substituteId: substituteId
+      };
+
+      // Save the updated data
+      fs.writeFileSync(filePath, JSON.stringify(absentTeachers, null, 2));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error assigning substitute:', error);
+      res.status(500).json({ error: 'Failed to assign substitute' });
     }
   });
 
