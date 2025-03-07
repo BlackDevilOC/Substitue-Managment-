@@ -33,5 +33,6 @@ export interface ProcessLog {
   action: string;
   details: string;
   status: 'info' | 'warning' | 'error';
+  data?: object;
   durationMs: number;
 }

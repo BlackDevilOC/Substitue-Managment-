@@ -190,24 +190,26 @@ export class SubstituteManager {
     const logs: ProcessLog[] = [];
     const startTime = Date.now();
 
-    // Logging helper function
-    const addLog = (action: string, details: string, status: 'info' | 'warning' | 'error' = 'info') => {
+    // Enhanced logging helper function with data capability
+    const addLog = (
+      action: string, 
+      details: string, 
+      status: 'info' | 'warning' | 'error' = 'info',
+      data?: object
+    ) => {
       logs.push({
         timestamp: new Date().toISOString(),
         action,
         details,
         status,
+        data,
         durationMs: Date.now() - startTime
       });
     };
 
     try {
-      // Initialize phase
-      addLog('Initialization', 'Starting substitute assignment process');
+      addLog('ProcessStart', 'Initializing substitute assignment system');
 
-      // Load data phase
-      addLog('DataLoading', 'Loading teachers, schedules, and existing assignments');
-      
       // If no absent teacher names provided, try to load from JSON
       if (!absentTeacherNames) {
         const absentTeachersPath = path.join(__dirname, '../data/absent_teachers.json');
@@ -228,7 +230,8 @@ export class SubstituteManager {
         addLog('DataLoading', `Using ${absentTeacherNames.length} provided absent teachers`);
       }
 
-      // Load all data
+      // Load all required data
+      addLog('DataLoading', 'Loading all required datasets');
       const [teachers, teacherSchedules, assignedTeachers, timetable] = await Promise.all([
         this.loadTeachers(DEFAULT_TEACHERS_PATH),
         this.loadSchedules(DEFAULT_SCHEDULES_PATH),
@@ -238,6 +241,7 @@ export class SubstituteManager {
       
       addLog('DataLoading', `Loaded ${teachers.length} teachers, ${teacherSchedules.size} schedules, ${assignedTeachers.length} existing assignments`);
 
+      // Core functionality
       const day = this.getDayFromDate(date);
       addLog('Processing', `Processing for day: ${day}`);
       
@@ -257,7 +261,7 @@ export class SubstituteManager {
         addLog('Validation', warning, 'warning');
       }
 
-      // Track existing assignments
+      // Initialize tracking maps
       assignedTeachers.forEach(({ substitutePhone, period }) => {
         workloadMap.set(substitutePhone, (workloadMap.get(substitutePhone) || 0) + 1);
         assignedPeriodsMap.set(substitutePhone, 
@@ -275,14 +279,15 @@ export class SubstituteManager {
       addLog('Processing', `Created schedule lookup map with ${scheduleMap.size} entries`);
 
       // Resolve absent teachers using variations
+      addLog('TeacherResolution', 'Validating absent teacher list');
       let absentTeachers: Teacher[] = [];
       try {
         absentTeachers = this.resolveTeacherNames(absentTeacherNames, teacherMap, warnings);
-        addLog('Processing', `Resolved ${absentTeachers.length} absent teachers out of ${absentTeacherNames?.length || 0} provided names`);
+        addLog('TeacherResolution', `Resolved ${absentTeachers.length} absent teachers out of ${absentTeacherNames?.length || 0} provided names`);
       } catch (error) {
         const errorMsg = `Error resolving teachers: ${error}`;
         warnings.push(errorMsg);
-        addLog('Processing', errorMsg, 'error');
+        addLog('TeacherResolution', errorMsg, 'error');
         
         // Save logs and warnings to files
         this.saveLogs(logs, date);
@@ -303,13 +308,18 @@ export class SubstituteManager {
 
       // Process each absent teacher
       for (const teacher of absentTeachers) {
-        addLog('Assignment', `Processing absent teacher: ${teacher.name}`);
+        addLog('TeacherProcessing', `Processing absent teacher: ${teacher.name}`, 'info', {
+          teacherId: teacher.phone
+        });
         
         const affectedPeriods = this.getAffectedPeriods(teacher.name, day, teacherMap, warnings);
-        addLog('Assignment', `Found ${affectedPeriods.length} affected periods for ${teacher.name}`);
+        addLog('PeriodDetection', `Found ${affectedPeriods.length} affected periods for ${teacher.name}`, 'info', {
+          periodDetails: affectedPeriods
+        });
         
         for (const { period, className } of affectedPeriods) {
-          addLog('Assignment', `Finding substitute for ${teacher.name}, period ${period}, class ${className}`);
+          const assignmentKey = `${teacher.name}-${period}-${className}`;
+          addLog('PeriodAssignment', `Processing ${assignmentKey}`, 'info');
           
           const { candidates, warnings: subWarnings } = this.findSuitableSubstitutes({
             className,
@@ -330,13 +340,14 @@ export class SubstituteManager {
           if (candidates.length === 0) {
             const warningMsg = `No substitute found for ${className} period ${period}`;
             warnings.push(warningMsg);
-            addLog('Assignment', warningMsg, 'warning');
+            addLog('AssignmentFailure', warningMsg, 'warning', {
+              availableSubstitutes: availableSubstitutes.map(s => s.name)
+            });
             continue;
           }
 
           // Select candidate with the least workload
           const selected = this.selectBestCandidate(candidates, workloadMap);
-          addLog('Assignment', `Selected ${selected.name} for ${className} period ${period} (current workload: ${workloadMap.get(selected.phone) || 0})`);
           
           // Record assignment
           assignments.push({
@@ -352,11 +363,26 @@ export class SubstituteManager {
           assignedPeriodsMap.set(selected.phone, 
             new Set([...(assignedPeriodsMap.get(selected.phone) || []), period])
           );
+          
+          addLog('AssignmentSuccess', `Assigned ${selected.name} to ${assignmentKey}`, 'info', {
+            substituteWorkload: workloadMap.get(selected.phone)
+          });
         }
       }
 
       // Validate final assignments
       addLog('Validation', `Validating ${assignments.length} assignments`);
+      
+      // Check for duplicate assignments
+      const assignmentKeys = new Set();
+      assignments.forEach(assignment => {
+        const key = `${assignment.substitutePhone}-${assignment.period}`;
+        if (assignmentKeys.has(key)) {
+          warnings.push(`Duplicate assignment: ${assignment.substitute} in period ${assignment.period}`);
+        }
+        assignmentKeys.add(key);
+      });
+      
       const validation = this.validateAssignments({
         assignments,
         workloadMap,
@@ -370,11 +396,16 @@ export class SubstituteManager {
 
       // Save the assignments to file (without warnings)
       this.saveAssignmentsToFile(assignments);
-      addLog('Completion', `Saved ${assignments.length} assignments to file`);
+      addLog('DataSave', `Saved ${assignments.length} assignments to file`);
       
       // Save logs and warnings to separate files
       this.saveLogs(logs, date);
       this.saveWarnings([...warnings, ...validation.warnings], date);
+
+      addLog('ProcessComplete', 'Substitute assignment completed successfully', 'info', {
+        totalAssignments: assignments.length,
+        unassignedPeriods: warnings.filter(w => w.includes('No substitute found')).length
+      });
 
       return {
         assignments,
@@ -383,13 +414,20 @@ export class SubstituteManager {
       };
     } catch (error) {
       const errorMsg = `Error in autoAssignSubstitutes: ${error}`;
-      addLog('Error', errorMsg, 'error');
+      addLog('ProcessError', errorMsg, 'error', {
+        errorMessage: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       
       // Save logs even in case of error
       this.saveLogs(logs, date);
       this.saveWarnings([errorMsg], date);
       
-      throw error;
+      return {
+        assignments: [],
+        warnings: [errorMsg],
+        logs
+      };
     }
   }
 

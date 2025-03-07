@@ -433,7 +433,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false,
         message: "Failed to auto-assign substitutes", 
-        error: error instanceof Error ? error.message : String(error) 
+        error: error instanceof Error ? error.message : String(error),
+        logs: error.logs || [] // Include logs if available for better error diagnostics
       });
     }
   });
