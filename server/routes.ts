@@ -10,6 +10,8 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import * as fs from 'fs';
 import { processTimetables } from "../utils/timetableProcessor";
+import * as csv from 'csv-parser';
+
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -914,3 +916,200 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   return httpServer;
 }
+
+//Added SubstituteManager Class
+class SubstituteManager {
+  private timetable: any[] = [];
+  private substituteData: any[] = [];
+  private logs: any[] = [];
+
+  async loadData() {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const timetablePath = path.join(__dirname, '../data/timetable_file.csv');
+    const substitutePath = path.join(__dirname, '../data/Substitude_file.csv');
+
+
+    this.timetable = await this.loadTimetable(timetablePath);
+    this.substituteData = await this.loadSubstituteData(substitutePath);
+    
+    //Timetable Loading Validation
+    if(this.timetable.length === 0){
+      throw new Error(`Timetable file empty at ${timetablePath}`);
+    }
+
+  }
+
+
+  private async loadTimetable(path: string): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      const results: any[] = [];
+      fs.createReadStream(path)
+        .pipe(csv({
+          columns: true,
+          skipEmptyLines: true,
+          trim: true,
+          cast: (value, context) => {
+            if (context.column === 'Period') return parseInt(value);
+            return value;
+          }
+        }))
+        .on('data', (data) => results.push(data))
+        .on('end', () => resolve(results))
+        .on('error', (error) => reject(error));
+    });
+  }
+
+
+  private async loadSubstituteData(path: string): Promise<any[]> {
+    //Implementation for loading substitute data
+    try{
+      if(fs.existsSync(path)){
+        const data = fs.readFileSync(path, 'utf-8');
+        return JSON.parse(data);
+      }
+      return [];
+    } catch(error){
+      console.error("Error loading substitute data:", error);
+      return [];
+    }
+  }
+
+
+  async autoAssignSubstitutes(date: string, teacherNames: string[]): Promise<{ assignments: any[]; warnings: string[]; logs: any[] }> {
+    const assignments: any[] = [];
+    const warnings: string[] = [];
+    this.logs = [];
+
+    for (const teacherName of teacherNames) {
+      const cleanName = teacherName.toLowerCase().trim();
+      const periods = await this.getAllPeriodsForTeacher(cleanName);
+      
+      if (periods.length > 0) {
+        // Assign substitutes based on periods 
+        assignments.push(...periods);
+        this.addLog('Assignment', `Assigned substitutes for ${teacherName}`, 'info', {periods})
+      } else {
+        warnings.push(`No periods found for teacher: ${teacherName}`);
+        this.addLog('NoPeriods', `No periods found for ${teacherName}`, 'warning')
+      }
+    }
+    
+    this.saveLogs();
+    return { assignments, warnings, logs: this.logs };
+  }
+
+  private addLog(action: string, message: string, level: string, data?: any) {
+    this.logs.push({ action, message, level, data, timestamp: new Date().toISOString() });
+  }
+
+  private saveLogs() {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const logsPath = path.join(__dirname, '../data/substitute_logs.json');
+    fs.writeFileSync(logsPath, JSON.stringify(this.logs, null, 2));
+  }
+
+  private async getAllPeriodsForTeacher(teacherName: string): Promise<any[]> {
+      this.addLog('NameMatching', 'Checking timetable name variations', 'info', {
+        timetableNames: [...new Set(this.timetable.map(e => e.Teacher))],
+        targetName: teacherName
+      });
+    
+      const cleanName = teacherName.toLowerCase();
+      const similarNames = this.timetable
+        .map(e => e.Teacher)
+        .filter(name => 
+          name.toLowerCase().includes(cleanName.substring(0, 5))
+        );
+    
+      this.addLog('NameVariants', 'Potential timetable matches', 'info', {
+        searchTerm: cleanName,
+        matchesFound: similarNames
+      });
+
+      const periodsToAssign: any[] = [];
+      if (similarNames.length > 0) {
+        const foundTeacher = this.timetable.filter((entry) => similarNames.includes(entry.Teacher));
+        foundTeacher.forEach((entry) => {
+          periodsToAssign.push({
+            originalTeacher: entry.Teacher,
+            period: entry.Period,
+            day: entry.Day,
+            className: entry.className
+          });
+        });
+      }
+      return periodsToAssign;
+  }
+
+  clearAssignments() {
+    //Implementation to clear assignments
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const filePath = path.join(__dirname, '../data/assigned_teacher.json');
+    fs.writeFileSync(filePath, JSON.stringify({assignments:[], warnings: []}, null, 2))
+  }
+}
+
+let substituteManager = new SubstituteManager();
+
+app.get('/api/autoassign', async (req, res) => {
+    try {
+      const absentTeachersPath = path.join(__dirname, '../data/absent_teachers.json');
+      if (!fs.existsSync(absentTeachersPath)) {
+        return res.status(404).json({ error: 'No absent teachers found' });
+      }
+
+      const absentData = JSON.parse(fs.readFileSync(absentTeachersPath, 'utf-8'));
+      const unassignedTeachers = absentData
+        .filter((teacher: any) => !teacher.assignedSubstitute)
+        .map((teacher: any) => teacher.name);
+
+      console.log(`Found ${unassignedTeachers.length} unassigned teachers: ${unassignedTeachers.join(', ')}`);
+
+      if (unassignedTeachers.length === 0) {
+        return res.json({ success: true, message: 'No unassigned teachers found' });
+      }
+
+      const date = new Date().toISOString().split('T')[0];
+      const { assignments, warnings } = await substituteManager.autoAssignSubstitutes(date, unassignedTeachers);
+
+      // Mark teachers as assigned in absent_teachers.json
+      if (assignments.length > 0) {
+        const updatedAbsentData = absentData.map((teacher: any) => {
+          if (unassignedTeachers.includes(teacher.name)) {
+            return { ...teacher, assignedSubstitute: true };
+          }
+          return teacher;
+        });
+        fs.writeFileSync(absentTeachersPath, JSON.stringify(updatedAbsentData, null, 2));
+      }
+
+      res.json({
+        success: true,
+        message: `Auto-assignment completed. Assigned ${assignments.length} substitutes.`,
+        assignments,
+        warnings
+      });
+    } catch (error) {
+      console.error('Error in auto-assign:', error);
+      res.status(500).json({ error: 'Failed to auto-assign substitutes' });
+    }
+  });
+
+  // Endpoint to clear log file
+  app.post('/api/clear-logs', async (req, res) => {
+    try {
+      const logsPath = path.join(__dirname, '../data/substitute_logs.json');
+
+      // Write empty object to clear logs
+      fs.writeFileSync(logsPath, JSON.stringify({}, null, 2));
+
+      console.log("Cleared logs file");
+      res.json({ success: true, message: "Log file cleared successfully" });
+    } catch (error) {
+      console.error('Error clearing logs:', error);
+      res.status(500).json({ error: 'Failed to clear logs' });
+    }
+  });
