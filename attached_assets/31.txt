@@ -1,0 +1,273 @@
+interface SubstituteAssignment {
+  originalTeacher: string;
+  period: number;
+  className: string;
+  substitute: string;
+  substitutePhone: string;
+}
+
+interface ProcessLog {
+  timestamp: string;
+  action: string;
+  details: string;
+  data?: object;
+  status: 'info' | 'warning' | 'error';
+  durationMs: number;
+}
+
+const MAX_DAILY_WORKLOAD = 5;
+
+async autoAssignSubstitutes(
+  date: string,
+  absentTeacherNames?: string[]
+): Promise<{ assignments: SubstituteAssignment[]; warnings: string[]; logs: ProcessLog[] }> {
+  const logs: ProcessLog[] = [];
+  const startTime = Date.now();
+
+  const addLog = (
+    action: string,
+    details: string,
+    status: 'info' | 'warning' | 'error' = 'info',
+    data?: object
+  ) => {
+    logs.push({
+      timestamp: new Date().toISOString(),
+      action,
+      details,
+      status,
+      data,
+      durationMs: Date.now() - startTime
+    });
+  };
+
+  try {
+    addLog('ProcessStart', 'Initializing substitute assignment system', 'info', {
+      version: '2.1-diagnostic'
+    });
+
+    // Load data with source verification
+    addLog('DataLoading', 'Loading source files', 'info', {
+      files: [
+        DEFAULT_TEACHERS_PATH,
+        DEFAULT_SCHEDULES_PATH,
+        DEFAULT_ASSIGNED_TEACHERS_PATH,
+        DEFAULT_TIMETABLE_PATH
+      ]
+    });
+
+    const [teachers, teacherSchedules, assignedTeachers, timetable] = await Promise.all([
+      this.loadTeachers(DEFAULT_TEACHERS_PATH),
+      this.loadSchedules(DEFAULT_SCHEDULES_PATH),
+      this.loadAssignedTeachers(DEFAULT_ASSIGNED_TEACHERS_PATH),
+      this.loadTimetable(DEFAULT_TIMETABLE_PATH)
+    ]);
+
+    addLog('DataVerification', 'Validating loaded data', 'info', {
+      teachersCount: teachers.length,
+      schedulesCount: teacherSchedules.size,
+      timetableEntries: timetable.length,
+      assignedTeachersCount: assignedTeachers.length
+    });
+
+    // Core processing
+    const day = this.getDayFromDate(date);
+    const assignments: SubstituteAssignment[] = [];
+    const warnings: string[] = [];
+
+    addLog('DayCalculation', 'Calculated working day', 'info', {
+      inputDate: date,
+      normalizedDay: day
+    });
+
+    // Enhanced period detection
+    const processTeacher = (teacher: Teacher) => {
+      addLog('TeacherProcessing', `Starting processing for ${teacher.name}`, 'info', {
+        teacherId: teacher.phone,
+        variants: teacher.variations
+      });
+
+      // Detailed period detection
+      const periods = this.getAllPeriodsForTeacherWithDiagnostics(
+        teacher.name,
+        day,
+        timetable,
+        teacherSchedules,
+        addLog
+      );
+
+      // Assignment logic
+      periods.forEach(({ period, className, source }) => {
+        const assignmentKey = `${teacher.name}-${period}-${className}`;
+        addLog('PeriodAssignment', `Processing assignment`, 'info', {
+          assignmentKey,
+          period,
+          className,
+          source
+        });
+
+        // Substitute selection logic
+        const { candidates, warnings: periodWarnings } = this.findSuitableSubstitutes({
+          className,
+          period,
+          day,
+          substitutes: this.getAvailableSubstitutes(teachers, [teacher], assignedTeachers),
+          teachers: new Map(teachers.map(t => [t.phone, t])),
+          schedules: teacherSchedules,
+          currentWorkload: new Map(),
+          assignedPeriodsMap: new Map()
+        });
+
+        // Handle assignment results
+        if (candidates.length > 0) {
+          const selected = candidates[0];
+          assignments.push({
+            originalTeacher: teacher.name,
+            period,
+            className,
+            substitute: selected.name,
+            substitutePhone: selected.phone
+          });
+          addLog('AssignmentSuccess', `Successful assignment`, 'info', {
+            assignmentKey,
+            substitute: selected.name,
+            substituteWorkload: selected.currentWorkload
+          });
+        } else {
+          warnings.push(`No substitute found for ${assignmentKey}`);
+          addLog('AssignmentFailure', `Failed assignment`, 'error', {
+            assignmentKey,
+            availableSubstitutes: candidates.map(c => c.name)
+          });
+        }
+      });
+    };
+
+    // Process absent teachers
+    absentTeacherNames?.forEach(name => {
+      const teacher = teachers.find(t => t.name.toLowerCase() === name.toLowerCase());
+      if (teacher) {
+        processTeacher(teacher);
+      } else {
+        addLog('TeacherNotFound', `Teacher not found in registry`, 'error', {
+          requestedName: name,
+          availableNames: teachers.map(t => t.name)
+        });
+      }
+    });
+
+    addLog('ProcessComplete', 'Finished assignment process', 'info', {
+      totalAssignments: assignments.length,
+      warningsCount: warnings.length
+    });
+
+    return {
+      assignments,
+      warnings,
+      logs
+    };
+
+  } catch (error) {
+    addLog('ProcessFailure', 'Critical system failure', 'error', {
+      error: error.message,
+      stack: error.stack
+    });
+    return {
+      assignments: [],
+      warnings: [`System error: ${error.message}`],
+      logs
+    };
+  }
+}
+
+// Diagnostic version of period detection
+private getAllPeriodsForTeacherWithDiagnostics(
+  teacherName: string,
+  day: string,
+  timetable: any[],
+  schedules: Map<string, any[]>,
+  log: (action: string, details: string, status: 'info' | 'warning' | 'error', data?: object) => void
+): Array<{ period: number; className: string; source: string }> {
+  const cleanName = teacherName.toLowerCase().trim();
+  const cleanDay = day.toLowerCase().trim();
+
+  log('NameProcessing', 'Starting name normalization', 'info', {
+    originalName: teacherName,
+    normalizedName: cleanName
+  });
+
+  // Timetable analysis
+  const timetableEntries = timetable.filter(entry => {
+    const entryTeacher = entry.Teacher?.toLowerCase().trim() || '';
+    return entryTeacher.includes(cleanName);
+  });
+
+  log('TimetableAnalysis', 'Found potential timetable entries', 'info', {
+    rawEntries: timetableEntries,
+    matchCriteria: `teacherName.includes(${cleanName})`
+  });
+
+  const timetablePeriods = timetableEntries
+    .filter(entry => entry.Day?.toLowerCase().trim() === cleanDay)
+    .map(entry => ({
+      rawPeriod: entry.Period,
+      period: Number(entry.Period),
+      className: entry.Class?.trim().toUpperCase(),
+      source: 'timetable'
+    }));
+
+  log('TimetableProcessing', 'Processed timetable periods', 'info', {
+    rawCount: timetableEntries.length,
+    validCount: timetablePeriods.length,
+    invalidEntries: timetableEntries.filter(e => !timetablePeriods.some(p => p.rawPeriod === e.Period))
+  });
+
+  // Schedule analysis
+  const scheduleEntries = schedules.get(cleanName) || [];
+  const schedulePeriods = scheduleEntries
+    .filter(entry => entry.day?.toLowerCase().trim() === cleanDay)
+    .map(entry => ({
+      rawPeriod: entry.period,
+      period: Number(entry.period),
+      className: entry.className?.trim().toUpperCase(),
+      source: 'schedule'
+    }));
+
+  log('ScheduleAnalysis', 'Processed schedule periods', 'info', {
+    rawEntries: scheduleEntries,
+    validCount: schedulePeriods.length,
+    invalidEntries: scheduleEntries.filter(e => !schedulePeriods.some(p => p.rawPeriod === e.period))
+  });
+
+  // Merge and validate
+  const allPeriods = [...timetablePeriods, ...schedulePeriods];
+  const validPeriods = allPeriods
+    .filter(p => !isNaN(p.period))
+    .map(p => ({
+      period: p.period,
+      className: p.className,
+      source: p.source
+    }));
+
+  log('PeriodValidation', 'Final period validation', 'info', {
+    totalCandidates: allPeriods.length,
+    validPeriods: validPeriods,
+    invalidPeriods: allPeriods.filter(p => isNaN(p.period))
+  });
+
+  // Deduplication
+  const uniquePeriods = Array.from(new Map(
+    validPeriods.map(p => [`${p.period}-${p.className}`, p])
+  ).values());
+
+  log('Deduplication', 'Removed duplicate periods', 'info', {
+    beforeDedupe: validPeriods.length,
+    afterDedupe: uniquePeriods.length,
+    duplicates: validPeriods.filter(p => 
+      validPeriods.filter(ip => 
+        ip.period === p.period && ip.className === p.className
+      ).length > 1
+    )
+  });
+
+  return uniquePeriods;
+}
