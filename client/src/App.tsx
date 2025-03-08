@@ -21,8 +21,9 @@ import { ProtectedRoute } from "./lib/protected-route";
 import BottomNav from "./components/bottom-nav";
 import NotificationsPage from "@/pages/notifications";
 import ExperimentScreen from "@/pages/experiment-screen";
-// Added import for the new page
+// Added imports for the new pages
 import SMSSendPage from "@/pages/sms-send"; // Assuming this component exists
+import TestingPage from "@/pages/testing-page";
 
 function Router() {
   return (
@@ -50,6 +51,11 @@ function Router() {
 
 function App() {
   return (
+
+        <Route path="/testing">
+          <TestingPage />
+        </Route>
+
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <div className="min-h-screen pb-16">

@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import {
   Bell,
   Calendar,
+
+import { Settings } from "lucide-react";
+import { Link } from "wouter";
+
   Clock,
   Home,
   Users,
@@ -18,6 +22,15 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+
+      <div className="absolute top-4 left-4">
+        <Link href="/testing">
+          <button className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+            <Settings className="h-5 w-5 text-gray-600" />
+          </button>
+        </Link>
+      </div>
+
 import { queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
