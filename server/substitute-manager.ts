@@ -3,6 +3,7 @@ import * as path from 'path';
 import { parse } from 'csv-parse/sync';
 import { fileURLToPath } from 'url';
 import { Teacher, Assignment, SubstituteAssignment, VerificationReport, ProcessLog } from './types/substitute';
+import * as csvParser from 'csv-parser'; //Import csv-parser for use in loadTimetable
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1118,8 +1119,6 @@ export class SubstituteManager {
   private async loadTimetable(timetablePath: string): Promise<any[]> {
     return new Promise((resolve, reject) => {
       const data: any[] = [];
-      const csvParser = require('csv-parser');
-
       fs.createReadStream(timetablePath)
         .pipe(csvParser())
         .on('data', (row) => data.push(row))
