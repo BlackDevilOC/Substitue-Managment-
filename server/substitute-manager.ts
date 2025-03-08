@@ -1120,7 +1120,7 @@ export class SubstituteManager {
     return new Promise((resolve, reject) => {
       const data: any[] = [];
       fs.createReadStream(timetablePath)
-        .pipe(csv.createReadStream())
+        .pipe(csv())
         .on('data', (row) => data.push(row))
         .on('end', () => {
           this.timetable = data;
