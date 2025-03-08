@@ -169,3 +169,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+import React from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import WebViewBridge from './bridge';
+
+const App = () => {
+  return (
+    <SafeAreaProvider>
+      <WebViewBridge />
+    </SafeAreaProvider>
+  );
+};
+
+export default App;

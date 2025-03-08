@@ -96,19 +96,27 @@ export function setupClientSideSMS() {
     }
 
     try {
-      // Send a message to the React Native host
-      (window as any).ReactNativeWebView.postMessage(
-        JSON.stringify({
-          type: 'SEND_SMS',
-          payload: {
-            phoneNumber,
-            message
-          }
-        })
-      );
-      return true;
+      // Check if running in React Native WebView
+      if (typeof (window as any).ReactNativeWebView !== 'undefined') {
+        // Send a message to the React Native host
+        (window as any).ReactNativeWebView.postMessage(
+          JSON.stringify({
+            type: 'SEND_SMS',
+            payload: {
+              phoneNumber,
+              message
+            }
+          })
+        );
+        return true;
+      } else {
+        // Fallback for web - could be a web SMS service or just logging
+        console.log(`Would send SMS to ${phoneNumber}: ${message}`);
+        // You could also implement a web SMS service here
+        return true;
+      }
     } catch (error) {
-      console.error('Failed to communicate with native app', error);
+      console.error('Failed to send SMS', error);
       return false;
     }
   };

@@ -98,3 +98,83 @@ export function InstallPrompt() {
     </Dialog>
   );
 }
+import React, { useState, useEffect } from "react";
+import { X } from "lucide-react";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+export function InstallPrompt() {
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    const handler = (e: BeforeInstallPromptEvent) => {
+      // Prevent Chrome 67 and earlier from automatically showing the prompt
+      e.preventDefault();
+      // Store the event so it can be triggered later
+      setDeferredPrompt(e);
+      // Show the prompt to the user
+      setShowPrompt(true);
+    };
+
+    // Add the event listener
+    window.addEventListener('beforeinstallprompt', handler as any);
+
+    // Check if the app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setShowPrompt(false);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler as any);
+    };
+  }, []);
+
+  const handleInstallClick = () => {
+    if (!deferredPrompt) return;
+
+    // Show the install prompt
+    deferredPrompt.prompt();
+
+    // Wait for the user to respond to the prompt
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      setDeferredPrompt(null);
+      setShowPrompt(false);
+    });
+  };
+
+  if (!showPrompt) return null;
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-card border-t border-border shadow-lg">
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <h4 className="font-semibold">Install App</h4>
+          <p className="text-sm text-muted-foreground">Add this app to your home screen for quick access</p>
+        </div>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setShowPrompt(false)}
+            className="p-2 rounded-full hover:bg-muted"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <button 
+            onClick={handleInstallClick}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          >
+            Install
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
