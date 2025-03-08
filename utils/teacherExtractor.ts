@@ -109,21 +109,13 @@ const registerTeacher = (rawName: string, phone: string = ''): boolean => {
   }
 
   // Check for similar names
-  let bestMatch: Teacher | undefined;
-  let bestSimilarity = 0;
-
-  for (const teacher of TEACHER_MAP.values()) {
+  for (const [, teacher] of TEACHER_MAP) {
     const similarity = nameSimilarity(normalized, normalizeName(teacher.canonicalName));
-    if (similarity > SIMILARITY_THRESHOLD && similarity > bestSimilarity) {
-      bestMatch = teacher;
-      bestSimilarity = similarity;
+    if (similarity > SIMILARITY_THRESHOLD) {
+      teacher.variations.add(rawName);
+      if (phone && !teacher.phone) teacher.phone = phone;
+      return true;
     }
-  }
-
-  if (bestMatch) {
-    bestMatch.variations.add(rawName);
-    if (phone && !bestMatch.phone) bestMatch.phone = phone;
-    return true;
   }
 
   // Add new teacher
@@ -147,11 +139,11 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
       columns: false,
       skip_empty_lines: true,
       trim: true,
-      relax_column_count: true // Allow varying column counts
+      relax_column_count: true
     });
 
     let subTeacherCount = 0;
-    subRecords.forEach((row: any) => {
+    subRecords.forEach((row: string[]) => {
       if (Array.isArray(row) && row[0] && registerTeacher(row[0], row[1] || '')) {
         subTeacherCount++;
       }
@@ -164,21 +156,16 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
       columns: false,
       skip_empty_lines: true,
       trim: true,
-      relax_column_count: true // Allow varying column counts
+      relax_column_count: true
     });
 
     const timetableTeachers = new Set<string>();
-    ttRecords.slice(1).forEach((row: any) => {
+    ttRecords.slice(1).forEach((row: string[]) => {
       if (!Array.isArray(row)) return;
-      // Safely process each cell in the row
-      row.slice(2).forEach((name: any) => {
+      row.slice(2).forEach((name: string) => {
         if (name && typeof name === 'string' && name.toLowerCase() !== 'empty') {
-          try {
-            if (registerTeacher(name)) {
-              timetableTeachers.add(name.toLowerCase().trim());
-            }
-          } catch (err) {
-            console.warn(`Error processing teacher name "${name}": ${err}`);
+          if (registerTeacher(name)) {
+            timetableTeachers.add(name.toLowerCase().trim());
           }
         }
       });
@@ -186,44 +173,11 @@ export const processTeacherFiles = async (timetableContent: string, substitutesC
 
     console.log(`Processed ${timetableTeachers.size} unique teachers from timetable`);
 
-    // Additional merging for very similar names
-    const uniqueTeachers = Array.from(TEACHER_MAP.values());
-    while (uniqueTeachers.length > EXPECTED_TEACHER_COUNT) {
-      let merged = false;
-      for (let i = 0; i < uniqueTeachers.length - 1 && !merged; i++) {
-        for (let j = i + 1; j < uniqueTeachers.length && !merged; j++) {
-          const similarity = nameSimilarity(
-            normalizeName(uniqueTeachers[i].canonicalName),
-            normalizeName(uniqueTeachers[j].canonicalName)
-          );
-          if (similarity > 0.95) {
-            // Merge teachers
-            uniqueTeachers[i].variations = new Set([
-              ...Array.from(uniqueTeachers[i].variations),
-              ...Array.from(uniqueTeachers[j].variations)
-            ]);
-            if (!uniqueTeachers[i].phone && uniqueTeachers[j].phone) {
-              uniqueTeachers[i].phone = uniqueTeachers[j].phone;
-            }
-            uniqueTeachers.splice(j, 1);
-            merged = true;
-          }
-        }
-      }
-      if (!merged) break; // No more merges possible
-    }
-
     // Generate CSV output
     let csv = 'Canonical Name,Phone Number,Variations\n';
-    uniqueTeachers.forEach(teacher => {
-      csv += `"${teacher.canonicalName}","${teacher.phone}","${Array.from(teacher.variations).join('|')}"\n`;
-    });
-
-    // Final validation
-    if (uniqueTeachers.length === EXPECTED_TEACHER_COUNT) {
-      console.log(`✅ Successfully extracted exactly ${EXPECTED_TEACHER_COUNT} teachers!`);
-    } else {
-      console.warn(`⚠️ Extracted ${uniqueTeachers.length} teachers, expected ${EXPECTED_TEACHER_COUNT}`);
+    for (const [, teacher] of TEACHER_MAP) {
+      const variations = Array.from(teacher.variations).join('|');
+      csv += `"${teacher.canonicalName}","${teacher.phone}","${variations}"\n`;
     }
 
     return csv;
