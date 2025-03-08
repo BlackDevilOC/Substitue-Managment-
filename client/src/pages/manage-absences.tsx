@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -13,6 +13,7 @@ interface AbsentTeacher {
   name: string;
   phoneNumber: string;
   timestamp: string;
+  assignedSubstitute: boolean; // Added assignedSubstitute property
 }
 
 export default function ManageAbsencesPage() {
@@ -88,6 +89,11 @@ export default function ManageAbsencesPage() {
       setSelectedTeacher(teacherName);
     }
   };
+
+  const filteredAbsentTeachers = useMemo(() => {
+    return absentTeachers.filter(teacher => !teacher.assignedSubstitute);
+  }, [absentTeachers]);
+
 
   if (isLoadingAbsent) {
     return (
@@ -165,7 +171,7 @@ export default function ManageAbsencesPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
-          {absentTeachers.length === 0 ? (
+          {filteredAbsentTeachers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center bg-muted/10 rounded-lg">
               <CalendarX className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
               <h3 className="text-xl font-medium mb-2">No Absences Reported</h3>
@@ -175,7 +181,7 @@ export default function ManageAbsencesPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {absentTeachers.map((teacher, index) => (
+              {filteredAbsentTeachers.map((teacher, index) => (
                 <div 
                   key={index} 
                   className="relative p-4 border rounded-lg hover:bg-muted/50 transition-colors duration-200 group"

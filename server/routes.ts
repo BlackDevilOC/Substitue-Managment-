@@ -771,7 +771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const simpleList = absentTeachers.map(teacher => ({
         name: teacher.name,
         phoneNumber: teacher.phoneNumber,
-        hasAssignedSubstitute: teacher.assignedSubstitute || false
+        assignedSubstitute: teacher.assignedSubstitute || false
       }));
 
       res.json({ 
