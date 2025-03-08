@@ -9,12 +9,15 @@ import {
   Users,
   School,
   Beaker,
-  ChevronDown
+  AlertCircle,
+  Search,
+  BarChart3,
+  Home,
+  History
 } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
 import { cn } from "@/lib/utils";
 
 export default function SecondaryNavPage() {
@@ -37,10 +40,10 @@ export default function SecondaryNavPage() {
           description: "Configure period start and end times"
         },
         {
-          title: "File Upload",
-          icon: <Upload className="h-5 w-5" />,
-          href: "/upload",
-          description: "Upload timetable and schedule files"
+          title: "Absences",
+          icon: <AlertCircle className="h-5 w-5" />,
+          href: "/manage-absences",
+          description: "Manage teacher absences"
         }
       ]
     },
@@ -55,9 +58,9 @@ export default function SecondaryNavPage() {
         },
         {
           title: "SMS History",
-          icon: <MessageSquare className="h-5 w-5" />,
+          icon: <History className="h-5 w-5" />,
           href: "/sms-history",
-          description: "View message history and notifications"
+          description: "View message history"
         },
         {
           title: "Notifications",
@@ -81,6 +84,12 @@ export default function SecondaryNavPage() {
           icon: <School className="h-5 w-5" />,
           href: "/teacher-details",
           description: "View and manage teacher information"
+        },
+        {
+          title: "Lookup",
+          icon: <Search className="h-5 w-5" />,
+          href: "/lookup",
+          description: "Search teachers and schedules"
         }
       ]
     },
@@ -88,16 +97,28 @@ export default function SecondaryNavPage() {
       name: "System",
       items: [
         {
+          title: "File Upload",
+          icon: <Upload className="h-5 w-5" />,
+          href: "/upload",
+          description: "Upload timetable and schedule files"
+        },
+        {
           title: "Settings",
           icon: <Settings className="h-5 w-5" />,
           href: "/settings",
           description: "Configure system preferences"
         },
         {
+          title: "Statistics",
+          icon: <BarChart3 className="h-5 w-5" />,
+          href: "/statistics",
+          description: "View system statistics"
+        },
+        {
           title: "Experiments",
           icon: <Beaker className="h-5 w-5" />,
           href: "/experiments",
-          description: "Test and validate code changes"
+          description: "Test experimental features"
         }
       ]
     }
@@ -115,8 +136,18 @@ export default function SecondaryNavPage() {
         transition={{ duration: 0.5 }}
         className="mb-8"
       >
-        <h1 className="text-3xl font-bold text-primary">Settings & More</h1>
-        <p className="text-muted-foreground mt-2">Manage your school system preferences and access additional features</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">Settings & More</h1>
+            <p className="text-muted-foreground mt-2">Manage your school system preferences and access additional features</p>
+          </div>
+          <Link href="/">
+            <Button variant="outline" className="flex items-center gap-2"> {/* Assumed Button component exists */}
+              <Home className="h-4 w-4" />
+              <span>Dashboard</span>
+            </Button>
+          </Link>
+        </div>
       </motion.div>
 
       <div className="mb-8">
@@ -186,26 +217,6 @@ export default function SecondaryNavPage() {
             <p className="text-muted-foreground">Select a category to view available options</p>
           </motion.div>
         )}
-      </div>
-
-      <div className="pt-4 border-t border-border">
-        <h2 className="text-xl font-semibold mb-4">Quick Access</h2>
-        <div className="flex flex-wrap gap-3">
-          {navCategories.flatMap(category => 
-            category.items.map(item => (
-              <Link key={item.href} href={item.href}>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-2 px-3 py-2 bg-secondary/50 rounded-lg hover:bg-secondary"
-                >
-                  <div className="text-primary">{item.icon}</div>
-                  <span className="text-sm font-medium">{item.title}</span>
-                </motion.div>
-              </Link>
-            ))
-          )}
-        </div>
       </div>
     </div>
   );
