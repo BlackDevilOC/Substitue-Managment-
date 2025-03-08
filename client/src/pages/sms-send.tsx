@@ -200,7 +200,7 @@ export default function SmsSendPage() {
               </SelectContent>
             </Select>
 
-            <motion.div layout className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+            <motion.div layout className="space-y-2 max-h-[330px] overflow-y-auto pr-2 custom-scrollbar">
               <AnimatePresence>
                 {filteredTeachers().map((teacher: any) => (
                   <motion.div
