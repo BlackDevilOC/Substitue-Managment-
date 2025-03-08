@@ -3,7 +3,6 @@ import * as path from 'path';
 import { parse } from 'csv-parse/sync';
 import { fileURLToPath } from 'url';
 import { Teacher, Assignment, SubstituteAssignment, VerificationReport, ProcessLog } from './types/substitute';
-import * as csv from 'csv-parser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -899,8 +898,8 @@ export class SubstituteManager {
         JSON.stringify(data, null, 2)
       );
 
-      console.log(""Assignments saved successfully");
-        } catch (error) {
+      console.log("Assignments saved successfully");
+    } catch (error) {
       console.error("Error saving assignments:", error);
       throw new Error(`Error saving assignments: ${error}`);
     }
