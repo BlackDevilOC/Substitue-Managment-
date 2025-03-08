@@ -57,10 +57,13 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
     // Clear existing schedules before adding new ones
     await storage.clearSchedules();
 
-    // Skip header row
+    // Skip header row explicitly
     for (let i = 1; i < records.length; i++) {
       const row = records[i];
-      if (!row[0] || !row[1]) continue;
+      if (!row[0] || !row[1]) {
+        console.warn(`Skipping invalid row ${i + 1}: missing day or period`);
+        continue;
+      }
 
       // Normalize day name
       const rawDay = row[0].toLowerCase().trim();
@@ -71,8 +74,8 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
       }
 
       const period = parseInt(row[1].trim());
-      if (isNaN(period)) {
-        console.warn(`Skipping invalid period number at line ${i + 1}`);
+      if (isNaN(period) || period < 1 || period > 8) {
+        console.warn(`Skipping invalid period number at line ${i + 1}: ${row[1]}`);
         continue;
       }
 
@@ -80,7 +83,8 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
       for (let j = 2; j < Math.min(row.length, validClasses.length + 2); j++) {
         const teacherName = row[j]?.trim();
         if (teacherName && teacherName.toLowerCase() !== 'empty') {
-          let teacher = await findOrCreateTeacher(normalizeTeacherName(teacherName));
+          const normalizedTeacherName = normalizeTeacherName(teacherName);
+          let teacher = await findOrCreateTeacher(normalizedTeacherName);
 
           schedules.push({
             id: 0, // Will be set by storage
@@ -93,6 +97,7 @@ export async function processTimetableCSV(fileContent: string): Promise<Schedule
       }
     }
 
+    console.log(`Processed ${schedules.length} schedule entries`);
     return schedules;
   } catch (error: any) {
     console.error('Error processing timetable CSV:', error);
@@ -132,15 +137,31 @@ export async function processSubstituteCSV(fileContent: string): Promise<Teacher
 }
 
 function normalizeDay(day: string): string | null {
-  const days = {
+  if (!day) return null;
+
+  const days: { [key: string]: string } = {
     'monday': 'monday',
     'tuesday': 'tuesday',
     'wednesday': 'wednesday',
     'thursday': 'thursday',
     'thurday': 'thursday', // Handle common typo
     'friday': 'friday',
-    'saturday': 'saturday'
+    'saturday': 'saturday',
+    // Add common variations
+    'mon': 'monday',
+    'tue': 'tuesday',
+    'tues': 'tuesday',
+    'wed': 'wednesday',
+    'thu': 'thursday',
+    'thur': 'thursday',
+    'thurs': 'thursday',
+    'fri': 'friday',
+    'sat': 'saturday'
   };
+
+  // Skip header row
+  if (day.toLowerCase() === 'day') return null;
+
   return days[day.toLowerCase()] || null;
 }
 
