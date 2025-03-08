@@ -1,7 +1,7 @@
 {
   "2025-03-08": [
     {
-      "timestamp": "2025-03-08T08:15:25.820Z",
+      "timestamp": "2025-03-08T08:20:44.288Z",
       "action": "ProcessStart",
       "details": "Initializing substitute assignment system",
       "status": "info",
@@ -11,14 +11,14 @@
       "durationMs": 0
     },
     {
-      "timestamp": "2025-03-08T08:15:25.820Z",
+      "timestamp": "2025-03-08T08:20:44.288Z",
       "action": "DataLoading",
       "details": "Using 1 provided absent teachers",
       "status": "info",
       "durationMs": 0
     },
     {
-      "timestamp": "2025-03-08T08:15:25.820Z",
+      "timestamp": "2025-03-08T08:20:44.288Z",
       "action": "DataLoading",
       "details": "Loading source files",
       "status": "info",
@@ -33,20 +33,20 @@
       "durationMs": 0
     },
     {
-      "timestamp": "2025-03-08T08:15:25.830Z",
+      "timestamp": "2025-03-08T08:20:44.296Z",
       "action": "DataVerification",
       "details": "Validating loaded data",
       "status": "info",
       "data": {
         "teachersCount": 35,
         "schedulesCount": 36,
-        "assignedTeachersCount": 3,
+        "assignedTeachersCount": 0,
         "timetableEntries": 46
       },
-      "durationMs": 10
+      "durationMs": 8
     },
     {
-      "timestamp": "2025-03-08T08:15:25.830Z",
+      "timestamp": "2025-03-08T08:20:44.296Z",
       "action": "DayCalculation",
       "details": "Calculated working day",
       "status": "info",
@@ -54,52 +54,52 @@
         "inputDate": "2025-03-08",
         "normalizedDay": "saturday"
       },
-      "durationMs": 10
+      "durationMs": 8
     },
     {
-      "timestamp": "2025-03-08T08:15:25.830Z",
+      "timestamp": "2025-03-08T08:20:44.296Z",
       "action": "Processing",
-      "details": "Processed 3 existing assignments with workload tracking",
+      "details": "Processed 0 existing assignments with workload tracking",
       "status": "info",
-      "durationMs": 10
+      "durationMs": 8
     },
     {
-      "timestamp": "2025-03-08T08:15:25.830Z",
+      "timestamp": "2025-03-08T08:20:44.296Z",
       "action": "Processing",
       "details": "Created teacher lookup map with 39 entries",
       "status": "info",
-      "durationMs": 10
+      "durationMs": 8
     },
     {
-      "timestamp": "2025-03-08T08:15:25.830Z",
+      "timestamp": "2025-03-08T08:20:44.296Z",
       "action": "Processing",
       "details": "Created schedule lookup map with 36 entries",
       "status": "info",
-      "durationMs": 10
+      "durationMs": 8
     },
     {
-      "timestamp": "2025-03-08T08:15:25.830Z",
+      "timestamp": "2025-03-08T08:20:44.296Z",
       "action": "TeacherResolution",
       "details": "Validating absent teacher list",
       "status": "info",
-      "durationMs": 10
+      "durationMs": 8
     },
     {
-      "timestamp": "2025-03-08T08:15:25.831Z",
+      "timestamp": "2025-03-08T08:20:44.296Z",
       "action": "TeacherResolution",
       "details": "Resolved 1 absent teachers out of 1 provided names",
       "status": "info",
-      "durationMs": 11
+      "durationMs": 8
     },
     {
-      "timestamp": "2025-03-08T08:15:25.831Z",
+      "timestamp": "2025-03-08T08:20:44.296Z",
       "action": "Processing",
-      "details": "Found 24 available substitutes out of 28 total",
+      "details": "Found 27 available substitutes out of 28 total",
       "status": "info",
-      "durationMs": 11
+      "durationMs": 8
     },
     {
-      "timestamp": "2025-03-08T08:15:25.831Z",
+      "timestamp": "2025-03-08T08:20:44.296Z",
       "action": "TeacherProcessing",
       "details": "Starting processing for Sir Bakir Shah",
       "status": "info",
@@ -111,10 +111,10 @@
           "sir bakir shah"
         ]
       },
-      "durationMs": 11
+      "durationMs": 8
     },
     {
-      "timestamp": "2025-03-08T08:15:25.831Z",
+      "timestamp": "2025-03-08T08:20:44.297Z",
       "action": "NameProcessing",
       "details": "Starting name normalization",
       "status": "info",
@@ -122,10 +122,10 @@
         "originalName": "Sir Bakir Shah",
         "normalizedName": "sir bakir shah"
       },
-      "durationMs": 11
+      "durationMs": 9
     },
     {
-      "timestamp": "2025-03-08T08:15:25.831Z",
+      "timestamp": "2025-03-08T08:20:44.297Z",
       "action": "ClassMapLookup",
       "details": "Checking teacher classes map",
       "status": "info",
@@ -133,10 +133,10 @@
         "teacherName": "sir bakir shah",
         "entriesFound": 23
       },
-      "durationMs": 11
+      "durationMs": 9
     },
     {
-      "timestamp": "2025-03-08T08:15:25.831Z",
+      "timestamp": "2025-03-08T08:20:44.297Z",
       "action": "ClassMapProcessing",
       "details": "Processed class map periods",
       "status": "info",
@@ -166,10 +166,10 @@
           }
         ]
       },
-      "durationMs": 11
+      "durationMs": 9
     },
     {
-      "timestamp": "2025-03-08T08:15:25.831Z",
+      "timestamp": "2025-03-08T08:20:44.297Z",
       "action": "ScheduleAnalysis",
       "details": "Processed schedule periods",
       "status": "info",
@@ -199,10 +199,10 @@
           }
         ]
       },
-      "durationMs": 11
+      "durationMs": 9
     },
     {
-      "timestamp": "2025-03-08T08:15:25.831Z",
+      "timestamp": "2025-03-08T08:20:44.297Z",
       "action": "VariationCheck",
       "details": "Checking name variations",
       "status": "info",
@@ -213,10 +213,10 @@
           "sir bakir shah"
         ]
       },
-      "durationMs": 11
+      "durationMs": 9
     },
     {
-      "timestamp": "2025-03-08T08:15:25.831Z",
+      "timestamp": "2025-03-08T08:20:44.297Z",
       "action": "VariationResults",
       "details": "Found periods from variations",
       "status": "info",
@@ -285,10 +285,10 @@
           }
         ]
       },
-      "durationMs": 11
+      "durationMs": 9
     },
     {
-      "timestamp": "2025-03-08T08:15:25.831Z",
+      "timestamp": "2025-03-08T08:20:44.297Z",
       "action": "PeriodValidation",
       "details": "Final period validation",
       "status": "info",
@@ -398,10 +398,10 @@
         ],
         "invalidPeriods": []
       },
-      "durationMs": 11
+      "durationMs": 9
     },
     {
-      "timestamp": "2025-03-08T08:15:25.832Z",
+      "timestamp": "2025-03-08T08:20:44.297Z",
       "action": "Deduplication",
       "details": "Removed duplicate periods",
       "status": "info",
@@ -431,10 +431,10 @@
           }
         ]
       },
-      "durationMs": 12
+      "durationMs": 9
     },
     {
-      "timestamp": "2025-03-08T08:15:25.832Z",
+      "timestamp": "2025-03-08T08:20:44.297Z",
       "action": "PeriodDetection",
       "details": "Found 4 affected periods for Sir Bakir Shah",
       "status": "info",
@@ -462,10 +462,10 @@
           }
         ]
       },
-      "durationMs": 12
+      "durationMs": 9
     },
     {
-      "timestamp": "2025-03-08T08:15:25.832Z",
+      "timestamp": "2025-03-08T08:20:44.297Z",
       "action": "PeriodAssignment",
       "details": "Processing assignment",
       "status": "info",
@@ -475,20 +475,20 @@
         "className": "10A",
         "source": "classMap"
       },
-      "durationMs": 12
+      "durationMs": 9
     },
     {
-      "timestamp": "2025-03-08T08:15:25.832Z",
+      "timestamp": "2025-03-08T08:20:44.298Z",
       "action": "AssignmentSuccess",
       "details": "Assigned Sir Waqar Ali to Sir Bakir Shah-1-10A",
       "status": "info",
       "data": {
         "substituteWorkload": 1
       },
-      "durationMs": 12
+      "durationMs": 10
     },
     {
-      "timestamp": "2025-03-08T08:15:25.832Z",
+      "timestamp": "2025-03-08T08:20:44.298Z",
       "action": "PeriodAssignment",
       "details": "Processing assignment",
       "status": "info",
@@ -498,20 +498,20 @@
         "className": "10A",
         "source": "classMap"
       },
-      "durationMs": 12
+      "durationMs": 10
     },
     {
-      "timestamp": "2025-03-08T08:15:25.833Z",
+      "timestamp": "2025-03-08T08:20:44.298Z",
       "action": "AssignmentSuccess",
       "details": "Assigned Sir Faisal Ali to Sir Bakir Shah-2-10A",
       "status": "info",
       "data": {
         "substituteWorkload": 1
       },
-      "durationMs": 13
+      "durationMs": 10
     },
     {
-      "timestamp": "2025-03-08T08:15:25.833Z",
+      "timestamp": "2025-03-08T08:20:44.298Z",
       "action": "PeriodAssignment",
       "details": "Processing assignment",
       "status": "info",
@@ -521,20 +521,20 @@
         "className": "10B",
         "source": "classMap"
       },
-      "durationMs": 13
+      "durationMs": 10
     },
     {
-      "timestamp": "2025-03-08T08:15:25.833Z",
+      "timestamp": "2025-03-08T08:20:44.298Z",
       "action": "AssignmentSuccess",
       "details": "Assigned Sir Irshad Qureshi to Sir Bakir Shah-6-10B",
       "status": "info",
       "data": {
         "substituteWorkload": 1
       },
-      "durationMs": 13
+      "durationMs": 10
     },
     {
-      "timestamp": "2025-03-08T08:15:25.833Z",
+      "timestamp": "2025-03-08T08:20:44.298Z",
       "action": "PeriodAssignment",
       "details": "Processing assignment",
       "status": "info",
@@ -544,31 +544,31 @@
         "className": "10A",
         "source": "classMap"
       },
-      "durationMs": 13
+      "durationMs": 10
     },
     {
-      "timestamp": "2025-03-08T08:15:25.833Z",
+      "timestamp": "2025-03-08T08:20:44.298Z",
       "action": "AssignmentSuccess",
-      "details": "Assigned Sir Iqbal Ahmed to Sir Bakir Shah-8-10A",
+      "details": "Assigned Sir Shafique Ahmed to Sir Bakir Shah-8-10A",
       "status": "info",
       "data": {
         "substituteWorkload": 1
       },
-      "durationMs": 13
+      "durationMs": 10
     },
     {
-      "timestamp": "2025-03-08T08:15:25.833Z",
+      "timestamp": "2025-03-08T08:20:44.298Z",
       "action": "Validation",
       "details": "Validating 4 assignments",
       "status": "info",
-      "durationMs": 13
+      "durationMs": 10
     },
     {
-      "timestamp": "2025-03-08T08:15:25.834Z",
+      "timestamp": "2025-03-08T08:20:44.300Z",
       "action": "DataSave",
       "details": "Saved 4 assignments to file",
       "status": "info",
-      "durationMs": 14
+      "durationMs": 12
     }
   ]
 }
