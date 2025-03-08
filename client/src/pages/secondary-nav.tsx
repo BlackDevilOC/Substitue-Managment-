@@ -1,222 +1,38 @@
-import { 
-  Bell, 
-  MessageSquare, 
-  Settings,
-  Calendar,
-  Clock,
-  Upload,
-  FileText,
-  Users,
-  School,
-  Beaker,
-  AlertCircle,
-  Search,
-  BarChart3,
-  Home,
-  History
-} from "lucide-react";
-import { Link } from "wouter";
-import { motion } from "framer-motion";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import React from "react";
+import { Link, useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+
+const navigationItems = [
+  { name: "SMS History", path: "/sms-history" },
+  { name: "SMS Send", path: "/sms-send" },
+  { name: "Periods", path: "/periods" },
+  { name: "Settings", path: "/settings" },
+  { name: "Assigned Substitutes", path: "/assigned-substitutes" },
+  { name: "Notifications", path: "/notifications" },
+  { name: "Teacher Lookup", path: "/lookup" }
+];
 
 export default function SecondaryNavPage() {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-
-  const navCategories = [
-    {
-      name: "Schedule Management",
-      items: [
-        {
-          title: "Schedule",
-          icon: <Calendar className="h-5 w-5" />,
-          href: "/schedule",
-          description: "View and manage daily schedules"
-        },
-        {
-          title: "Period Times",
-          icon: <Clock className="h-5 w-5" />,
-          href: "/periods",
-          description: "Configure period start and end times"
-        },
-        {
-          title: "Absences",
-          icon: <AlertCircle className="h-5 w-5" />,
-          href: "/manage-absences",
-          description: "Manage teacher absences"
-        }
-      ]
-    },
-    {
-      name: "Communication",
-      items: [
-        {
-          title: "SMS Send",
-          icon: <MessageSquare className="h-5 w-5" />,
-          href: "/sms-send",
-          description: "Send SMS messages to teachers"
-        },
-        {
-          title: "SMS History",
-          icon: <History className="h-5 w-5" />,
-          href: "/sms-history",
-          description: "View message history"
-        },
-        {
-          title: "Notifications",
-          icon: <Bell className="h-5 w-5" />,
-          href: "/notifications",
-          description: "Manage notification preferences"
-        }
-      ]
-    },
-    {
-      name: "Staff Management",
-      items: [
-        {
-          title: "Substitutes",
-          icon: <Users className="h-5 w-5" />,
-          href: "/assigned-substitutes",
-          description: "Manage substitute teachers"
-        },
-        {
-          title: "Teacher Details",
-          icon: <School className="h-5 w-5" />,
-          href: "/teacher-details",
-          description: "View and manage teacher information"
-        },
-        {
-          title: "Lookup",
-          icon: <Search className="h-5 w-5" />,
-          href: "/lookup",
-          description: "Search teachers and schedules"
-        }
-      ]
-    },
-    {
-      name: "System",
-      items: [
-        {
-          title: "File Upload",
-          icon: <Upload className="h-5 w-5" />,
-          href: "/upload",
-          description: "Upload timetable and schedule files"
-        },
-        {
-          title: "Settings",
-          icon: <Settings className="h-5 w-5" />,
-          href: "/settings",
-          description: "Configure system preferences"
-        },
-        {
-          title: "Statistics",
-          icon: <BarChart3 className="h-5 w-5" />,
-          href: "/statistics",
-          description: "View system statistics"
-        },
-        {
-          title: "Experiments",
-          icon: <Beaker className="h-5 w-5" />,
-          href: "/experiments",
-          description: "Test experimental features"
-        }
-      ]
-    }
-  ];
-
-  const toggleCategory = (name: string) => {
-    setActiveCategory(activeCategory === name ? null : name);
-  };
+  const [location] = useLocation();
+  const { user } = useAuth();
 
   return (
-    <div className="container mx-auto p-4 min-h-screen bg-gradient-to-b from-background to-background/80">
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-8"
-      >
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-primary">Settings & More</h1>
-            <p className="text-muted-foreground mt-2">Manage your school system preferences and access additional features</p>
-          </div>
-          <Link href="/">
-            <Button variant="outline" className="flex items-center gap-2"> {/* Assumed Button component exists */}
-              <Home className="h-4 w-4" />
-              <span>Dashboard</span>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">More Options</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {navigationItems.map((item) => (
+          <Link key={item.path} href={item.path}>
+            <Button 
+              variant="outline" 
+              className="w-full h-20 text-lg justify-start px-4"
+              aria-current={location === item.path ? "page" : undefined}
+            >
+              {item.name}
             </Button>
           </Link>
-        </div>
-      </motion.div>
-
-      <div className="mb-8">
-        <div className="flex flex-wrap gap-2 mb-4">
-          {navCategories.map((category) => (
-            <button
-              key={category.name}
-              onClick={() => toggleCategory(category.name)}
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-colors border-2",
-                activeCategory === category.name
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80 border-secondary"
-              )}
-            >
-              {category.name}
-            </button>
-          ))}
-        </div>
-
-        <motion.div 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-        >
-          {navCategories.map((category) => (
-            activeCategory === category.name && (
-              <motion.div 
-                key={category.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ staggerChildren: 0.1 }}
-                className="space-y-4"
-              >
-                {category.items.map((item) => (
-                  <motion.div
-                    key={item.href}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="bg-card rounded-lg shadow p-4 border border-border hover:border-primary/50 transition-all"
-                  >
-                    <Link href={item.href}>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                          {item.icon}
-                        </div>
-                        <div>
-                          <h3 className="font-medium">{item.title}</h3>
-                          <p className="text-sm text-muted-foreground">{item.description}</p>
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )
-          ))}
-        </motion.div>
-
-        {!activeCategory && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="p-6 bg-card rounded-lg shadow border border-border text-center"
-          >
-            <p className="text-muted-foreground">Select a category to view available options</p>
-          </motion.div>
-        )}
+        ))}
       </div>
     </div>
   );
