@@ -1,46 +1,78 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "wouter";
 
 export default function TestingPage() {
+  const [activeTab, setActiveTab] = useState("overview");
+
   return (
-    <div className="container py-6">
-      <h1 className="text-2xl font-bold mb-2">Testing Page</h1>
-      <p className="text-gray-500 mb-6">This page is for testing functionality</p>
-      
-      <Tabs defaultValue="basic" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="basic">Basic Tests</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced Tests</TabsTrigger>
+    <div className="container mx-auto p-4 space-y-6">
+      <div className="flex items-center gap-2">
+        <Link href="/">
+          <Button variant="ghost" size="icon">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Link>
+        <h1 className="text-2xl font-bold">Testing Page</h1>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="logs">Logs</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="basic">
+        <TabsContent value="overview" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Basic Testing Features</CardTitle>
+              <CardTitle>System Status</CardTitle>
+              <CardDescription>
+                View the current status of the system
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col gap-2">
-                <Button variant="default">Test Button</Button>
-                <Button variant="outline">Secondary Test</Button>
+            <CardContent>
+              <p>This is a testing page where you can experiment with different features.</p>
+              <div className="mt-4">
+                <Button>Run Test</Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
         
-        <TabsContent value="advanced">
+        <TabsContent value="settings" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Advanced Testing Features</CardTitle>
+              <CardTitle>Testing Settings</CardTitle>
+              <CardDescription>
+                Configure the testing environment
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-500 mb-4">
-                This section contains advanced testing features for development purposes.
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="destructive">Reset Data</Button>
-                <Button variant="secondary">Reload Config</Button>
+              <p>Settings content will go here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="logs" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Error Logs</CardTitle>
+              <CardDescription>
+                View system logs and errors
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-muted p-4 rounded-md">
+                <pre className="whitespace-pre-wrap text-xs">
+                  {`TypeError: csv is not a function
+    at SubstituteManager.loadTimetable (/home/runner/workspace/server/substitute-manager.ts:1123:15)
+    at SubstituteManager.autoAssignSubstitutes (/home/runner/workspace/server/substitute-manager.ts:252:14)`}
+                </pre>
               </div>
             </CardContent>
           </Card>
