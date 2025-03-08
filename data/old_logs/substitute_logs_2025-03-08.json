@@ -1,7 +1,7 @@
 {
   "2025-03-08": [
     {
-      "timestamp": "2025-03-08T01:09:17.109Z",
+      "timestamp": "2025-03-08T01:11:31.127Z",
       "action": "ProcessStart",
       "details": "Initializing substitute assignment system",
       "status": "info",
@@ -11,14 +11,14 @@
       "durationMs": 0
     },
     {
-      "timestamp": "2025-03-08T01:09:17.109Z",
+      "timestamp": "2025-03-08T01:11:31.127Z",
       "action": "DataLoading",
       "details": "Using 1 provided absent teachers",
       "status": "info",
       "durationMs": 0
     },
     {
-      "timestamp": "2025-03-08T01:09:17.109Z",
+      "timestamp": "2025-03-08T01:11:31.127Z",
       "action": "DataLoading",
       "details": "Loading source files",
       "status": "info",
@@ -33,15 +33,15 @@
       "durationMs": 0
     },
     {
-      "timestamp": "2025-03-08T01:09:17.120Z",
+      "timestamp": "2025-03-08T01:11:31.139Z",
       "action": "ProcessError",
-      "details": "Error in autoAssignSubstitutes: ReferenceError: require is not defined",
+      "details": "Error in autoAssignSubstitutes: TypeError: csvParser is not a function",
       "status": "error",
       "data": {
-        "errorMessage": "require is not defined",
-        "stack": "ReferenceError: require is not defined\n    at <anonymous> (/home/runner/workspace/server/substitute-manager.ts:1121:25)\n    at new Promise (<anonymous>)\n    at SubstituteManager.loadTimetable (/home/runner/workspace/server/substitute-manager.ts:1119:12)\n    at SubstituteManager.autoAssignSubstitutes (/home/runner/workspace/server/substitute-manager.ts:251:14)\n    at <anonymous> (/home/runner/workspace/server/routes.ts:427:36)"
+        "errorMessage": "csvParser is not a function",
+        "stack": "TypeError: csvParser is not a function\n    at <anonymous> (/home/runner/workspace/server/substitute-manager.ts:1123:15)\n    at new Promise (<anonymous>)\n    at SubstituteManager.loadTimetable (/home/runner/workspace/server/substitute-manager.ts:1120:12)\n    at SubstituteManager.autoAssignSubstitutes (/home/runner/workspace/server/substitute-manager.ts:252:14)\n    at <anonymous> (/home/runner/workspace/server/routes.ts:427:36)"
       },
-      "durationMs": 11
+      "durationMs": 12
     }
   ]
 }
