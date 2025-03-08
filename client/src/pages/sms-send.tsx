@@ -93,7 +93,7 @@ export default function SmsSendPage() {
   const filteredTeachers = () => {
     if (!teachers || !assignedTeachers?.assignments) return [];
 
-    const assignedIds = assignedTeachers.assignments.map((a: any) => 
+    const assignedIds = assignedTeachers.assignments.map((a: any) =>
       teachers.find((t: any) => t.name === a.substitute)?.id
     ).filter(Boolean);
 
@@ -117,7 +117,7 @@ export default function SmsSendPage() {
       toast({
         title: "No recipients selected",
         description: "Please select at least one teacher to send the message to.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -126,14 +126,14 @@ export default function SmsSendPage() {
       toast({
         title: "Empty message",
         description: "Please enter a message to send.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     try {
       // Combine message with note if present
-      const finalMessage = noteText 
+      const finalMessage = noteText
         ? `${messageText}\n\nNote: ${noteText}`
         : messageText;
 
@@ -145,36 +145,38 @@ export default function SmsSendPage() {
       toast({
         title: "Failed to send SMS",
         description: "There was an error sending your message.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="container mx-auto p-4 space-y-6 pb-20"
+      className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6"
     >
-      <motion.div 
+      <motion.div
         initial={{ y: -20 }}
         animate={{ y: 0 }}
-        className="flex justify-between items-center"
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
       >
         <h1 className="text-2xl font-bold">SMS Messaging</h1>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setSelectedTeachers([])}
             disabled={selectedTeachers.length === 0}
           >
             <X className="h-4 w-4 mr-1" /> Clear All
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setSelectedTeachers(teachers?.map((t: any) => t.id.toString()) || [])}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setSelectedTeachers(teachers?.map((t: any) => t.id.toString()) || [])
+            }
           >
             <RefreshCcw className="h-4 w-4 mr-1" /> Select All
           </Button>
@@ -188,7 +190,7 @@ export default function SmsSendPage() {
         <CardContent>
           <div className="space-y-4">
             <Select value={teacherFilter} onValueChange={setTeacherFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Filter teachers" />
               </SelectTrigger>
               <SelectContent>
@@ -213,7 +215,7 @@ export default function SmsSendPage() {
                     }`}
                     onClick={() => {
                       if (selectedTeachers.includes(teacher.id.toString())) {
-                        setSelectedTeachers(selectedTeachers.filter(id => id !== teacher.id.toString()));
+                        setSelectedTeachers(selectedTeachers.filter((id) => id !== teacher.id.toString()));
                       } else {
                         setSelectedTeachers([...selectedTeachers, teacher.id.toString()]);
                       }
@@ -223,15 +225,15 @@ export default function SmsSendPage() {
                       <p className="font-medium">{teacher.name}</p>
                       <p className="text-sm text-muted-foreground">{teacher.phone}</p>
                     </div>
-                    <motion.div 
+                    <motion.div
                       className="h-5 w-5 rounded-full border flex items-center justify-center"
                       whileHover={{ scale: 1.1 }}
                     >
                       {selectedTeachers.includes(teacher.id.toString()) && (
-                        <motion.div 
+                        <motion.div
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className="h-3 w-3 rounded-full bg-primary" 
+                          className="h-3 w-3 rounded-full bg-primary"
                         />
                       )}
                     </motion.div>
@@ -249,12 +251,12 @@ export default function SmsSendPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <p className="text-sm font-medium">Selected Recipients: {selectedTeachers.length}</p>
 
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                 <Select value={templateCategory} onValueChange={setTemplateCategory}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Message Category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -264,15 +266,16 @@ export default function SmsSendPage() {
                   </SelectContent>
                 </Select>
 
-                <Select 
-                  value={selectedTemplate} 
+                <Select
+                  value={selectedTemplate}
                   onValueChange={(value) => {
-                    const template = messageTemplates[templateCategory as keyof typeof messageTemplates]
-                      .find(t => t.title === value);
+                    const template = messageTemplates[templateCategory as keyof typeof messageTemplates].find(
+                      (t) => t.title === value
+                    );
                     if (template) handleTemplateSelect(template);
                   }}
                 >
-                  <SelectTrigger className="w-[220px]">
+                  <SelectTrigger className="w-full sm:w-[220px]">
                     <SelectValue placeholder="Select Template" />
                   </SelectTrigger>
                   <SelectContent>
@@ -312,8 +315,8 @@ export default function SmsSendPage() {
               </p>
             </div>
 
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               onClick={handleSendSms}
               disabled={selectedTeachers.length === 0 || !messageText.trim()}
             >
