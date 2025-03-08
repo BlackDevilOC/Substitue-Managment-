@@ -11,7 +11,8 @@ import {
   ClipboardList,
   Clock,
   Menu,
-  X
+  X,
+  Search
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,11 @@ export function MobileNav() {
       href: "/schedules",
       label: "Schedules",
       icon: <Calendar className="h-5 w-5" />
+    },
+    {
+      href: "/lookup",
+      label: "Lookup",
+      icon: <Search className="h-5 w-5" />
     },
     {
       href: "/substitutes",
@@ -101,12 +107,12 @@ export function MobileNav() {
           variant="ghost"
           size="icon"
           className="relative"
-          onClick={() => handleNavigation('/absent-teachers')}
+          onClick={() => handleNavigation('/lookup')}
           asChild
         >
-          <Link href="/absent-teachers">
-            <UserMinus className="h-6 w-6" />
-            <span className="sr-only">Absent Teachers</span>
+          <Link href="/lookup">
+            <Search className="h-6 w-6" />
+            <span className="sr-only">Lookup</span>
           </Link>
         </Button>
 
@@ -166,12 +172,12 @@ export function MobileNav() {
           variant="ghost"
           size="icon"
           className="relative"
-          onClick={() => handleNavigation('/schedules')}
+          onClick={() => handleNavigation('/absent-teachers')}
           asChild
         >
-          <Link href="/schedules">
-            <Calendar className="h-6 w-6" />
-            <span className="sr-only">Schedules</span>
+          <Link href="/absent-teachers">
+            <UserMinus className="h-6 w-6" />
+            <span className="sr-only">Absent Teachers</span>
           </Link>
         </Button>
 

@@ -8,7 +8,8 @@ import {
   MessageSquare,
   BookOpen,
   MoreHorizontal,
-  Settings
+  Settings,
+  Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -58,10 +59,10 @@ export default function HomePage() {
                   <span className="text-xs">Notifications</span>
                 </Button>
               </Link>
-              <Link href="/periods">
+              <Link href="/lookup">
                 <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center gap-1">
-                  <Clock className="h-5 w-5" />
-                  <span className="text-xs">Periods</span>
+                  <Search className="h-5 w-5" />
+                  <span className="text-xs">Lookup</span>
                 </Button>
               </Link>
             </div>
