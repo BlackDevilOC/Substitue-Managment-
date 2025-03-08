@@ -1,3 +1,4 @@
+
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -44,6 +45,7 @@ function Router() {
       <ProtectedRoute path="/experiments" component={ExperimentScreen} />
       <Route path="/notifications" component={NotificationsPage} />
       <Route path="/sms-send" component={SMSSendPage} /> {/* Added SMS Send route */}
+      <Route path="/testing" component={TestingPage} /> {/* Added Testing route */}
       <Route component={NotFound} />
     </Switch>
   );
@@ -51,11 +53,6 @@ function Router() {
 
 function App() {
   return (
-
-        <Route path="/testing">
-          <TestingPage />
-        </Route>
-
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <div className="min-h-screen pb-16">
