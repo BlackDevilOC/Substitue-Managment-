@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsTrigger, TabsList } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 export default function LookupPage() {
   const [selectedClass, setSelectedClass] = useState<string>("");
@@ -18,16 +19,29 @@ export default function LookupPage() {
   });
 
   const { data: teacherData, isLoading: teacherLoading } = useQuery({
-    queryKey: ['/api/teachers']
+    queryKey: ['/api/teachers'],
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to load teacher data",
+        variant: "destructive",
+      });
+    }
   });
 
   const { data: teacherSchedule, isLoading: teacherScheduleLoading } = useQuery({
-    queryKey: ['/api/teacher-schedule', selectedTeacher],
+    queryKey: ['/api/teacher-schedule', selectedTeacher, selectedDay],
     enabled: !!selectedTeacher
   });
 
   const validClasses = ['10A', '10B', '10C', '9A', '9B', '9C', '8A', '8B', '8C', '7A', '7B', '7C', '6A', '6B', '6C'];
   const validDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  const LoadingSpinner = () => (
+    <div className="flex justify-center py-8">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
 
   return (
     <div className="container mx-auto p-4">
@@ -70,8 +84,8 @@ export default function LookupPage() {
               </div>
 
               {scheduleLoading ? (
-                <div>Loading schedule...</div>
-              ) : scheduleData ? (
+                <LoadingSpinner />
+              ) : scheduleData?.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -90,8 +104,12 @@ export default function LookupPage() {
                     ))}
                   </TableBody>
                 </Table>
+              ) : selectedClass && selectedDay ? (
+                <div className="text-center text-muted-foreground py-8">
+                  No schedule found for the selected class and day
+                </div>
               ) : (
-                <div className="text-center text-muted-foreground">
+                <div className="text-center text-muted-foreground py-8">
                   Select a class and day to view the timetable
                 </div>
               )}
@@ -112,7 +130,7 @@ export default function LookupPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {teacherData?.map((teacher: any) => (
-                      <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                      <SelectItem key={teacher.id || teacher.name} value={teacher.id?.toString() || teacher.name}>
                         {teacher.name}
                       </SelectItem>
                     ))}
@@ -121,8 +139,8 @@ export default function LookupPage() {
               </div>
 
               {teacherScheduleLoading ? (
-                <div>Loading teacher schedule...</div>
-              ) : teacherSchedule ? (
+                <LoadingSpinner />
+              ) : teacherSchedule?.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -141,8 +159,12 @@ export default function LookupPage() {
                     ))}
                   </TableBody>
                 </Table>
+              ) : selectedTeacher ? (
+                <div className="text-center text-muted-foreground py-8">
+                  No schedule found for the selected teacher
+                </div>
               ) : (
-                <div className="text-center text-muted-foreground">
+                <div className="text-center text-muted-foreground py-8">
                   Select a teacher to view their schedule
                 </div>
               )}
