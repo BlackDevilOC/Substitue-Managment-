@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, RefreshCcw, X, ChevronDown } from "lucide-react";
+import { Send, RefreshCcw, X, ChevronDown, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -98,10 +98,12 @@ export default function SmsSendPage() {
     ).filter(Boolean);
 
     switch (teacherFilter) {
+      case "selected":
+        return teachers.filter((t: any) =>
+          selectedTeachers.includes(t.id.toString())
+        );
       case "assigned":
         return teachers.filter((t: any) => assignedIds.includes(t.id));
-      case "unassigned":
-        return teachers.filter((t: any) => !assignedIds.includes(t.id));
       default:
         return teachers;
     }
@@ -112,20 +114,30 @@ export default function SmsSendPage() {
     setMessageText(template.text);
   };
 
+  // Helper function to generate assignment message for a substitute
+  const generateAssignmentMessage = (teacherName: string) => {
+    if (!assignedTeachers?.assignments) return "";
+
+    const teacherAssignments = assignedTeachers.assignments.filter(
+      (a: any) => a.substitute === teacherName
+    );
+
+    if (teacherAssignments.length === 0) return "";
+
+    let msg = "You have been assigned to substitute for:\n\n";
+    teacherAssignments.forEach((assignment: any) => {
+      msg += `- Period ${assignment.period}, Class ${assignment.className}\n`;
+      msg += `  (Original teacher: ${assignment.originalTeacher})\n`;
+    });
+
+    return msg;
+  };
+
   const handleSendSms = async () => {
     if (selectedTeachers.length === 0) {
       toast({
-        title: "No recipients selected",
-        description: "Please select at least one teacher to send the message to.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!messageText.trim()) {
-      toast({
-        title: "Empty message",
-        description: "Please enter a message to send.",
+        title: "Error",
+        description: "Please select at least one teacher",
         variant: "destructive",
       });
       return;
@@ -195,8 +207,8 @@ export default function SmsSendPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Teachers</SelectItem>
-                <SelectItem value="assigned">Assigned Teachers</SelectItem>
-                <SelectItem value="unassigned">Unassigned Teachers</SelectItem>
+                <SelectItem value="assigned">Assigned Substitutes</SelectItem>
+                <SelectItem value="selected">Selected Only</SelectItem>
               </SelectContent>
             </Select>
 
@@ -304,6 +316,45 @@ export default function SmsSendPage() {
                 onChange={(e) => setNoteText(e.target.value)}
                 className="min-h-[80px]"
               />
+            </div>
+
+            <div className="flex space-x-2">
+              <Button
+                onClick={() => setMessageText(selectedTemplate)}
+                variant="outline"
+                disabled={!selectedTemplate}
+              >
+                <FileText className="h-4 w-4 mr-1" /> Apply Template
+              </Button>
+              <Button
+                onClick={() => {
+                  if (selectedTeachers.length === 1) {
+                    const teacherId = selectedTeachers[0];
+                    const teacher = teachers.find((t: any) => t.id.toString() === teacherId);
+                    if (teacher) {
+                      const assignmentMsg = generateAssignmentMessage(teacher.name);
+                      if (assignmentMsg) {
+                        setMessageText(assignmentMsg);
+                      } else {
+                        toast({
+                          title: "No Assignments",
+                          description: "This teacher has no assignments",
+                          variant: "destructive",
+                        });
+                      }
+                    }
+                  } else {
+                    toast({
+                      title: "Select One Teacher",
+                      description: "Please select exactly one teacher",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                variant="outline"
+              >
+                <FileText className="h-4 w-4 mr-1" /> Generate Assignment Message
+              </Button>
             </div>
 
             <div className="flex justify-between mt-2">
