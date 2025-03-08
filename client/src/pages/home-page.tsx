@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import {
   Bell,
   Calendar,
-
-import { Settings } from "lucide-react";
-import { Link } from "wouter";
-
   Clock,
   Home,
   Users,
+  Settings
+} from "lucide-react";
+import { Link } from "wouter";
   MessageSquare,
   BookOpen,
   MoreHorizontal,
