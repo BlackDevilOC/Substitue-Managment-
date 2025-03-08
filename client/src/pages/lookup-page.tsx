@@ -14,7 +14,7 @@ export default function LookupPage() {
   const { toast } = useToast();
 
   const { data: scheduleData, isLoading: scheduleLoading } = useQuery({
-    queryKey: ['/api/schedules', selectedClass, selectedDay],
+    queryKey: ['/api/class-schedules'],
     enabled: !!(selectedClass && selectedDay)
   });
 
@@ -30,7 +30,14 @@ export default function LookupPage() {
   });
 
   const { data: teacherSchedule, isLoading: teacherScheduleLoading } = useQuery({
-    queryKey: ['/api/teacher-schedule', selectedTeacher, selectedDay],
+    queryKey: ['/api/teacher-schedule', selectedTeacher],
+    queryFn: async () => {
+      const response = await fetch(`/api/teacher-schedule?name=${encodeURIComponent(selectedTeacher)}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch teacher schedule');
+      }
+      return response.json();
+    },
     enabled: !!selectedTeacher
   });
 
@@ -42,6 +49,11 @@ export default function LookupPage() {
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
     </div>
   );
+
+  const getClassSchedule = () => {
+    if (!scheduleData || !selectedClass || !selectedDay) return [];
+    return scheduleData[selectedClass]?.[selectedDay.toLowerCase()] || [];
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -85,7 +97,7 @@ export default function LookupPage() {
 
               {scheduleLoading ? (
                 <LoadingSpinner />
-              ) : scheduleData?.length > 0 ? (
+              ) : getClassSchedule().length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -95,7 +107,7 @@ export default function LookupPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {scheduleData.map((schedule: any) => (
+                    {getClassSchedule().map((schedule: any) => (
                       <TableRow key={schedule.period}>
                         <TableCell>{schedule.period}</TableCell>
                         <TableCell>{schedule.time}</TableCell>
