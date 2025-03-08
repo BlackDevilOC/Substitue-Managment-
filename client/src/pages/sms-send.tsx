@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -10,69 +9,107 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, RefreshCcw, X } from "lucide-react";
+import { Send, RefreshCcw, X, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+
+const messageTemplates = {
+  assignment: [
+    {
+      title: "Assignment Confirmation",
+      text: "Dear {teacher}, you have been assigned to cover {class} for {original_teacher}. Please confirm your availability.",
+    },
+    {
+      title: "Schedule Change",
+      text: "Important: Your teaching schedule has been updated. You will be covering {class} during period {period}.",
+    },
+    {
+      title: "Urgent Coverage",
+      text: "Urgent: We need coverage for {class}. Please respond ASAP if you're available.",
+    },
+  ],
+  meeting: [
+    {
+      title: "Regular Staff Meeting",
+      text: "Reminder: Staff meeting tomorrow at {time} in {location}. Agenda: {agenda}",
+    },
+    {
+      title: "Emergency Meeting",
+      text: "Emergency staff meeting called for today at {time}. Your attendance is required.",
+    },
+    {
+      title: "Department Meeting",
+      text: "Department meeting scheduled for {date} at {time}. Please prepare {preparation}.",
+    },
+  ],
+  reminder: [
+    {
+      title: "Class Schedule",
+      text: "Reminder: You have {class} scheduled for {period} period tomorrow.",
+    },
+    {
+      title: "Exam Duty",
+      text: "You have been assigned exam duty for {class} on {date} during {period} period.",
+    },
+    {
+      title: "Training Session",
+      text: "Training session scheduled for {date} at {time}. Topic: {topic}",
+    },
+  ],
+};
 
 export default function SmsSendPage() {
   const { toast } = useToast();
   const [selectedTeachers, setSelectedTeachers] = useState<string[]>([]);
   const [messageText, setMessageText] = useState("");
-  
+  const [noteText, setNoteText] = useState("");
+  const [templateCategory, setTemplateCategory] = useState("assignment");
+  const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [teacherFilter, setTeacherFilter] = useState("all");
+
   const { data: teachers, isLoading: teachersLoading } = useQuery({
     queryKey: ["teachers"],
     queryFn: async () => {
       const response = await fetch("/api/teachers");
-      if (!response.ok) {
-        throw new Error("Failed to fetch teachers");
-      }
+      if (!response.ok) throw new Error("Failed to fetch teachers");
       return response.json();
     },
   });
 
-  const { data: assignments, isLoading: assignmentsLoading } = useQuery({
-    queryKey: ["substituteAssignments"],
+  const { data: assignedTeachers, isLoading: assignedLoading } = useQuery({
+    queryKey: ["assignedTeachers"],
     queryFn: async () => {
       const response = await fetch("/api/substitute-assignments");
-      if (!response.ok) {
-        throw new Error("Failed to fetch substitute assignments");
-      }
+      if (!response.ok) throw new Error("Failed to fetch assignments");
       return response.json();
     },
   });
 
-  const groupTeachersByAssignmentStatus = () => {
-    if (!teachers || !assignments) return { assigned: [], unassigned: [] };
-    
-    const assignedTeacherNames = assignments.assignments
-      ? assignments.assignments.map((a: any) => a.substituteTeacher)
-      : [];
-    
-    const assigned = teachers.filter((t: any) => 
-      assignedTeacherNames.includes(t.name)
-    );
-    
-    const unassigned = teachers.filter((t: any) => 
-      !assignedTeacherNames.includes(t.name)
-    );
-    
-    return { assigned, unassigned };
-  };
+  const filteredTeachers = () => {
+    if (!teachers || !assignedTeachers?.assignments) return [];
 
-  const { assigned, unassigned } = groupTeachersByAssignmentStatus();
+    const assignedIds = assignedTeachers.assignments.map((a: any) => 
+      teachers.find((t: any) => t.name === a.substitute)?.id
+    ).filter(Boolean);
 
-  const handleClearAll = () => {
-    setSelectedTeachers([]);
-  };
-
-  const handleSelectAll = () => {
-    if (teachers) {
-      const allTeacherIds = teachers.map((teacher: any) => teacher.id.toString());
-      setSelectedTeachers(allTeacherIds);
+    switch (teacherFilter) {
+      case "assigned":
+        return teachers.filter((t: any) => assignedIds.includes(t.id));
+      case "unassigned":
+        return teachers.filter((t: any) => !assignedIds.includes(t.id));
+      default:
+        return teachers;
     }
+  };
+
+  const handleTemplateSelect = (template: any) => {
+    setSelectedTemplate(template.title);
+    setMessageText(template.text);
   };
 
   const handleSendSms = async () => {
@@ -95,7 +132,11 @@ export default function SmsSendPage() {
     }
 
     try {
-      // API call would go here
+      // Combine message with note if present
+      const finalMessage = noteText 
+        ? `${messageText}\n\nNote: ${noteText}`
+        : messageText;
+
       toast({
         title: "SMS Sent",
         description: `Message sent to ${selectedTeachers.length} recipients.`,
@@ -110,14 +151,22 @@ export default function SmsSendPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6 pb-20">
-      <div className="flex justify-between items-center">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="container mx-auto p-4 space-y-6 pb-20"
+    >
+      <motion.div 
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        className="flex justify-between items-center"
+      >
         <h1 className="text-2xl font-bold">SMS Messaging</h1>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={handleClearAll}
+            onClick={() => setSelectedTeachers([])}
             disabled={selectedTeachers.length === 0}
           >
             <X className="h-4 w-4 mr-1" /> Clear All
@@ -125,123 +174,74 @@ export default function SmsSendPage() {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={handleSelectAll}
+            onClick={() => setSelectedTeachers(teachers?.map((t: any) => t.id.toString()) || [])}
           >
             <RefreshCcw className="h-4 w-4 mr-1" /> Select All
           </Button>
         </div>
-      </div>
+      </motion.div>
 
-      <Tabs defaultValue="assigned">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="assigned">
-            Assigned Teachers
-            {assigned.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {assigned.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="unassigned">
-            Unassigned Teachers
-            {unassigned.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {unassigned.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="assigned" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Assigned Substitute Teachers</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {assignmentsLoading ? (
-                <p>Loading...</p>
-              ) : assigned.length === 0 ? (
-                <p className="text-muted-foreground">No assigned teachers found</p>
-              ) : (
-                <div className="space-y-2">
-                  {assigned.map((teacher: any) => (
-                    <div
-                      key={teacher.id}
-                      className={`flex items-center justify-between p-3 rounded-lg border ${
-                        selectedTeachers.includes(teacher.id.toString())
-                          ? "bg-primary/10 border-primary"
-                          : ""
-                      }`}
-                      onClick={() => {
-                        if (selectedTeachers.includes(teacher.id.toString())) {
-                          setSelectedTeachers(selectedTeachers.filter(id => id !== teacher.id.toString()));
-                        } else {
-                          setSelectedTeachers([...selectedTeachers, teacher.id.toString()]);
-                        }
-                      }}
-                    >
-                      <div>
-                        <p className="font-medium">{teacher.name}</p>
-                        <p className="text-sm text-muted-foreground">{teacher.phone}</p>
-                      </div>
-                      <div className="h-5 w-5 rounded-full border flex items-center justify-center">
-                        {selectedTeachers.includes(teacher.id.toString()) && (
-                          <div className="h-3 w-3 rounded-full bg-primary" />
-                        )}
-                      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Select Recipients</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Select value={teacherFilter} onValueChange={setTeacherFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter teachers" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Teachers</SelectItem>
+                <SelectItem value="assigned">Assigned Teachers</SelectItem>
+                <SelectItem value="unassigned">Unassigned Teachers</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <motion.div layout className="space-y-2">
+              <AnimatePresence>
+                {filteredTeachers().map((teacher: any) => (
+                  <motion.div
+                    key={teacher.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
+                      selectedTeachers.includes(teacher.id.toString())
+                        ? "bg-primary/10 border-primary"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      if (selectedTeachers.includes(teacher.id.toString())) {
+                        setSelectedTeachers(selectedTeachers.filter(id => id !== teacher.id.toString()));
+                      } else {
+                        setSelectedTeachers([...selectedTeachers, teacher.id.toString()]);
+                      }
+                    }}
+                  >
+                    <div>
+                      <p className="font-medium">{teacher.name}</p>
+                      <p className="text-sm text-muted-foreground">{teacher.phone}</p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="unassigned" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Unassigned Substitute Teachers</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {teachersLoading ? (
-                <p>Loading...</p>
-              ) : unassigned.length === 0 ? (
-                <p className="text-muted-foreground">No unassigned teachers found</p>
-              ) : (
-                <div className="space-y-2">
-                  {unassigned.map((teacher: any) => (
-                    <div
-                      key={teacher.id}
-                      className={`flex items-center justify-between p-3 rounded-lg border ${
-                        selectedTeachers.includes(teacher.id.toString())
-                          ? "bg-primary/10 border-primary"
-                          : ""
-                      }`}
-                      onClick={() => {
-                        if (selectedTeachers.includes(teacher.id.toString())) {
-                          setSelectedTeachers(selectedTeachers.filter(id => id !== teacher.id.toString()));
-                        } else {
-                          setSelectedTeachers([...selectedTeachers, teacher.id.toString()]);
-                        }
-                      }}
+                    <motion.div 
+                      className="h-5 w-5 rounded-full border flex items-center justify-center"
+                      whileHover={{ scale: 1.1 }}
                     >
-                      <div>
-                        <p className="font-medium">{teacher.name}</p>
-                        <p className="text-sm text-muted-foreground">{teacher.phone}</p>
-                      </div>
-                      <div className="h-5 w-5 rounded-full border flex items-center justify-center">
-                        {selectedTeachers.includes(teacher.id.toString()) && (
-                          <div className="h-3 w-3 rounded-full bg-primary" />
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                      {selectedTeachers.includes(teacher.id.toString()) && (
+                        <motion.div 
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="h-3 w-3 rounded-full bg-primary" 
+                        />
+                      )}
+                    </motion.div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -249,41 +249,79 @@ export default function SmsSendPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div>
-              <div className="flex justify-between mb-2">
-                <p className="text-sm font-medium">Selected Recipients: {selectedTeachers.length}</p>
-                <Select>
+            <div className="flex justify-between items-center">
+              <p className="text-sm font-medium">Selected Recipients: {selectedTeachers.length}</p>
+
+              <div className="flex gap-4">
+                <Select value={templateCategory} onValueChange={setTemplateCategory}>
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Message Template" />
+                    <SelectValue placeholder="Message Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="assignment">Assignment Notification</SelectItem>
-                    <SelectItem value="reminder">Class Reminder</SelectItem>
-                    <SelectItem value="meeting">Staff Meeting</SelectItem>
+                    <SelectItem value="assignment">Assignment Notifications</SelectItem>
+                    <SelectItem value="meeting">Staff Meetings</SelectItem>
+                    <SelectItem value="reminder">Class Reminders</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select 
+                  value={selectedTemplate} 
+                  onValueChange={(value) => {
+                    const template = messageTemplates[templateCategory as keyof typeof messageTemplates]
+                      .find(t => t.title === value);
+                    if (template) handleTemplateSelect(template);
+                  }}
+                >
+                  <SelectTrigger className="w-[220px]">
+                    <SelectValue placeholder="Select Template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {messageTemplates[templateCategory as keyof typeof messageTemplates].map((template) => (
+                      <SelectItem key={template.title} value={template.title}>
+                        {template.title}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-              <Textarea
-                placeholder="Type your message here..."
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-                className="min-h-[120px]"
-              />
-              <div className="flex justify-between mt-2">
-                <p className="text-xs text-muted-foreground">
-                  {messageText.length} characters
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {Math.ceil(messageText.length / 160)} SMS
-                </p>
-              </div>
             </div>
-            <Button className="w-full" onClick={handleSendSms}>
+
+            <Textarea
+              placeholder="Type your message here..."
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              className="min-h-[120px]"
+            />
+
+            <div className="space-y-2">
+              <Label>Additional Note (Optional)</Label>
+              <Textarea
+                placeholder="Add a note that will appear at the bottom of your message..."
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                className="min-h-[80px]"
+              />
+            </div>
+
+            <div className="flex justify-between mt-2">
+              <p className="text-xs text-muted-foreground">
+                {messageText.length + (noteText ? noteText.length + 2 : 0)} characters
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {Math.ceil((messageText.length + (noteText ? noteText.length + 2 : 0)) / 160)} SMS
+              </p>
+            </div>
+
+            <Button 
+              className="w-full" 
+              onClick={handleSendSms}
+              disabled={selectedTeachers.length === 0 || !messageText.trim()}
+            >
               <Send className="h-4 w-4 mr-2" /> Send Message
             </Button>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }
