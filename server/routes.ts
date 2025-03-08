@@ -12,6 +12,24 @@ import * as fs from 'fs';
 import { processTimetables } from "../utils/timetableProcessor";
 import * as csv from 'csv-parser';
 
+interface AbsentTeacher {
+  id: number;
+  name: string;
+  phoneNumber: string | null;
+  timestamp: string;
+  assignedSubstitute: boolean;
+}
+
+interface AssignmentData {
+  assignments: Array<{
+    originalTeacher: string;
+    period: number;
+    className: string;
+    substitute: string;
+    substitutePhone: string;
+  }>;
+  warnings: string[];
+}
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -19,6 +37,11 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024 // 5MB limit
   }
 });
+
+// Update the function to handle undefined substituteId
+async function assignSubstitute(absenceId: number, substituteId: number | undefined): Promise<void> {
+  await storage.assignSubstitute(absenceId, substituteId || null);
+}
 
 async function processAndSaveTeachers(timetableContent?: string, substituteContent?: string) {
   try {
@@ -297,14 +320,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Read current absent teachers
       const absentFileContent = fs.readFileSync(absentFilePath, 'utf8');
-      let absentTeachers = JSON.parse(absentFileContent);
+      let absentTeachers: AbsentTeacher[] = JSON.parse(absentFileContent);
 
       if (status === 'absent') {
         // Add teacher if not already in list
-        if (!absentTeachers.find((t: any) => t.name === teacherName)) {
+        if (!absentTeachers.find((t: AbsentTeacher) => t.name === teacherName)) {
           // Get the last ID or start from 1
           const lastId = absentTeachers.length > 0 
-            ? Math.max(...absentTeachers.map((t: any) => t.id || 0)) 
+            ? Math.max(...absentTeachers.map((t: AbsentTeacher) => t.id || 0)) 
             : 0;
 
           absentTeachers.push({
@@ -317,13 +340,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } else if (status === 'present') {
         // Remove teacher from absent list
-        absentTeachers = absentTeachers.filter((t: any) => t.name !== teacherName);
+        absentTeachers = absentTeachers.filter((t: AbsentTeacher) => t.name !== teacherName);
 
         // Also remove from assigned teachers list if they exist there
         if (fs.existsSync(assignedFilePath)) {
           try {
             const assignedFileContent = fs.readFileSync(assignedFilePath, 'utf8');
-            const assignedData = JSON.parse(assignedFileContent);
+            const assignedData: AssignmentData = JSON.parse(assignedFileContent);
 
             if (assignedData && assignedData.assignments) {
               // Filter out assignments for this teacher
@@ -389,7 +412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Read absent teachers file
       const absentTeachersContent = fs.readFileSync(absentTeachersPath, 'utf-8');
-      const absentTeachers = JSON.parse(absentTeachersContent);
+      const absentTeachers: AbsentTeacher[] = JSON.parse(absentTeachersContent);
 
       if (!absentTeachers || absentTeachers.length === 0) {
         return res.status(200).json({ 
@@ -400,8 +423,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Filter teachers that don't have substitutes assigned
-      const unassignedTeachers = absentTeachers.filter((t: any) => !t.assignedSubstitute);
-      const teacherNames = unassignedTeachers.map((teacher: any) => teacher.name);
+      const unassignedTeachers = absentTeachers.filter((t: AbsentTeacher) => !t.assignedSubstitute);
+      const teacherNames = unassignedTeachers.map((teacher: AbsentTeacher) => teacher.name);
 
       if (teacherNames.length === 0) {
         return res.status(200).json({
@@ -429,7 +452,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update absent teachers file to mark teachers as assigned
       if (assignments.length > 0) {
-        const updatedAbsentTeachers = absentTeachers.map((teacher: any) => {
+        const updatedAbsentTeachers = absentTeachers.map((teacher: AbsentTeacher) => {
           if (teacherNames.includes(teacher.name)) {
             return { ...teacher, assignedSubstitute: true };
           }
@@ -439,7 +462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Save the assignments to the assigned_teacher.json file
         const assignedTeachersPath = path.join(__dirname, '../data/assigned_teacher.json');
-        const assignmentData = {
+        const assignmentData: AssignmentData = {
           assignments: assignments,
           warnings: warnings
         };
@@ -479,10 +502,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const fileContent = fs.readFileSync(filePath, 'utf8');
-      const absentTeachers = JSON.parse(fileContent);
+      const absentTeachers: AbsentTeacher[] = JSON.parse(fileContent);
 
       // Sort by timestamp to get latest entries first
-      const sortedTeachers = absentTeachers.sort((a: any, b: any) => {
+      const sortedTeachers = absentTeachers.sort((a: AbsentTeacher, b: AbsentTeacher) => {
         return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
       });
 
@@ -515,7 +538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create file with empty data if it doesn't exist
       if (!fs.existsSync(filePath)) {
-        const emptyData = {
+        const emptyData: AssignmentData = {
           assignments: [],
           warnings: []
         };
@@ -526,7 +549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileContent = fs.readFileSync(filePath, 'utf8');
 
       try {
-        const assignmentsData = JSON.parse(fileContent);
+        const assignmentsData: AssignmentData = JSON.parse(fileContent);
         console.log('Sending assignments data:', assignmentsData);
         res.json(assignmentsData);
       } catch (parseError) {
@@ -542,7 +565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           // Try to auto-fix the JSON file for next time
-          const emptyData = {
+          const emptyData: AssignmentData = {
             assignments: [],
             warnings: ["Previous data was corrupted and has been reset"]
           };
@@ -695,10 +718,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const fileContent = fs.readFileSync(filePath, 'utf8');
-      const absentTeachers = JSON.parse(fileContent);
+      const absentTeachers: AbsentTeacher[] = JSON.parse(fileContent);
 
       // Sort by timestamp to get latest entries first
-      const sortedTeachers = absentTeachers.sort((a: any, b: any) => {
+      const sortedTeachers = absentTeachers.sort((a: AbsentTeacher, b: AbsentTeacher) => {
         return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
       });
 
@@ -727,7 +750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const fileContent = fs.readFileSync(filePath, 'utf8');
-      let currentAbsentTeachers = JSON.parse(fileContent);
+      let currentAbsentTeachers: string[] = JSON.parse(fileContent);
 
       if (isAbsent) {
         if (!currentAbsentTeachers.includes(teacherName)) {
@@ -758,7 +781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const fileContent = fs.readFileSync(filePath, 'utf8');
-      let absentTeachers = [];
+      let absentTeachers: AbsentTeacher[] = [];
 
       try {
         absentTeachers = JSON.parse(fileContent);
@@ -768,7 +791,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Only return the count and names, avoiding timestamp processing
-      const simpleList = absentTeachers.map(teacher => ({
+      const simpleList = absentTeachers.map((teacher: AbsentTeacher) => ({
         name: teacher.name,
         phoneNumber: teacher.phoneNumber,
         assignedSubstitute: teacher.assignedSubstitute || false
@@ -827,7 +850,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const filePath = path.join(__dirname, '../data/day_schedules.json');
 
       if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: 'Day schedules file not found' });
+        return res.status(404).json({ error: 'Day schedules filenot found' });
       }
 
       const schedules = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
@@ -860,7 +883,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/absent-teachers/:id/substitute", async (req, res) => {
     try {
       const { id } = req.params;
-      const { substituteId } = req.body;
+      const { substituteId } = req.body as { substituteId: number };
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = path.dirname(__filename);
       const filePath = path.join(__dirname, '../data/absent_teachers.json');
@@ -870,10 +893,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const fileContent = fs.readFileSync(filePath, 'utf8');
-      let absentTeachers = JSON.parse(fileContent);
+      let absentTeachers: AbsentTeacher[] = JSON.parse(fileContent);
 
       // Find and update the teacher's record
-      const teacherIndex = absentTeachers.findIndex((t: any) => t.id === parseInt(id));
+      const teacherIndex = absentTeachers.findIndex((t: AbsentTeacher) => t.id === parseInt(id));
       if (teacherIndex === -1) {
         return res.status(404).json({ error: 'Teacher not found' });
       }
@@ -953,13 +976,7 @@ class SubstituteManager {
   private substituteData: any[] = [];
   private logs: any[] = [];
 
-  async loadData() {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const timetablePath = path.join(__dirname, '../data/timetable_file.csv');
-    const substitutePath = path.join(__dirname, '../data/Substitude_file.csv');
-
-
+  async loadData(timetablePath: string, substitutePath: string) {
     this.timetable = await this.loadTimetable(timetablePath);
     this.substituteData = await this.loadSubstituteData(substitutePath);
     
@@ -1085,86 +1102,86 @@ class SubstituteManager {
 let substituteManager = new SubstituteManager();
 
 app.get('/api/autoassign', async (req, res) => {
-    try {
-      const absentTeachersPath = path.join(__dirname, '../data/absent_teachers.json');
-      if (!fs.existsSync(absentTeachersPath)) {
-        return res.status(404).json({ error: 'No absent teachers found' });
-      }
+  try {
+    const absentTeachersPath = path.join(__dirname, '../data/absent_teachers.json');
+    if (!fs.existsSync(absentTeachersPath)) {
+      return res.status(404).json({ error: 'No absent teachers found' });
+    }
 
-      const absentData = JSON.parse(fs.readFileSync(absentTeachersPath, 'utf-8'));
-      const unassignedTeachers = absentData
-        .filter((teacher: any) => !teacher.assignedSubstitute)
-        .map((teacher: any) => teacher.name);
+    const absentData = JSON.parse(fs.readFileSync(absentTeachersPath, 'utf-8'));
+    const unassignedTeachers = absentData
+      .filter((teacher: any) => !teacher.assignedSubstitute)
+      .map((teacher: any) => teacher.name);
 
-      console.log(`Found ${unassignedTeachers.length} unassigned teachers: ${unassignedTeachers.join(', ')}`);
+    console.log(`Found ${unassignedTeachers.length} unassigned teachers: ${unassignedTeachers.join(', ')}`);
 
-      if (unassignedTeachers.length === 0) {
-        return res.json({ success: true, message: 'No unassigned teachers found' });
-      }
+    if (unassignedTeachers.length === 0) {
+      return res.json({ success: true, message: 'No unassigned teachers found' });
+    }
 
-      const date = new Date().toISOString().split('T')[0];
-      const { assignments, warnings } = await substituteManager.autoAssignSubstitutes(date, unassignedTeachers);
+    const date = new Date().toISOString().split('T')[0];
+    const { assignments, warnings } = await substituteManager.autoAssignSubstitutes(date, unassignedTeachers);
 
-      // Mark teachers as assigned in absent_teachers.json
-      if (assignments.length > 0) {
-        const updatedAbsentData = absentData.map((teacher: any) => {
-          if (unassignedTeachers.includes(teacher.name)) {
-            return { ...teacher, assignedSubstitute: true };
-          }
-          return teacher;
-        });
-        fs.writeFileSync(absentTeachersPath, JSON.stringify(updatedAbsentData, null, 2));
-      }
-
-      res.json({
-        success: true,
-        message: `Auto-assignment completed. Assigned ${assignments.length} substitutes.`,
-        assignments,
-        warnings
+    // Mark teachers as assigned in absent_teachers.json
+    if (assignments.length > 0) {
+      const updatedAbsentData = absentData.map((teacher: any) => {
+        if (unassignedTeachers.includes(teacher.name)) {
+          return { ...teacher, assignedSubstitute: true };
+        }
+        return teacher;
       });
-    } catch (error) {
-      console.error('Error in auto-assign:', error);
-      res.status(500).json({ error: 'Failed to auto-assign substitutes' });
+      fs.writeFileSync(absentTeachersPath, JSON.stringify(updatedAbsentData, null, 2));
     }
-  });
 
-  // Endpoint to archive log file 
-  app.get('/api/archive-logs', async (req, res) => {
-    try {
-      const logsPath = path.join(__dirname, '../data/substitute_logs.json');
-      const oldLogsDir = path.join(__dirname, '../data/old_logs');
-      
-      // Ensure the old logs directory exists
-      if (!fs.existsSync(oldLogsDir)) {
-        fs.mkdirSync(oldLogsDir, { recursive: true });
-      }
-      
-      if (fs.existsSync(logsPath)) {
-        // Format date for filename
-        const now = new Date();
-        const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${now.getHours()}-${now.getMinutes()}`;
-        const archivePath = path.join(oldLogsDir, `substitute_logs_${formattedDate}.json`);
-        
-        // Copy current logs to archive
-        fs.copyFileSync(logsPath, archivePath);
-        
-        // Create empty log file
-        fs.writeFileSync(logsPath, JSON.stringify({}, null, 2));
-        
-        console.log(`Archived logs to ${archivePath}`);
-        res.json({ 
-          success: true, 
-          message: "Logs archived successfully", 
-          archivePath: archivePath 
-        });
-      } else {
-        res.json({ 
-          success: true, 
-          message: "No logs file found to archive" 
-        });
-      }
-    } catch (error) {
-      console.error('Error archiving logs:', error);
-      res.status(500).json({ error: 'Failed to archive logs' });
+    res.json({
+      success: true,
+      message: `Auto-assignment completed. Assigned ${assignments.length} substitutes.`,
+      assignments,
+      warnings
+    });
+  } catch (error) {
+    console.error('Error in auto-assign:', error);
+    res.status(500).json({ error: 'Failed to auto-assign substitutes' });
+  }
+});
+
+// Endpoint to archive log file 
+app.get('/api/archive-logs', async (req, res) => {
+  try {
+    const logsPath = path.join(__dirname, '../data/substitute_logs.json');
+    const oldLogsDir = path.join(__dirname, '../data/old_logs');
+    
+    // Ensure the old logs directory exists
+    if (!fs.existsSync(oldLogsDir)) {
+      fs.mkdirSync(oldLogsDir, { recursive: true });
     }
-  });
+    
+    if (fs.existsSync(logsPath)) {
+      // Format date for filename
+      const now = new Date();
+      const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${now.getHours()}-${now.getMinutes()}`;
+      const archivePath = path.join(oldLogsDir, `substitute_logs_${formattedDate}.json`);
+      
+      // Copy current logs to archive
+      fs.copyFileSync(logsPath, archivePath);
+      
+      // Create empty log file
+      fs.writeFileSync(logsPath, JSON.stringify({}, null, 2));
+      
+      console.log(`Archived logs to ${archivePath}`);
+      res.json({ 
+        success: true, 
+        message: "Logs archived successfully", 
+        archivePath: archivePath 
+      });
+    } else {
+      res.json({ 
+        success: true, 
+        message: "No logs file found to archive" 
+      });
+    }
+  } catch (error) {
+    console.error('Error archiving logs:', error);
+    res.status(500).json({ error: 'Failed to archive logs' });
+  }
+});

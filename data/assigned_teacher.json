@@ -1,25 +1,32 @@
 {
   "assignments": [
     {
-      "originalTeacher": "Sir Mushtaque Ahmed",
+      "originalTeacher": "Sir Bakir Shah",
       "period": 1,
-      "className": "10B",
-      "substitute": "Sir Romanulabdin",
-      "substitutePhone": "+923048151502"
+      "className": "10A",
+      "substitute": "Sir Waqar Ali",
+      "substitutePhone": "+923113588606"
     },
     {
-      "originalTeacher": "Sir Mushtaque Ahmed",
+      "originalTeacher": "Sir Bakir Shah",
       "period": 2,
-      "className": "10B",
-      "substitute": "Sir Aman Arif",
-      "substitutePhone": "+923147500857"
+      "className": "10A",
+      "substitute": "Sir Faisal Ali",
+      "substitutePhone": "+923473093995"
     },
     {
-      "originalTeacher": "Sir Mushtaque Ahmed",
+      "originalTeacher": "Sir Bakir Shah",
+      "period": 6,
+      "className": "10B",
+      "substitute": "Sir Irshad Qureshi",
+      "substitutePhone": "+923123131179"
+    },
+    {
+      "originalTeacher": "Sir Bakir Shah",
       "period": 8,
-      "className": "9C",
-      "substitute": "Sir Shafique Ahmed",
-      "substitutePhone": "+923337199001"
+      "className": "10A",
+      "substitute": "Sir Iqbal Ahmed",
+      "substitutePhone": "+923063624407"
     }
   ],
   "warnings": []
