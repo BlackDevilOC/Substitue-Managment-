@@ -1,168 +1,216 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { Card, Title, Paragraph, Avatar, Button, Divider, Text, useTheme } from 'react-native-paper';
+import { Text, Card, Title, Paragraph, Button, IconButton, useTheme, Divider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../context/AuthContext';
-import { useNetwork } from '../context/NetworkContext';
 import { useDatabase } from '../context/DatabaseContext';
+import { useNetwork } from '../context/NetworkContext';
 import { format } from 'date-fns';
 
 const HomeScreen = () => {
-  const navigation = useNavigation<any>();
-  const { user } = useAuth();
-  const { isConnected, lastOnlineAt } = useNetwork();
-  const { teachersTable, absencesTable, subsAssignmentsTable, isInitialized } = useDatabase();
+  const navigation = useNavigation();
   const theme = useTheme();
+  const { isConnected } = useNetwork();
+  const { isInitialized, teachersTable, schedulesTable, absencesTable, subsAssignmentsTable } = useDatabase();
   
-  const [teacherCount, setTeacherCount] = useState(0);
-  const [absentCount, setAbsentCount] = useState(0);
-  const [substitutions, setSubstitutions] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [today] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [teachers, setTeachers] = useState([]);
+  const [absences, setAbsences] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [todaySchedule, setTodaySchedule] = useState([]);
   
-  // Load dashboard data
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const dayOfWeek = format(new Date(), 'EEEE').toLowerCase();
+
   useEffect(() => {
     if (isInitialized) {
-      loadDashboardData();
+      loadData();
     }
   }, [isInitialized]);
-  
-  const loadDashboardData = async () => {
+
+  const loadData = async () => {
     try {
-      // Get teacher count
-      const teachers = await teachersTable.getAll();
-      setTeacherCount(teachers.length);
+      // Get counts
+      const teachersList = await teachersTable.getAll();
+      setTeachers(teachersList);
       
-      // Get absent teachers for today
-      const absences = await absencesTable.getByDate(today);
-      setAbsentCount(absences.length);
+      // Get today's absences
+      const todayAbsences = await absencesTable.getByDate(today);
+      setAbsences(todayAbsences);
       
-      // Get today's substitutions
-      const subs = await subsAssignmentsTable.getByDate(today);
-      setSubstitutions(subs);
+      // Get today's assignments
+      const todayAssignments = await subsAssignmentsTable.getByDate(today);
+      setAssignments(todayAssignments);
+      
+      // Get today's schedule
+      const daySchedule = await schedulesTable.getByDay(dayOfWeek);
+      setTodaySchedule(daySchedule);
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      console.error('Error loading data:', error);
     }
   };
-  
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadDashboardData();
+    await loadData();
     setRefreshing(false);
   };
-  
+
+  const goToAbsenceManagement = () => {
+    navigation.navigate('ManageAbsences', { date: today });
+  };
+
+  const goToSubstituteAssignment = () => {
+    navigation.navigate('SubstituteAssignment', { date: today });
+  };
+
+  const goToImportData = () => {
+    navigation.navigate('DataImport');
+  };
+
+  if (!isInitialized) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Initializing database...</Text>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView 
+    <ScrollView
       style={styles.container}
+      contentContainerStyle={styles.content}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      {/* Welcome card */}
-      <Card style={styles.card}>
-        <Card.Content style={styles.welcomeCard}>
-          <View>
-            <Title>Welcome, {user?.username || 'User'}</Title>
-            <Paragraph>Today is {format(new Date(), 'EEEE, MMMM d, yyyy')}</Paragraph>
+      {/* Header section with date and sync status */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.dateText}>{format(new Date(), 'EEEE, MMMM d, yyyy')}</Text>
+          <Text style={[styles.connectionStatus, { color: isConnected ? theme.colors.primary : '#F44336' }]}>
+            {isConnected ? 'Online' : 'Offline'} Mode
+          </Text>
+        </View>
+        <IconButton
+          icon="refresh"
+          size={24}
+          onPress={onRefresh}
+        />
+      </View>
+      
+      {/* Quick actions */}
+      <Card style={styles.actionsCard}>
+        <Card.Content>
+          <Title>Quick Actions</Title>
+          <View style={styles.actionButtons}>
+            <Button
+              mode="contained"
+              icon="account-cancel"
+              onPress={goToAbsenceManagement}
+              style={styles.actionButton}
+            >
+              Mark Absences
+            </Button>
+            <Button
+              mode="contained"
+              icon="account-switch"
+              onPress={goToSubstituteAssignment}
+              style={styles.actionButton}
+            >
+              Assign Substitutes
+            </Button>
+            <Button
+              mode="contained"
+              icon="file-import"
+              onPress={goToImportData}
+              style={styles.actionButton}
+            >
+              Import Data
+            </Button>
           </View>
-          <Avatar.Icon size={48} icon="account" style={{ backgroundColor: theme.colors.primary }} />
         </Card.Content>
       </Card>
       
-      {/* Status indicator */}
-      <View style={styles.statusContainer}>
-        <View style={[styles.statusIndicator, { backgroundColor: isConnected ? '#4CAF50' : '#FF9800' }]} />
-        <Text style={styles.statusText}>
-          {isConnected 
-            ? 'Online Mode: Changes will sync when possible' 
-            : 'Offline Mode: Working with local data only'}
-        </Text>
-        {!isConnected && lastOnlineAt && (
-          <Text style={styles.lastOnlineText}>
-            Last online: {format(lastOnlineAt, 'MMM d, h:mm a')}
-          </Text>
-        )}
-      </View>
-      
-      {/* Stats cards */}
-      <View style={styles.statsRow}>
+      {/* Statistics overview */}
+      <View style={styles.statsContainer}>
         <Card style={styles.statsCard}>
           <Card.Content>
-            <Title style={styles.statsNumber}>{teacherCount}</Title>
-            <Paragraph>Total Teachers</Paragraph>
+            <Title>Teachers</Title>
+            <Paragraph style={styles.statNumber}>{teachers.length}</Paragraph>
           </Card.Content>
         </Card>
         
-        <Card style={[styles.statsCard, { marginLeft: 10 }]}>
+        <Card style={styles.statsCard}>
           <Card.Content>
-            <Title style={styles.statsNumber}>{absentCount}</Title>
-            <Paragraph>Absent Today</Paragraph>
+            <Title>Absences Today</Title>
+            <Paragraph style={styles.statNumber}>{absences.length}</Paragraph>
+          </Card.Content>
+        </Card>
+        
+        <Card style={styles.statsCard}>
+          <Card.Content>
+            <Title>Assignments</Title>
+            <Paragraph style={styles.statNumber}>{assignments.length}</Paragraph>
           </Card.Content>
         </Card>
       </View>
       
-      {/* Actions */}
-      <Card style={styles.card}>
+      {/* Today's absences */}
+      <Card style={styles.listCard}>
         <Card.Content>
-          <Title>Quick Actions</Title>
-        </Card.Content>
-        <Divider />
-        <Card.Actions style={styles.actionsContainer}>
-          <Button 
-            mode="contained" 
-            onPress={() => navigation.navigate('ManageAbsences')}
-            style={styles.actionButton}
-          >
-            Mark Absences
-          </Button>
-          <Button 
-            mode="contained" 
-            onPress={() => navigation.navigate('SubstituteAssignment')}
-            style={styles.actionButton}
-          >
-            Assign Substitutes
-          </Button>
-        </Card.Actions>
-        <Card.Actions style={styles.actionsContainer}>
-          <Button 
-            mode="outlined" 
-            onPress={() => navigation.navigate('DataImport')}
-            style={styles.actionButton}
-          >
-            Import Data
-          </Button>
-          <Button 
-            mode="outlined" 
-            onPress={() => {/* Add functionality */}}
-            style={styles.actionButton}
-          >
-            Send Notifications
-          </Button>
-        </Card.Actions>
-      </Card>
-      
-      {/* Today's Substitutions */}
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title>Today's Substitutions</Title>
-          {substitutions.length === 0 ? (
-            <Paragraph style={styles.noDataText}>No substitutions assigned for today</Paragraph>
+          <Title>Today's Absences</Title>
+          <Divider style={{ marginVertical: 10 }} />
+          {absences.length > 0 ? (
+            absences.map((absence: any, index: number) => (
+              <View key={absence.id || index} style={styles.listItem}>
+                <Text style={styles.teacherName}>{absence.teacher_name}</Text>
+                <Text style={styles.details}>{absence.notes || 'No notes'}</Text>
+              </View>
+            ))
           ) : (
-            <View>
-              {substitutions.map((sub: any, index: number) => (
-                <View key={index} style={styles.substitutionItem}>
-                  <Paragraph style={styles.substitutionText}>
-                    <Text style={{ fontWeight: 'bold' }}>{sub.substitute_teacher_name}</Text> 
-                    {' replacing '} 
-                    <Text style={{ fontWeight: 'bold' }}>{sub.absent_teacher_name}</Text>
-                  </Paragraph>
-                  <Paragraph>Period {sub.period}, Class {sub.class_name}</Paragraph>
-                  {index < substitutions.length - 1 && <Divider style={styles.itemDivider} />}
-                </View>
-              ))}
-            </View>
+            <Text style={styles.emptyText}>No absences recorded for today</Text>
           )}
         </Card.Content>
+        {absences.length > 0 && (
+          <Card.Actions>
+            <Button
+              onPress={goToAbsenceManagement}
+            >
+              Manage Absences
+            </Button>
+          </Card.Actions>
+        )}
+      </Card>
+      
+      {/* Today's substitute assignments */}
+      <Card style={styles.listCard}>
+        <Card.Content>
+          <Title>Today's Substitute Assignments</Title>
+          <Divider style={{ marginVertical: 10 }} />
+          {assignments.length > 0 ? (
+            assignments.map((assignment: any, index: number) => (
+              <View key={assignment.id || index} style={styles.listItem}>
+                <Text style={styles.teacherName}>
+                  {assignment.absent_teacher_name} → {assignment.substitute_teacher_name}
+                </Text>
+                <Text style={styles.details}>
+                  Period {assignment.period}, Class {assignment.class_name}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>No substitute assignments for today</Text>
+          )}
+        </Card.Content>
+        {absences.length > 0 && assignments.length < absences.length && (
+          <Card.Actions>
+            <Button
+              onPress={goToSubstituteAssignment}
+            >
+              Assign Substitutes
+            </Button>
+          </Card.Actions>
+        )}
       </Card>
     </ScrollView>
   );
@@ -171,77 +219,83 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#f5f5f5',
+  },
+  content: {
     padding: 16,
   },
-  card: {
-    marginBottom: 16,
-    elevation: 2,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  welcomeCard: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 16,
-    backgroundColor: 'white',
-    padding: 10,
-    borderRadius: 8,
-    elevation: 1,
   },
-  statusIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 8,
+  dateText: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
-  statusText: {
+  connectionStatus: {
     fontSize: 14,
-    flex: 1,
   },
-  lastOnlineText: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
+  actionsCard: {
+    marginBottom: 16,
+    elevation: 2,
   },
-  statsRow: {
+  actionButtons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+  },
+  actionButton: {
+    margin: 4,
+    flex: 1,
+    minWidth: '45%',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
   statsCard: {
     flex: 1,
+    marginHorizontal: 4,
     elevation: 2,
   },
-  statsNumber: {
-    fontSize: 28,
-    marginBottom: 4,
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 8,
-  },
-  actionButton: {
-    flex: 1,
-    marginHorizontal: 4,
-  },
-  substitutionItem: {
-    marginVertical: 8,
-  },
-  substitutionText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  itemDivider: {
-    marginVertical: 8,
-  },
-  noDataText: {
-    fontStyle: 'italic',
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
     marginTop: 8,
+  },
+  listCard: {
+    marginBottom: 16,
+    elevation: 2,
+  },
+  listItem: {
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  teacherName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  details: {
+    fontSize: 14,
     color: '#666',
+    marginTop: 4,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#666',
+    marginVertical: 16,
+    fontStyle: 'italic',
   },
 });
 

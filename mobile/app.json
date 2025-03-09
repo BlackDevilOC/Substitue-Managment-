@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Teacher Schedule Manager",
-    "slug": "teacher-schedule-manager",
+    "name": "Schedulizer",
+    "slug": "schedulizer",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -9,21 +9,21 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#8A4FFF"
+      "backgroundColor": "#A992CC"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.teacherschedule.manager"
+      "bundleIdentifier": "com.schedulizer.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#8A4FFF"
+        "backgroundColor": "#A992CC"
       },
-      "package": "com.teacherschedule.manager",
+      "package": "com.schedulizer.app",
       "permissions": [
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
