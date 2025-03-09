@@ -14,7 +14,7 @@ import * as csv from 'csv-parser';
 import { notifications, insertNotificationSchema } from "@shared/schema";
 import { getNotificationServer } from "./websocket";
 import { db } from "./db";
-import { eq, desc } from 'drizzle-orm';
+import { eq } from "drizzle-orm";
 
 
 interface AbsentTeacher {
@@ -858,7 +858,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Day schedules filenot found' });
       }
 
-      const schedules = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      constconst schedules = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
       res.json(schedules);
     } catch (error) {
       console.error('Error reading day schedules:', error);
@@ -977,7 +977,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await db.select()
         .from(notifications)
         .where(eq(notifications.recipientId, teacherId))
-        .orderBy(desc(notifications.createdAt));
+        .orderBy(notifications.createdAt);
 
       res.json(result);
     } catch (error) {
