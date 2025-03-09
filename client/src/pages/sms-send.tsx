@@ -17,6 +17,7 @@ import { Send, RefreshCcw, X, ChevronDown, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useLocation } from "wouter";
 
 const messageTemplates = {
   assignment: [
@@ -64,6 +65,7 @@ const messageTemplates = {
 };
 
 export default function SmsSendPage() {
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedTeachers, setSelectedTeachers] = useState<string[]>([]);
   const [messageText, setMessageText] = useState("");
@@ -93,17 +95,16 @@ export default function SmsSendPage() {
   const filteredTeachers = () => {
     if (!teachers || !assignedTeachers?.assignments) return [];
 
-    const assignedIds = assignedTeachers.assignments.map((a: any) =>
-      teachers.find((t: any) => t.name === a.substitute)?.id
-    ).filter(Boolean);
+    const assignedIds = new Set(assignedTeachers.assignments.map((a: any) => {
+      const teacher = teachers.find((t: any) => t.name === a.substitute);
+      return teacher?.id;
+    }).filter(Boolean));
 
     switch (teacherFilter) {
       case "selected":
-        return teachers.filter((t: any) =>
-          selectedTeachers.includes(t.id.toString())
-        );
+        return teachers.filter((t: any) => selectedTeachers.includes(t.id.toString()));
       case "assigned":
-        return teachers.filter((t: any) => assignedIds.includes(t.id));
+        return teachers.filter((t: any) => assignedIds.has(t.id));
       default:
         return teachers;
     }
@@ -111,10 +112,31 @@ export default function SmsSendPage() {
 
   const handleTemplateSelect = (template: any) => {
     setSelectedTemplate(template.title);
-    setMessageText(template.text);
+    let text = template.text;
+
+    if (templateCategory === "assignment" && selectedTeachers.length === 1) {
+      const teacherId = selectedTeachers[0];
+      const teacher = teachers?.find((t: any) => t.id.toString() === teacherId);
+
+      if (teacher && assignedTeachers?.assignments) {
+        const assignments = assignedTeachers.assignments.filter(
+          (a: any) => a.substitute === teacher.name
+        );
+
+        if (assignments.length > 0) {
+          const assignment = assignments[0];
+          text = text
+            .replace("{teacher}", teacher.name)
+            .replace("{class}", assignment.className)
+            .replace("{original_teacher}", assignment.originalTeacher)
+            .replace("{period}", assignment.period.toString());
+        }
+      }
+    }
+
+    setMessageText(text);
   };
 
-  // Helper function to generate assignment message for a substitute
   const generateAssignmentMessage = (teacherName: string) => {
     if (!assignedTeachers?.assignments) return "";
 
@@ -143,20 +165,34 @@ export default function SmsSendPage() {
       return;
     }
 
-    try {
-      // Combine message with note if present
-      const finalMessage = noteText
-        ? `${messageText}\n\nNote: ${noteText}`
-        : messageText;
-
+    if (!messageText.trim()) {
       toast({
-        title: "SMS Sent",
-        description: `Message sent to ${selectedTeachers.length} recipients.`,
+        title: "Error",
+        description: "Please enter a message",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const selectedTeacherObjects = teachers
+        .filter((t: any) => selectedTeachers.includes(t.id.toString()))
+        .map((t: any) => ({
+          id: t.id.toString(),
+          name: t.name,
+          phone: t.phoneNumber
+        }));
+
+      setLocation('/sms-confirm', {
+        state: {
+          selectedTeachers: selectedTeacherObjects,
+          messageText: noteText ? `${messageText}\n\nNote: ${noteText}` : messageText
+        }
       });
     } catch (error) {
       toast({
-        title: "Failed to send SMS",
-        description: "There was an error sending your message.",
+        title: "Error",
+        description: "Failed to proceed to confirmation. Please try again.",
         variant: "destructive",
       });
     }
@@ -371,7 +407,7 @@ export default function SmsSendPage() {
               onClick={handleSendSms}
               disabled={selectedTeachers.length === 0 || !messageText.trim()}
             >
-              <Send className="h-4 w-4 mr-2" /> Send Message
+              <Send className="h-4 w-4 mr-2" /> Continue to Confirmation
             </Button>
           </div>
         </CardContent>

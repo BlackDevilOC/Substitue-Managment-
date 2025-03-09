@@ -23,7 +23,8 @@ import NotificationsPage from "@/pages/notifications";
 import ExperimentScreen from "@/pages/experiment-screen";
 import SMSSendPage from "@/pages/sms-send";
 import TestingPage from "@/pages/testing-page";
-import LookupPage from "@/pages/lookup-page"; // Add this line
+import LookupPage from "@/pages/lookup-page";
+import SMSConfirmPage from "@/pages/sms-confirm"; // Added import
 
 function Router() {
   return (
@@ -44,8 +45,9 @@ function Router() {
       <ProtectedRoute path="/experiments" component={ExperimentScreen} />
       <Route path="/notifications" component={NotificationsPage} />
       <Route path="/sms-send" component={SMSSendPage} />
+      <Route path="/sms-confirm" component={SMSConfirmPage} />
       <Route path="/testing" component={TestingPage} />
-      <ProtectedRoute path="/lookup" component={LookupPage} /> {/* Add this line */}
+      <ProtectedRoute path="/lookup" component={LookupPage} />
       <Route component={NotFound} />
     </Switch>
   );
