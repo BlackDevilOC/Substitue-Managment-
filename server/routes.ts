@@ -443,6 +443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { SubstituteManager } = await import('./substitute-manager.js');
       const manager = new SubstituteManager();
       
+
       // Make sure to load data from the right files
       await manager.loadData(timetablePath, substitutePath);
 
@@ -460,6 +461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         fs.writeFileSync(absentTeachersPath, JSON.stringify(updatedAbsentTeachers, null, 2));
         
+
         // Save the assignments to the assigned_teacher.json file
         const assignedTeachersPath = path.join(__dirname, '../data/assigned_teacher.json');
         const assignmentData: AssignmentData = {
@@ -516,18 +518,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/sms-history", async (req, res) => {
-    const history = await storage.getSmsHistory();
-    const enrichedHistory = await Promise.all(
-      history.map(async (sms) => {
-        const teacher = await storage.getTeacher(sms.teacherId);
-        return {
-          ...sms,
-          teacherName: teacher?.name || 'Unknown'
-        };
-      })
-    );
-    res.json(enrichedHistory);
+  app.get("/api/sms-history", async (req, res) => {
+    try {
+      const { getSMSHistory } = await import('./sms-handler.js');
+      const history = getSMSHistory();
+      res.json(history);
+    } catch (error) {
+      console.error('Error getting SMS history:', error);
+      res.status(500).json({ 
+        error: 'Failed to get SMS history',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
   });
 
   app.get("/api/substitute-assignments", async (req, res) => {
@@ -808,6 +810,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+  app.post("/api/send-messages", async (req, res) => {
+    try {
+      const { teachers, message, method } = req.body;
+
+      for (const teacher of teachers) {
+        const { sendSMS, addSMSToHistory, loadSMSHistory, saveSMSHistory } = await import('./sms-handler.js');
+
+        // Add to history before sending
+        const historyEntry = addSMSToHistory({
+          teacherId: teacher.id,
+          teacherName: teacher.name,
+          message: message,
+          status: 'pending',
+          method: method
+        });
+
+        // Send SMS
+        const success = await sendSMS(teacher.phone, message, method);
+
+        // Update history with result
+        if (!success) {
+          const history = loadSMSHistory();
+          const updatedHistory = history.map(entry => 
+            entry.id === historyEntry.id 
+              ? { ...entry, status: 'failed' }
+              : entry
+          );
+          saveSMSHistory(updatedHistory);
+        }
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error sending messages:', error);
+      res.status(500).json({ 
+        error: 'Failed to send messages',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   app.post("/api/process-timetables", async (req, res) => {
     try {
       console.log("API: Processing timetables only for schedule data extraction...");
@@ -980,6 +1023,7 @@ class SubstituteManager {
     this.timetable = await this.loadTimetable(timetablePath);
     this.substituteData = await this.loadSubstituteData(substitutePath);
     
+
     //Timetable Loading Validation
     if(this.timetable.length === 0){
       throw new Error(`Timetable file empty at ${timetablePath}`);
@@ -1032,6 +1076,7 @@ class SubstituteManager {
       const cleanName = teacherName.toLowerCase().trim();
       const periods = await this.getAllPeriodsForTeacher(cleanName);
       
+
       if (periods.length > 0) {
         // Assign substitutes based on periods 
         assignments.push(...periods);
@@ -1042,6 +1087,7 @@ class SubstituteManager {
       }
     }
     
+
     this.saveLogs();
     return { assignments, warnings, logs: this.logs };
   }
@@ -1063,6 +1109,7 @@ class SubstituteManager {
         targetName: teacherName
       });
     
+
       const cleanName = teacherName.toLowerCase();
       const similarNames = this.timetable
         .map(e => e.Teacher)
@@ -1070,6 +1117,7 @@ class SubstituteManager {
           name.toLowerCase().includes(cleanName.substring(0, 5))
         );
     
+
       this.addLog('NameVariants', 'Potential timetable matches', 'info', {
         searchTerm: cleanName,
         matchesFound: similarNames
@@ -1151,23 +1199,28 @@ app.get('/api/archive-logs', async (req, res) => {
     const logsPath = path.join(__dirname, '../data/substitute_logs.json');
     const oldLogsDir = path.join(__dirname, '../data/old_logs');
     
+
     // Ensure the old logs directory exists
     if (!fs.existsSync(oldLogsDir)) {
       fs.mkdirSync(oldLogsDir, { recursive: true });
     }
     
+
     if (fs.existsSync(logsPath)) {
       // Format date for filename
       const now = new Date();
       const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${now.getHours()}-${now.getMinutes()}`;
       const archivePath = path.join(oldLogsDir, `substitute_logs_${formattedDate}.json`);
       
+
       // Copy current logs to archive
       fs.copyFileSync(logsPath, archivePath);
       
+
       // Create empty log file
       fs.writeFileSync(logsPath, JSON.stringify({}, null, 2));
       
+
       console.log(`Archived logs to ${archivePath}`);
       res.json({ 
         success: true, 
