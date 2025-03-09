@@ -24,6 +24,18 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto p-4">
+      {/* Logo Section */}
+      <div className="flex flex-col items-center mb-8">
+        <img 
+          src="/icons/icon-192x192.png"
+          alt="Schedulizer Logo"
+          className="w-24 h-24 mb-2"
+        />
+        <h2 className="text-lg font-medium text-muted-foreground">
+          Stay Organized, Stay Ahead!
+        </h2>
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="flex gap-2">
