@@ -1,3 +1,74 @@
 {
-  "assignments": []
+  "assignments": [
+    {
+      "originalTeacher": "Sir Wajiudin Shaikh",
+      "period": 3,
+      "className": "6A",
+      "substitute": "Sir Bakir Shah",
+      "substitutePhone": "+923156103995"
+    },
+    {
+      "originalTeacher": "Sir Wajiudin Shaikh",
+      "period": 8,
+      "className": "7A",
+      "substitute": "Sir Irshad Qureshi",
+      "substitutePhone": "+923123131179"
+    },
+    {
+      "originalTeacher": "Sir Iqbal Ahmed",
+      "period": 1,
+      "className": "9C",
+      "substitute": "Sir Waqar Ali",
+      "substitutePhone": "+923113588606"
+    },
+    {
+      "originalTeacher": "Sir Iqbal Ahmed",
+      "period": 2,
+      "className": "9C",
+      "substitute": "Sir Faisal Ali",
+      "substitutePhone": "+923473093995"
+    },
+    {
+      "originalTeacher": "Sir Iqbal Ahmed",
+      "period": 4,
+      "className": "10C",
+      "substitute": "Sir Muhammad Taha",
+      "substitutePhone": "+923163745043"
+    },
+    {
+      "originalTeacher": "Sir Iqbal Ahmed",
+      "period": 5,
+      "className": "9C",
+      "substitute": "Sir Asif Nawaz",
+      "substitutePhone": "+923122084340"
+    },
+    {
+      "originalTeacher": "Sir Jamalullah",
+      "period": 1,
+      "className": "7A",
+      "substitute": "Sir Romanulabdin",
+      "substitutePhone": "+923048151502"
+    },
+    {
+      "originalTeacher": "Sir Jamalullah",
+      "period": 2,
+      "className": "7A",
+      "substitute": "Sir Aman Arif",
+      "substitutePhone": "+923147500857"
+    },
+    {
+      "originalTeacher": "Sir Jamalullah",
+      "period": 7,
+      "className": "7A",
+      "substitute": "Sir Shafique Ahmed",
+      "substitutePhone": "+923337199001"
+    }
+  ],
+  "warnings": [
+    "Grade conflict: Sir Bakir Shah (grade 10) assigned to 6A",
+    "Grade conflict: Sir Irshad Qureshi (grade 10) assigned to 7A",
+    "Grade conflict: Sir Romanulabdin (grade 10) assigned to 7A",
+    "Grade conflict: Sir Aman Arif (grade 10) assigned to 7A",
+    "Grade conflict: Sir Shafique Ahmed (grade 10) assigned to 7A"
+  ]
 }
