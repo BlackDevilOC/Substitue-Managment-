@@ -1,8 +1,6 @@
 import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
-import { BarChart3, Calendar, Clock, FileUp, Flask, Settings } from "lucide-react";
-
-import { Beaker } from "lucide-react";
+import { BarChart3, Calendar, Clock, FileUp, Settings, FileDown } from "lucide-react";
 
 function MorePage() {
   const menuItems = [
@@ -28,18 +26,18 @@ function MorePage() {
       description: "Upload timetable and substitute files"
     },
     {
-      title: "Experiments",
-      icon: <Beaker className="h-6 w-6" />,
-      path: "/experiments",
+      title: "Migration",
+      icon: <FileDown className="h-6 w-6" />,
+      path: "/migration",
       color: "bg-yellow-100",
-      description: "Explore experimental features"
+      description: "Export or import your settings"
     },
     {
       title: "Statistics",
       icon: <BarChart3 className="h-6 w-6" />,
       path: "/statistics",
       color: "bg-pink-100",
-      description: "Get help and documentation"
+      description: "View system statistics and reports"
     },
     {
       title: "Settings",

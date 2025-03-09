@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, User, Lock, FileDown } from "lucide-react";
+import { Loader2, User, Lock } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { changePasswordSchema, type ChangePassword } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -25,16 +26,10 @@ export default function ProfilePage() {
 
   const changePasswordMutation = useMutation({
     mutationFn: async (data: ChangePassword) => {
-      const res = await fetch("/api/user/change-password", {
+      return apiRequest("/api/user/change-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        data,
       });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to change password");
-      }
-      return res.json();
     },
     onSuccess: () => {
       form.reset();
@@ -46,36 +41,28 @@ export default function ProfilePage() {
     onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to change password",
         variant: "destructive",
       });
     },
   });
 
   const onSubmit = (data: ChangePassword) => {
+    if (data.newPassword !== data.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "New passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
     changePasswordMutation.mutate(data);
-  };
-
-  const exportReport = async () => {
-    const res = await fetch('/api/absences/report');
-    const report = await res.json();
-    
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `absence-report-${new Date().toLocaleDateString()}.json`;
-    a.click();
   };
 
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Profile Settings</h1>
-        <Button onClick={exportReport} variant="outline">
-          <FileDown className="h-4 w-4 mr-2" />
-          Export Report
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -159,7 +146,10 @@ export default function ProfilePage() {
                 disabled={changePasswordMutation.isPending}
               >
                 {changePasswordMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Changing Password...
+                  </>
                 ) : (
                   "Change Password"
                 )}
