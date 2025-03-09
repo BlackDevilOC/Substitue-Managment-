@@ -14,16 +14,22 @@ interface Teacher {
   phone?: string;
 }
 
+interface LocationState {
+  selectedTeachers: Teacher[];
+  messageText: string;
+}
+
 export default function SmsConfirmPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [sendMethod, setSendMethod] = useState<'api' | 'mobile' | 'whatsapp'>('api');
-  
-  // Get the selected teachers from navigation state
-  const location = useLocation();
-  const selectedTeachers: Teacher[] = location.state?.selectedTeachers || [];
-  const messageText: string = location.state?.messageText || '';
-  
+
+  // Parse state from URL query parameters since wouter doesn't support state
+  const params = new URLSearchParams(window.location.search);
+  const stateParam = params.get('state');
+  const state: LocationState = stateParam ? JSON.parse(decodeURIComponent(stateParam)) : { selectedTeachers: [], messageText: '' };
+  const { selectedTeachers = [], messageText = '' } = state;
+
   // State for teachers without phone numbers
   const [missingPhones, setMissingPhones] = useState<Record<string, string>>(
     selectedTeachers.reduce((acc, teacher) => {

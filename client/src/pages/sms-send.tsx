@@ -17,7 +17,7 @@ import { Send, RefreshCcw, X, ChevronDown, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useLocation } from "wouter";
+import { useLocation, useNavigate } from "wouter";
 
 const messageTemplates = {
   assignment: [
@@ -183,17 +183,19 @@ export default function SmsSendPage() {
           phone: t.phoneNumber
         }));
 
-      setLocation('/sms-confirm', {
-        state: {
-          selectedTeachers: selectedTeacherObjects,
-          messageText: noteText ? `${messageText}\n\nNote: ${noteText}` : messageText
-        }
-      });
+      const state = {
+        selectedTeachers: selectedTeacherObjects,
+        messageText: noteText ? `${messageText}\n\nNote: ${noteText}` : messageText
+      };
+
+      // Encode state as URL parameter
+      const stateParam = encodeURIComponent(JSON.stringify(state));
+      setLocation(`/sms-confirm?state=${stateParam}`);
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to proceed to confirmation. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
