@@ -1,37 +1,10 @@
-
 {
-  "short_name": "Sub Teacher",
-  "name": "Substitute Teacher Manager",
-  "icons": [
-    {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
-  "orientation": "portrait"
-}
-{
-  "name": "Teacher Management System",
-  "short_name": "TeacherMgmt",
+  "name": "Schedulizer - School Schedule Management",
+  "short_name": "Schedulizer",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4a6cf7",
+  "background_color": "#8A4FFF",
+  "theme_color": "#8A4FFF",
   "icons": [
     {
       "src": "icons/icon-72x72.png",
@@ -73,5 +46,12 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "orientation": "portrait",
+  "description": "Stay Organized, Stay Ahead!",
+  "screenshots": [],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "splash_pages": null,
+  "shortcuts": []
 }
