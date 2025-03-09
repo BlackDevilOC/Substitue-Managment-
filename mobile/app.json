@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#A992CC"
+      "backgroundColor": "#ffffff"
     },
     "updates": {
       "fallbackToCacheTimeout": 0
@@ -24,31 +24,22 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#A992CC"
+        "backgroundColor": "#ffffff"
       },
       "package": "com.schedulizer.app",
       "permissions": [
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "INTERNET",
-        "ACCESS_NETWORK_STATE"
+        "WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      [
-        "expo-document-picker",
-        {
-          "iCloudContainerEnvironment": "Production"
-        }
-      ]
+      "expo-document-picker",
+      "expo-file-system",
+      "expo-sqlite"
     ],
-    "extra": {
-      "eas": {
-        "projectId": "schedulizer-app"
-      }
-    }
+    "sdkVersion": "48.0.0"
   }
 }

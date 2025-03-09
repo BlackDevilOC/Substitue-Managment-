@@ -1,28 +1,29 @@
 {
   "cli": {
-    "version": ">= 3.8.1"
+    "version": ">= 3.5.1"
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "android": {
-        "gradleCommand": ":app:assembleDebug",
-        "buildType": "apk"
-      },
       "ios": {
-        "buildConfiguration": "Debug"
+        "resourceClass": "m-medium"
       }
     },
     "preview": {
+      "extends": "development",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "distribution": "store",
       "android": {
         "buildType": "app-bundle"
+      },
+      "ios": {
+        "resourceClass": "m-medium"
       }
     }
   },
