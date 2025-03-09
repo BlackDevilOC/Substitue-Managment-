@@ -17,7 +17,7 @@ import { Send, RefreshCcw, X, ChevronDown, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useLocation, useNavigate } from "wouter";
+import { useLocation } from "wouter";
 
 const messageTemplates = {
   assignment: [
@@ -204,12 +204,12 @@ export default function SmsSendPage() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6"
+      className="container max-w-5xl mx-auto px-4 sm:px-6 py-8"
     >
       <motion.div
         initial={{ y: -20 }}
         animate={{ y: 0 }}
-        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6"
       >
         <h1 className="text-2xl font-bold">SMS Messaging</h1>
         <div className="flex flex-wrap gap-2">
@@ -233,187 +233,193 @@ export default function SmsSendPage() {
         </div>
       </motion.div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Select Recipients</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Select value={teacherFilter} onValueChange={setTeacherFilter}>
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Filter teachers" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Teachers</SelectItem>
-                <SelectItem value="assigned">Assigned Substitutes</SelectItem>
-                <SelectItem value="selected">Selected Only</SelectItem>
-              </SelectContent>
-            </Select>
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Select Recipients</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Select value={teacherFilter} onValueChange={setTeacherFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="Filter teachers" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Teachers</SelectItem>
+                  <SelectItem value="assigned">Assigned Substitutes</SelectItem>
+                  <SelectItem value="selected">Selected Only</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <motion.div layout className="space-y-2 max-h-[330px] overflow-y-auto pr-2 custom-scrollbar">
-              <AnimatePresence>
-                {filteredTeachers().map((teacher: any) => (
-                  <motion.div
-                    key={teacher.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
-                      selectedTeachers.includes(teacher.id.toString())
-                        ? "bg-primary/10 border-primary"
-                        : ""
-                    }`}
-                    onClick={() => {
-                      if (selectedTeachers.includes(teacher.id.toString())) {
-                        setSelectedTeachers(selectedTeachers.filter((id) => id !== teacher.id.toString()));
-                      } else {
-                        setSelectedTeachers([...selectedTeachers, teacher.id.toString()]);
-                      }
+              <motion.div layout className="space-y-2 max-h-[330px] overflow-y-auto pr-2 custom-scrollbar">
+                <AnimatePresence>
+                  {filteredTeachers().map((teacher: any) => (
+                    <motion.div
+                      key={teacher.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
+                        selectedTeachers.includes(teacher.id.toString())
+                          ? "bg-primary/10 border-primary"
+                          : "hover:bg-accent"
+                      }`}
+                      onClick={() => {
+                        if (selectedTeachers.includes(teacher.id.toString())) {
+                          setSelectedTeachers(selectedTeachers.filter((id) => id !== teacher.id.toString()));
+                        } else {
+                          setSelectedTeachers([...selectedTeachers, teacher.id.toString()]);
+                        }
+                      }}
+                    >
+                      <div>
+                        <p className="font-medium">{teacher.name}</p>
+                        <p className="text-sm text-muted-foreground">{teacher.phone}</p>
+                      </div>
+                      <motion.div
+                        className="h-5 w-5 rounded-full border flex items-center justify-center"
+                        whileHover={{ scale: 1.1 }}
+                      >
+                        {selectedTeachers.includes(teacher.id.toString()) && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="h-3 w-3 rounded-full bg-primary"
+                          />
+                        )}
+                      </motion.div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Compose Message</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Selected Recipients: {selectedTeachers.length}</p>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Select value={templateCategory} onValueChange={setTemplateCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Message Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="assignment">Assignment Notifications</SelectItem>
+                      <SelectItem value="meeting">Staff Meetings</SelectItem>
+                      <SelectItem value="reminder">Class Reminders</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={selectedTemplate}
+                    onValueChange={(value) => {
+                      const template = messageTemplates[templateCategory as keyof typeof messageTemplates].find(
+                        (t) => t.title === value
+                      );
+                      if (template) handleTemplateSelect(template);
                     }}
                   >
-                    <div>
-                      <p className="font-medium">{teacher.name}</p>
-                      <p className="text-sm text-muted-foreground">{teacher.phone}</p>
-                    </div>
-                    <motion.div
-                      className="h-5 w-5 rounded-full border flex items-center justify-center"
-                      whileHover={{ scale: 1.1 }}
-                    >
-                      {selectedTeachers.includes(teacher.id.toString()) && (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="h-3 w-3 rounded-full bg-primary"
-                        />
-                      )}
-                    </motion.div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </motion.div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Compose Message</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <p className="text-sm font-medium">Selected Recipients: {selectedTeachers.length}</p>
-
-              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                <Select value={templateCategory} onValueChange={setTemplateCategory}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Message Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="assignment">Assignment Notifications</SelectItem>
-                    <SelectItem value="meeting">Staff Meetings</SelectItem>
-                    <SelectItem value="reminder">Class Reminders</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={selectedTemplate}
-                  onValueChange={(value) => {
-                    const template = messageTemplates[templateCategory as keyof typeof messageTemplates].find(
-                      (t) => t.title === value
-                    );
-                    if (template) handleTemplateSelect(template);
-                  }}
-                >
-                  <SelectTrigger className="w-full sm:w-[220px]">
-                    <SelectValue placeholder="Select Template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {messageTemplates[templateCategory as keyof typeof messageTemplates].map((template) => (
-                      <SelectItem key={template.title} value={template.title}>
-                        {template.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {messageTemplates[templateCategory as keyof typeof messageTemplates].map((template) => (
+                        <SelectItem key={template.title} value={template.title}>
+                          {template.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
 
-            <Textarea
-              placeholder="Type your message here..."
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
-              className="min-h-[120px]"
-            />
-
-            <div className="space-y-2">
-              <Label>Additional Note (Optional)</Label>
               <Textarea
-                placeholder="Add a note that will appear at the bottom of your message..."
-                value={noteText}
-                onChange={(e) => setNoteText(e.target.value)}
-                className="min-h-[80px]"
+                placeholder="Type your message here..."
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                className="min-h-[120px]"
               />
-            </div>
 
-            <div className="flex space-x-2">
-              <Button
-                onClick={() => setMessageText(selectedTemplate)}
-                variant="outline"
-                disabled={!selectedTemplate}
-              >
-                <FileText className="h-4 w-4 mr-1" /> Apply Template
-              </Button>
-              <Button
-                onClick={() => {
-                  if (selectedTeachers.length === 1) {
-                    const teacherId = selectedTeachers[0];
-                    const teacher = teachers.find((t: any) => t.id.toString() === teacherId);
-                    if (teacher) {
-                      const assignmentMsg = generateAssignmentMessage(teacher.name);
-                      if (assignmentMsg) {
-                        setMessageText(assignmentMsg);
-                      } else {
-                        toast({
-                          title: "No Assignments",
-                          description: "This teacher has no assignments",
-                          variant: "destructive",
-                        });
+              <div className="space-y-2">
+                <Label>Additional Note (Optional)</Label>
+                <Textarea
+                  placeholder="Add a note that will appear at the bottom of your message..."
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() => setMessageText(selectedTemplate)}
+                  variant="outline"
+                  disabled={!selectedTemplate}
+                  className="flex-shrink-0"
+                >
+                  <FileText className="h-4 w-4 mr-1" /> Apply Template
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (selectedTeachers.length === 1) {
+                      const teacherId = selectedTeachers[0];
+                      const teacher = teachers.find((t: any) => t.id.toString() === teacherId);
+                      if (teacher) {
+                        const assignmentMsg = generateAssignmentMessage(teacher.name);
+                        if (assignmentMsg) {
+                          setMessageText(assignmentMsg);
+                        } else {
+                          toast({
+                            title: "No Assignments",
+                            description: "This teacher has no assignments",
+                            variant: "destructive",
+                          });
+                        }
                       }
+                    } else {
+                      toast({
+                        title: "Select One Teacher",
+                        description: "Please select exactly one teacher",
+                        variant: "destructive",
+                      });
                     }
-                  } else {
-                    toast({
-                      title: "Select One Teacher",
-                      description: "Please select exactly one teacher",
-                      variant: "destructive",
-                    });
-                  }
-                }}
-                variant="outline"
+                  }}
+                  variant="outline"
+                  className="flex-shrink-0"
+                >
+                  <FileText className="h-4 w-4 mr-1" /> Generate Assignment Message
+                </Button>
+              </div>
+
+              <div className="flex justify-between items-center text-xs text-muted-foreground border-t pt-4">
+                <p>
+                  {messageText.length + (noteText ? noteText.length + 2 : 0)} characters
+                </p>
+                <p>
+                  {Math.ceil((messageText.length + (noteText ? noteText.length + 2 : 0)) / 160)} SMS
+                </p>
+              </div>
+
+              <Button
+                className="w-full"
+                onClick={handleSendSms}
+                disabled={selectedTeachers.length === 0 || !messageText.trim()}
               >
-                <FileText className="h-4 w-4 mr-1" /> Generate Assignment Message
+                <Send className="h-4 w-4 mr-2" /> Continue to Confirmation
               </Button>
             </div>
-
-            <div className="flex justify-between mt-2">
-              <p className="text-xs text-muted-foreground">
-                {messageText.length + (noteText ? noteText.length + 2 : 0)} characters
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {Math.ceil((messageText.length + (noteText ? noteText.length + 2 : 0)) / 160)} SMS
-              </p>
-            </div>
-
-            <Button
-              className="w-full"
-              onClick={handleSendSms}
-              disabled={selectedTeachers.length === 0 || !messageText.trim()}
-            >
-              <Send className="h-4 w-4 mr-2" /> Continue to Confirmation
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </motion.div>
   );
 }

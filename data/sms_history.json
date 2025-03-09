@@ -1,0 +1,11 @@
+[
+  {
+    "teacherId": "1",
+    "teacherName": "Sir Bakir Shah",
+    "message": "Important: Your teaching schedule has been updated. You will be covering 6A during period 3.",
+    "status": "pending",
+    "method": "api",
+    "id": "o3k72q2m8",
+    "sentAt": "2025-03-09T15:04:09.824Z"
+  }
+]
