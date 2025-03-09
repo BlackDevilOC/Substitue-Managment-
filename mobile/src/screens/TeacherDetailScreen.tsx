@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Card, Title, Paragraph, TextInput, Button, Divider, List, Switch, Text, useTheme } from 'react-native-paper';
+import { Text, Card, Avatar, Button, Badge, List, Divider, useTheme, IconButton } from 'react-native-paper';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useDatabase } from '../context/DatabaseContext';
+import { format } from 'date-fns';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useDatabase } from '../context/DatabaseContext';
 
 interface TeacherSchedule {
   id: number;
@@ -14,240 +15,253 @@ interface TeacherSchedule {
 }
 
 const TeacherDetailScreen = () => {
-  const route = useRoute();
+  const [teacher, setTeacher] = useState<any>(null);
+  const [schedule, setSchedule] = useState<TeacherSchedule[]>([]);
+  const [absences, setAbsences] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [expandedDay, setExpandedDay] = useState<string | null>(null);
+  
+  const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  const { teachersTable, schedulesTable, isInitialized } = useDatabase();
+  const { teachersTable, schedulesTable, absencesTable } = useDatabase();
   const theme = useTheme();
   
-  // @ts-ignore - Route params type
-  const { teacherId } = route.params;
-  const isNewTeacher = teacherId === 'new';
-  
-  const [teacher, setTeacher] = useState({
-    id: 0,
-    name: '',
-    phone_number: '',
-    is_substitute: 0,
-    grade_level: 0
-  });
-  
-  const [schedules, setSchedules] = useState<TeacherSchedule[]>([]);
-  const [loading, setLoading] = useState(false);
+  const teacherId = route.params?.teacherId;
   
   useEffect(() => {
-    if (isInitialized && !isNewTeacher) {
+    if (teacherId) {
       loadTeacherData();
     }
-  }, [isInitialized, teacherId]);
+  }, [teacherId]);
   
   const loadTeacherData = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       
-      // Get teacher details
-      const teacherData = await teachersTable.getById(Number(teacherId));
-      if (teacherData) {
-        setTeacher(teacherData);
-        
-        // Get teacher's schedule
-        const scheduleData = await schedulesTable.getByTeacherId(Number(teacherId));
-        setSchedules(scheduleData);
-      }
+      // Load teacher details
+      const teacherData = await teachersTable.getById(teacherId);
+      setTeacher(teacherData);
       
-      setLoading(false);
+      // Load schedule
+      const scheduleData = await schedulesTable.getByTeacherId(teacherId);
+      setSchedule(scheduleData);
+      
+      // Load absences
+      const absenceData = await absencesTable.getByTeacherId(teacherId);
+      setAbsences(absenceData);
+      
     } catch (error) {
       console.error('Error loading teacher data:', error);
-      setLoading(false);
+      Alert.alert('Error', 'Failed to load teacher data');
+    } finally {
+      setIsLoading(false);
     }
   };
-  
-  const handleSave = async () => {
-    try {
-      // Validate required fields
-      if (!teacher.name.trim()) {
-        Alert.alert('Validation Error', 'Teacher name is required');
-        return;
-      }
-      
-      setLoading(true);
-      
-      if (isNewTeacher) {
-        // Create new teacher
-        const newTeacher = await teachersTable.create({
-          name: teacher.name,
-          phone_number: teacher.phone_number,
-          is_substitute: teacher.is_substitute,
-          grade_level: teacher.grade_level
-        });
-        
-        Alert.alert('Success', 'Teacher created successfully');
-        navigation.goBack();
-      } else {
-        // Update existing teacher
-        await teachersTable.update(teacher);
-        Alert.alert('Success', 'Teacher updated successfully');
-        navigation.goBack();
-      }
-      
-      setLoading(false);
-    } catch (error) {
-      console.error('Error saving teacher:', error);
-      Alert.alert('Error', 'Failed to save teacher information');
-      setLoading(false);
-    }
+
+  const handleMarkAbsent = () => {
+    navigation.navigate('ManageAbsences', {
+      date: format(new Date(), 'yyyy-MM-dd'),
+      teacherId: teacherId,
+    });
   };
-  
-  const handleDelete = async () => {
+
+  const handleAssignSubstitute = () => {
+    navigation.navigate('SubstituteAssignment', {
+      date: format(new Date(), 'yyyy-MM-dd'),
+      teacherId: teacherId,
+    });
+  };
+
+  const handleEditTeacher = () => {
+    // Navigate to edit teacher form (in real app)
     Alert.alert(
-      'Confirm Delete',
-      'Are you sure you want to delete this teacher? This will also delete all associated schedules and absences.',
+      'Edit Teacher',
+      'This functionality would allow editing the teacher details'
+    );
+  };
+
+  const handleDeleteTeacher = () => {
+    Alert.alert(
+      'Delete Teacher',
+      'Are you sure you want to delete this teacher? This action cannot be undone.',
       [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
           style: 'destructive',
           onPress: async () => {
             try {
-              setLoading(true);
-              
-              await teachersTable.remove(teacher.id);
-              
-              Alert.alert('Success', 'Teacher deleted successfully');
+              await teachersTable.remove(teacherId);
               navigation.goBack();
-              
-              setLoading(false);
             } catch (error) {
               console.error('Error deleting teacher:', error);
               Alert.alert('Error', 'Failed to delete teacher');
-              setLoading(false);
             }
-          }
-        }
-      ]
+          },
+        },
+      ],
+      { cancelable: true }
     );
   };
-  
-  const handleInputChange = (name: string, value: any) => {
-    setTeacher(prev => ({
-      ...prev,
-      [name]: value
-    }));
+
+  const renderDaySchedules = (day: string) => {
+    const daySchedules = schedule.filter(s => s.day.toLowerCase() === day.toLowerCase());
+    const isExpanded = expandedDay === day;
+    
+    if (daySchedules.length === 0) {
+      return null;
+    }
+    
+    return (
+      <List.Accordion
+        title={day.charAt(0).toUpperCase() + day.slice(1)}
+        left={props => <List.Icon {...props} icon="calendar-day" />}
+        expanded={isExpanded}
+        onPress={() => setExpandedDay(isExpanded ? null : day)}
+        style={styles.accordionHeader}
+      >
+        {daySchedules
+          .sort((a, b) => a.period - b.period)
+          .map((scheduleItem, index) => (
+            <List.Item
+              key={index}
+              title={`Period ${scheduleItem.period}`}
+              description={scheduleItem.class_name}
+              left={props => (
+                <Badge
+                  {...props}
+                  style={[styles.periodBadge, { backgroundColor: theme.colors.primary }]}
+                >
+                  {scheduleItem.period}
+                </Badge>
+              )}
+              style={styles.scheduleItem}
+            />
+          ))}
+      </List.Accordion>
+    );
   };
-  
-  const getDayLabel = (day: string) => {
-    // Format the day for display (e.g., 'monday' -> 'Monday')
-    return day.charAt(0).toUpperCase() + day.slice(1);
-  };
-  
+
+  if (isLoading || !teacher) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading teacher data...</Text>
+      </View>
+    );
+  }
+
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
   return (
     <ScrollView style={styles.container}>
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title>{isNewTeacher ? 'Add New Teacher' : 'Edit Teacher'}</Title>
-          
-          <TextInput
-            label="Teacher Name"
-            value={teacher.name}
-            onChangeText={(value) => handleInputChange('name', value)}
-            mode="outlined"
-            style={styles.input}
+      <Card style={styles.profileCard}>
+        <Card.Content style={styles.profileContent}>
+          <Avatar.Text
+            size={80}
+            label={teacher.name.substring(0, 2).toUpperCase()}
+            style={{
+              backgroundColor: teacher.is_substitute === 1
+                ? theme.colors.accent
+                : theme.colors.primary
+            }}
           />
-          
-          <TextInput
-            label="Phone Number"
-            value={teacher.phone_number}
-            onChangeText={(value) => handleInputChange('phone_number', value)}
-            mode="outlined"
-            style={styles.input}
-            keyboardType="phone-pad"
-          />
-          
-          <TextInput
-            label="Grade Level"
-            value={teacher.grade_level.toString()}
-            onChangeText={(value) => handleInputChange('grade_level', parseInt(value) || 0)}
-            mode="outlined"
-            style={styles.input}
-            keyboardType="number-pad"
-          />
-          
-          <View style={styles.switchContainer}>
-            <Text>Substitute Teacher</Text>
-            <Switch
-              value={!!teacher.is_substitute}
-              onValueChange={(value) => handleInputChange('is_substitute', value ? 1 : 0)}
-              color={theme.colors.primary}
-            />
+          <View style={styles.profileInfo}>
+            <Text style={styles.teacherName}>{teacher.name}</Text>
+            {teacher.is_substitute === 1 && (
+              <Badge style={styles.substituteBadge}>Substitute</Badge>
+            )}
+            {teacher.phone_number && (
+              <View style={styles.phoneContainer}>
+                <MaterialCommunityIcons name="phone" size={16} color="#666" />
+                <Text style={styles.phoneText}>{teacher.phone_number}</Text>
+              </View>
+            )}
           </View>
         </Card.Content>
-        
-        <Card.Actions style={styles.cardActions}>
-          <Button 
-            mode="outlined" 
-            onPress={() => navigation.goBack()}
+        <Card.Actions>
+          <Button
+            mode="contained"
+            icon="calendar-minus"
+            onPress={handleMarkAbsent}
             style={styles.actionButton}
           >
-            Cancel
+            Mark Absent
           </Button>
-          <Button 
-            mode="contained" 
-            onPress={handleSave}
-            style={styles.actionButton}
-            loading={loading}
-          >
-            Save
-          </Button>
+          {teacher.is_substitute === 1 && (
+            <Button
+              mode="outlined"
+              icon="account-switch"
+              onPress={handleAssignSubstitute}
+              style={styles.actionButton}
+            >
+              Assign
+            </Button>
+          )}
         </Card.Actions>
       </Card>
-      
-      {!isNewTeacher && (
-        <>
-          <Card style={styles.card}>
-            <Card.Content>
-              <Title>Schedule</Title>
-              {schedules.length === 0 ? (
-                <Paragraph style={styles.noDataText}>No schedule entries found</Paragraph>
-              ) : (
-                <View>
-                  {schedules.map((schedule, index) => (
-                    <View key={index}>
-                      <List.Item
-                        title={`${getDayLabel(schedule.day)} - Period ${schedule.period}`}
-                        description={`Class: ${schedule.class_name}`}
-                        left={props => (
-                          <List.Icon {...props} icon="calendar" />
-                        )}
-                      />
-                      {index < schedules.length - 1 && <Divider />}
-                    </View>
-                  ))}
+
+      <Card style={styles.sectionCard}>
+        <Card.Title title="Schedule" />
+        <Card.Content>
+          {schedule.length === 0 ? (
+            <Text>No schedule information available</Text>
+          ) : (
+            <List.Section>
+              {days.map(day => renderDaySchedules(day))}
+            </List.Section>
+          )}
+        </Card.Content>
+      </Card>
+
+      <Card style={styles.sectionCard}>
+        <Card.Title title="Recent Absences" />
+        <Card.Content>
+          {absences.length === 0 ? (
+            <Text>No absence records</Text>
+          ) : (
+            absences
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .slice(0, 5)
+              .map((absence, index) => (
+                <View key={index} style={styles.absenceItem}>
+                  <View style={styles.absenceDate}>
+                    <Text style={styles.absenceDateText}>{format(new Date(absence.date), 'MMM dd')}</Text>
+                  </View>
+                  <View style={styles.absenceDetails}>
+                    <Text>{format(new Date(absence.date), 'EEEE, MMMM d, yyyy')}</Text>
+                    {absence.notes && <Text style={styles.absenceNotes}>{absence.notes}</Text>}
+                  </View>
                 </View>
-              )}
-            </Card.Content>
-            <Card.Actions>
-              <Button 
-                mode="outlined" 
-                onPress={() => {/* Navigate to schedule editor */}}
-              >
-                Edit Schedule
-              </Button>
-            </Card.Actions>
-          </Card>
-          
-          <View style={styles.deleteContainer}>
-            <Button 
-              mode="contained" 
-              onPress={handleDelete}
-              style={styles.deleteButton}
-              icon={({size, color}) => (
-                <MaterialCommunityIcons name="delete" size={size} color={color} />
-              )}
-            >
-              Delete Teacher
-            </Button>
-          </View>
-        </>
-      )}
+              ))
+          )}
+        </Card.Content>
+      </Card>
+
+      <View style={styles.dangerZone}>
+        <Text style={styles.dangerZoneTitle}>Management Options</Text>
+        <View style={styles.dangerButtons}>
+          <Button
+            mode="outlined"
+            icon="account-edit"
+            onPress={handleEditTeacher}
+            style={styles.dangerButton}
+          >
+            Edit Teacher
+          </Button>
+          <Button
+            mode="outlined"
+            icon="account-remove"
+            onPress={handleDeleteTeacher}
+            style={[styles.dangerButton, { borderColor: theme.colors.error }]}
+            textColor={theme.colors.error}
+          >
+            Delete Teacher
+          </Button>
+        </View>
+      </View>
     </ScrollView>
   );
 };
@@ -255,41 +269,113 @@ const TeacherDetailScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
-    padding: 16,
+    backgroundColor: '#f5f5f5',
   },
-  card: {
-    marginBottom: 16,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  input: {
-    marginBottom: 12,
+  profileCard: {
+    margin: 16,
+    elevation: 2,
   },
-  switchContainer: {
+  profileContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 8,
+  },
+  profileInfo: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  teacherName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  substituteBadge: {
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  phoneContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
     marginTop: 8,
-    marginBottom: 16,
   },
-  cardActions: {
-    justifyContent: 'flex-end',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  actionButton: {
-    marginLeft: 8,
-  },
-  noDataText: {
-    fontStyle: 'italic',
-    marginTop: 8,
+  phoneText: {
+    marginLeft: 4,
     color: '#666',
   },
-  deleteContainer: {
-    marginBottom: 40,
+  actionButton: {
+    flex: 1,
+    margin: 4,
+  },
+  sectionCard: {
+    margin: 16,
+    marginTop: 0,
+    elevation: 2,
+  },
+  accordionHeader: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  scheduleItem: {
+    paddingLeft: 16,
+  },
+  periodBadge: {
+    marginRight: 8,
+    paddingHorizontal: 8,
+    alignSelf: 'center',
+  },
+  absenceItem: {
+    flexDirection: 'row',
+    marginVertical: 8,
+    padding: 8,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 4,
+  },
+  absenceDate: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#eee',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  deleteButton: {
-    backgroundColor: '#F44336',
+  absenceDateText: {
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  absenceDetails: {
+    marginLeft: 16,
+    flex: 1,
+    justifyContent: 'center',
+  },
+  absenceNotes: {
+    fontStyle: 'italic',
+    marginTop: 4,
+    color: '#666',
+  },
+  dangerZone: {
+    margin: 16,
+    marginTop: 8,
+    padding: 16,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  dangerZoneTitle: {
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  dangerButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  dangerButton: {
+    flex: 1,
+    margin: 4,
   },
 });
 

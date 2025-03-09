@@ -1,217 +1,285 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
-import { Text, Card, Title, Paragraph, Button, IconButton, useTheme, Divider } from 'react-native-paper';
+import { Card, Text, Button, ActivityIndicator, Chip, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
+import { format } from 'date-fns';
+import { useAuth } from '../context/AuthContext';
 import { useDatabase } from '../context/DatabaseContext';
 import { useNetwork } from '../context/NetworkContext';
-import { format } from 'date-fns';
 
 const HomeScreen = () => {
-  const navigation = useNavigation();
-  const theme = useTheme();
-  const { isConnected } = useNetwork();
-  const { isInitialized, teachersTable, schedulesTable, absencesTable, subsAssignmentsTable } = useDatabase();
-  
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [absentTeachers, setAbsentTeachers] = useState<any[]>([]);
+  const [substitutesNeeded, setSubstitutesNeeded] = useState<any[]>([]);
+  const [todaySchedule, setTodaySchedule] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [teachers, setTeachers] = useState([]);
-  const [absences, setAbsences] = useState([]);
-  const [assignments, setAssignments] = useState([]);
-  const [todaySchedule, setTodaySchedule] = useState([]);
+  const [currentDay, setCurrentDay] = useState('');
+  const [currentDate, setCurrentDate] = useState('');
   
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const dayOfWeek = format(new Date(), 'EEEE').toLowerCase();
+  const navigation = useNavigation<any>();
+  const { user } = useAuth();
+  const { teachersTable, schedulesTable, absencesTable, subsAssignmentsTable } = useDatabase();
+  const { isConnected, syncStatus, syncData } = useNetwork();
+  const theme = useTheme();
 
   useEffect(() => {
-    if (isInitialized) {
-      loadData();
-    }
-  }, [isInitialized]);
+    loadData();
+    
+    // Set current day and date
+    const date = new Date();
+    setCurrentDay(format(date, 'EEEE').toLowerCase());
+    setCurrentDate(format(date, 'yyyy-MM-dd'));
+  }, []);
 
   const loadData = async () => {
     try {
-      // Get counts
-      const teachersList = await teachersTable.getAll();
-      setTeachers(teachersList);
+      setIsLoading(true);
       
-      // Get today's absences
+      // Load teachers
+      const allTeachers = await teachersTable.getAll();
+      setTeachers(allTeachers);
+      
+      // Load absences for today
+      const today = format(new Date(), 'yyyy-MM-dd');
       const todayAbsences = await absencesTable.getByDate(today);
-      setAbsences(todayAbsences);
+      setAbsentTeachers(todayAbsences);
       
-      // Get today's assignments
-      const todayAssignments = await subsAssignmentsTable.getByDate(today);
-      setAssignments(todayAssignments);
-      
-      // Get today's schedule
-      const daySchedule = await schedulesTable.getByDay(dayOfWeek);
+      // Load schedule for today
+      const day = format(new Date(), 'EEEE').toLowerCase();
+      const daySchedule = await schedulesTable.getByDay(day);
       setTodaySchedule(daySchedule);
+      
+      // Find which absences need substitutes
+      const assignments = await subsAssignmentsTable.getByDate(today);
+      const assignedTeacherIds = assignments.map(a => a.absent_teacher_id);
+      
+      const needSubstitutes = todayAbsences.filter(
+        absence => !assignedTeacherIds.includes(absence.teacher_id)
+      );
+      setSubstitutesNeeded(needSubstitutes);
+      
     } catch (error) {
       console.error('Error loading data:', error);
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
     }
   };
 
   const onRefresh = async () => {
     setRefreshing(true);
     await loadData();
-    setRefreshing(false);
   };
 
-  const goToAbsenceManagement = () => {
-    navigation.navigate('ManageAbsences', { date: today });
+  const handleManageAbsences = () => {
+    navigation.navigate('ManageAbsences', { date: format(new Date(), 'yyyy-MM-dd') });
   };
 
-  const goToSubstituteAssignment = () => {
-    navigation.navigate('SubstituteAssignment', { date: today });
+  const handleAssignSubstitutes = () => {
+    navigation.navigate('SubstituteAssignment', { date: format(new Date(), 'yyyy-MM-dd') });
   };
 
-  const goToImportData = () => {
+  const handleImportData = () => {
     navigation.navigate('DataImport');
   };
 
-  if (!isInitialized) {
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Initializing database...</Text>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={styles.loadingText}>Loading dashboard...</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView
+    <ScrollView 
       style={styles.container}
-      contentContainerStyle={styles.content}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      {/* Header section with date and sync status */}
+      {/* Header Section */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.dateText}>{format(new Date(), 'EEEE, MMMM d, yyyy')}</Text>
-          <Text style={[styles.connectionStatus, { color: isConnected ? theme.colors.primary : '#F44336' }]}>
-            {isConnected ? 'Online' : 'Offline'} Mode
-          </Text>
-        </View>
-        <IconButton
-          icon="refresh"
-          size={24}
-          onPress={onRefresh}
-        />
+        <Text style={styles.headerDate}>
+          {format(new Date(), 'EEEE, MMMM d, yyyy')}
+        </Text>
+        <Chip 
+          icon={isConnected ? "wifi" : "wifi-off"}
+          style={{
+            backgroundColor: isConnected 
+              ? theme.colors.successGreen 
+              : theme.colors.error + '20'
+          }}
+        >
+          {isConnected ? "Online" : "Offline"}
+        </Chip>
       </View>
-      
-      {/* Quick actions */}
-      <Card style={styles.actionsCard}>
+
+      {/* Stats Cards */}
+      <View style={styles.statsContainer}>
+        <Card style={styles.statsCard}>
+          <Card.Content>
+            <Text style={styles.statValue}>{teachers.length}</Text>
+            <Text style={styles.statLabel}>Total Teachers</Text>
+          </Card.Content>
+        </Card>
+        
+        <Card style={styles.statsCard}>
+          <Card.Content>
+            <Text style={styles.statValue}>{absentTeachers.length}</Text>
+            <Text style={styles.statLabel}>Absent Today</Text>
+          </Card.Content>
+        </Card>
+        
+        <Card style={styles.statsCard}>
+          <Card.Content>
+            <Text style={[styles.statValue, {
+              color: substitutesNeeded.length > 0 
+                ? theme.colors.error 
+                : theme.colors.successGreen
+            }]}>
+              {substitutesNeeded.length}
+            </Text>
+            <Text style={styles.statLabel}>Need Substitutes</Text>
+          </Card.Content>
+        </Card>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.actionContainer}>
+        <Button 
+          mode="contained" 
+          icon="calendar-check" 
+          style={styles.actionButton}
+          onPress={handleManageAbsences}
+        >
+          Mark Absences
+        </Button>
+        
+        <Button 
+          mode="contained" 
+          icon="account-switch" 
+          style={styles.actionButton}
+          onPress={handleAssignSubstitutes}
+          disabled={absentTeachers.length === 0}
+        >
+          Assign Substitutes
+        </Button>
+        
+        <Button 
+          mode="outlined" 
+          icon="database-import" 
+          style={styles.actionButton}
+          onPress={handleImportData}
+        >
+          Import/Export Data
+        </Button>
+      </View>
+
+      {/* Today's Absences */}
+      <Card style={styles.cardContainer}>
+        <Card.Title title="Today's Absences" />
         <Card.Content>
-          <Title>Quick Actions</Title>
-          <View style={styles.actionButtons}>
-            <Button
-              mode="contained"
-              icon="account-cancel"
-              onPress={goToAbsenceManagement}
-              style={styles.actionButton}
+          {absentTeachers.length === 0 ? (
+            <Text>No absences reported for today.</Text>
+          ) : (
+            absentTeachers.map((teacher, index) => (
+              <Chip 
+                key={index}
+                style={styles.teacherChip}
+                icon="account-cancel"
+              >
+                {teacher.teacher_name}
+              </Chip>
+            ))
+          )}
+        </Card.Content>
+      </Card>
+
+      {/* Substitutes Needed */}
+      {substitutesNeeded.length > 0 && (
+        <Card style={[styles.cardContainer, { borderLeftColor: theme.colors.error, borderLeftWidth: 4 }]}>
+          <Card.Title 
+            title="Substitutes Needed" 
+            titleStyle={{ color: theme.colors.error }}
+          />
+          <Card.Content>
+            <Text style={{ marginBottom: 10 }}>
+              The following absent teachers need substitutes assigned:
+            </Text>
+            {substitutesNeeded.map((teacher, index) => (
+              <Chip 
+                key={index}
+                style={[styles.teacherChip, { backgroundColor: theme.colors.error + '20' }]}
+                icon="alert-circle"
+              >
+                {teacher.teacher_name}
+              </Chip>
+            ))}
+            <Button 
+              mode="contained" 
+              icon="account-switch" 
+              style={{ marginTop: 10, backgroundColor: theme.colors.error }}
+              onPress={handleAssignSubstitutes}
             >
-              Mark Absences
+              Assign Now
             </Button>
-            <Button
-              mode="contained"
-              icon="account-switch"
-              onPress={goToSubstituteAssignment}
-              style={styles.actionButton}
+          </Card.Content>
+        </Card>
+      )}
+
+      {/* Today's Schedule */}
+      <Card style={styles.cardContainer}>
+        <Card.Title title={`Today's Schedule (${format(new Date(), 'EEEE')})`} />
+        <Card.Content>
+          {todaySchedule.length === 0 ? (
+            <Text>No classes scheduled for today.</Text>
+          ) : (
+            todaySchedule.slice(0, 5).map((schedule, index) => (
+              <View key={index} style={styles.scheduleItem}>
+                <Text style={styles.periodText}>Period {schedule.period}</Text>
+                <Text style={styles.classText}>{schedule.class_name}</Text>
+                <Text style={styles.teacherText}>{schedule.teacher_name}</Text>
+              </View>
+            ))
+          )}
+          {todaySchedule.length > 5 && (
+            <Button 
+              mode="text" 
+              onPress={() => navigation.navigate('ScheduleList', { day: currentDay })}
             >
-              Assign Substitutes
+              View All {todaySchedule.length} Classes
             </Button>
-            <Button
-              mode="contained"
-              icon="file-import"
-              onPress={goToImportData}
-              style={styles.actionButton}
+          )}
+        </Card.Content>
+      </Card>
+
+      {/* Sync Status */}
+      <Card style={[styles.cardContainer, styles.syncCard]}>
+        <Card.Content>
+          <View style={styles.syncContainer}>
+            <Text>Last synced: {isConnected ? 'Just now' : 'Never'}</Text>
+            <Button 
+              mode="outlined"
+              icon="sync"
+              disabled={!isConnected || syncStatus === 'syncing'}
+              loading={syncStatus === 'syncing'}
+              onPress={syncData}
             >
-              Import Data
+              {syncStatus === 'syncing' ? 'Syncing...' : 'Sync Now'}
             </Button>
           </View>
         </Card.Content>
       </Card>
       
-      {/* Statistics overview */}
-      <View style={styles.statsContainer}>
-        <Card style={styles.statsCard}>
-          <Card.Content>
-            <Title>Teachers</Title>
-            <Paragraph style={styles.statNumber}>{teachers.length}</Paragraph>
-          </Card.Content>
-        </Card>
-        
-        <Card style={styles.statsCard}>
-          <Card.Content>
-            <Title>Absences Today</Title>
-            <Paragraph style={styles.statNumber}>{absences.length}</Paragraph>
-          </Card.Content>
-        </Card>
-        
-        <Card style={styles.statsCard}>
-          <Card.Content>
-            <Title>Assignments</Title>
-            <Paragraph style={styles.statNumber}>{assignments.length}</Paragraph>
-          </Card.Content>
-        </Card>
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          Logged in as {user?.username} • 
+          Schedulizer v1.0
+        </Text>
       </View>
-      
-      {/* Today's absences */}
-      <Card style={styles.listCard}>
-        <Card.Content>
-          <Title>Today's Absences</Title>
-          <Divider style={{ marginVertical: 10 }} />
-          {absences.length > 0 ? (
-            absences.map((absence: any, index: number) => (
-              <View key={absence.id || index} style={styles.listItem}>
-                <Text style={styles.teacherName}>{absence.teacher_name}</Text>
-                <Text style={styles.details}>{absence.notes || 'No notes'}</Text>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.emptyText}>No absences recorded for today</Text>
-          )}
-        </Card.Content>
-        {absences.length > 0 && (
-          <Card.Actions>
-            <Button
-              onPress={goToAbsenceManagement}
-            >
-              Manage Absences
-            </Button>
-          </Card.Actions>
-        )}
-      </Card>
-      
-      {/* Today's substitute assignments */}
-      <Card style={styles.listCard}>
-        <Card.Content>
-          <Title>Today's Substitute Assignments</Title>
-          <Divider style={{ marginVertical: 10 }} />
-          {assignments.length > 0 ? (
-            assignments.map((assignment: any, index: number) => (
-              <View key={assignment.id || index} style={styles.listItem}>
-                <Text style={styles.teacherName}>
-                  {assignment.absent_teacher_name} → {assignment.substitute_teacher_name}
-                </Text>
-                <Text style={styles.details}>
-                  Period {assignment.period}, Class {assignment.class_name}
-                </Text>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.emptyText}>No substitute assignments for today</Text>
-          )}
-        </Card.Content>
-        {absences.length > 0 && assignments.length < absences.length && (
-          <Card.Actions>
-            <Button
-              onPress={goToSubstituteAssignment}
-            >
-              Assign Substitutes
-            </Button>
-          </Card.Actions>
-        )}
-      </Card>
     </ScrollView>
   );
 };
@@ -221,81 +289,94 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  content: {
-    padding: 16,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loadingText: {
+    marginTop: 10,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    padding: 16,
+    paddingBottom: 8,
   },
-  dateText: {
-    fontSize: 18,
+  headerDate: {
+    fontSize: 16,
     fontWeight: 'bold',
-  },
-  connectionStatus: {
-    fontSize: 14,
-  },
-  actionsCard: {
-    marginBottom: 16,
-    elevation: 2,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 8,
-  },
-  actionButton: {
-    margin: 4,
-    flex: 1,
-    minWidth: '45%',
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    padding: 16,
+    paddingTop: 8,
   },
   statsCard: {
-    flex: 1,
-    marginHorizontal: 4,
+    width: '31%',
     elevation: 2,
   },
-  statNumber: {
+  statValue: {
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: 8,
   },
-  listCard: {
+  statLabel: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  actionContainer: {
+    padding: 16,
+  },
+  actionButton: {
+    marginBottom: 10,
+  },
+  cardContainer: {
+    margin: 16,
+    marginTop: 0,
     marginBottom: 16,
     elevation: 2,
   },
-  listItem: {
-    marginBottom: 12,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+  teacherChip: {
+    margin: 4,
   },
-  teacherName: {
-    fontSize: 16,
+  scheduleItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    paddingVertical: 8,
+  },
+  periodText: {
+    width: '20%',
     fontWeight: 'bold',
   },
-  details: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
+  classText: {
+    width: '40%',
   },
-  emptyText: {
-    textAlign: 'center',
+  teacherText: {
+    width: '40%',
+    textAlign: 'right',
     color: '#666',
-    marginVertical: 16,
-    fontStyle: 'italic',
+  },
+  syncCard: {
+    backgroundColor: '#f9f9f9',
+  },
+  syncContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  footer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#888',
   },
 });
 

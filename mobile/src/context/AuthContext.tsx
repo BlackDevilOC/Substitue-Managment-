@@ -17,73 +17,86 @@ interface AuthContextType {
   clearError: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+// Create context with default values
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  isLoading: true,
+  error: null,
+  login: async () => {},
+  logout: async () => {},
+  clearError: () => {},
+});
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+// Hook to use auth context
+export const useAuth = () => useContext(AuthContext);
 
+// Mock function to simulate authentication
+async function authenticateUser(username: string, password: string): Promise<User | null> {
+  // This would be a real API call in production
+  return new Promise((resolve) => {
+    // Simulate API delay
+    setTimeout(() => {
+      // For demo purposes, accept simple credentials
+      if (username === 'admin' && password === 'password') {
+        resolve({
+          id: 1,
+          username: 'admin',
+          isAdmin: true,
+        });
+      } else if (username === 'teacher' && password === 'password') {
+        resolve({
+          id: 2,
+          username: 'teacher',
+          isAdmin: false,
+        });
+      } else {
+        resolve(null);
+      }
+    }, 800); // Simulate network delay
+  });
+}
+
+// Auth provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize auth state
+  // Load user from storage on app startup
   useEffect(() => {
     const loadUser = async () => {
       try {
         const storedUser = await AsyncStorage.getItem('user');
-        
         if (storedUser) {
           setUser(JSON.parse(storedUser));
         }
-      } catch (err) {
-        console.error('Error loading user from storage:', err);
+      } catch (e) {
+        console.error('Failed to load user from storage:', e);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     loadUser();
   }, []);
 
-  // Login function - in a real app, this would call an API
+  // Login function
   const login = async (username: string, password: string) => {
     try {
       setIsLoading(true);
       setError(null);
+
+      const user = await authenticateUser(username, password);
       
-      // For demo purposes only - in a real app, validate with server
-      if (!username.trim() || !password.trim()) {
-        throw new Error('Username and password are required');
-      }
-      
-      // Simple validation - in production, this would be an API call
-      if (password !== 'password') { // Demo password
-        throw new Error('Invalid credentials');
-      }
-      
-      // Create a user object - in production, this would come from the server
-      const newUser: User = {
-        id: 1,
-        username,
-        isAdmin: username.toLowerCase() === 'admin',
-      };
-      
-      // Store user data
-      await AsyncStorage.setItem('user', JSON.stringify(newUser));
-      setUser(newUser);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
+      if (user) {
+        setUser(user);
+        await AsyncStorage.setItem('user', JSON.stringify(user));
       } else {
-        setError('An unknown error occurred');
+        throw new Error('Invalid credentials. Please try again.');
       }
-      console.error('Login error:', err);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'An unexpected error occurred');
+      throw e;
     } finally {
       setIsLoading(false);
     }
@@ -93,21 +106,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       setIsLoading(true);
-      // Clear user data from storage
       await AsyncStorage.removeItem('user');
       setUser(null);
-    } catch (err) {
-      console.error('Logout error:', err);
-      Alert.alert('Error', 'Failed to logout');
+    } catch (e) {
+      console.error('Logout error:', e);
+      Alert.alert('Error', 'Failed to logout. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Clear error
   const clearError = () => {
     setError(null);
   };
 
+  // Provide auth context value
   return (
     <AuthContext.Provider
       value={{
@@ -123,5 +137,3 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
-
-export default AuthContext;

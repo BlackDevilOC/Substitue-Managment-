@@ -1,6 +1,7 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import { Alert } from 'react-native';
+import { useAuth } from './AuthContext';
 import { useDatabase } from './DatabaseContext';
 
 interface NetworkContextType {
@@ -12,71 +13,62 @@ interface NetworkContextType {
   syncData: () => Promise<void>;
 }
 
-const NetworkContext = createContext<NetworkContextType | null>(null);
-
-export const useNetwork = () => {
-  const context = useContext(NetworkContext);
-  if (!context) {
-    throw new Error('useNetwork must be used within a NetworkProvider');
-  }
-  return context;
+const initialState: NetworkContextType = {
+  isConnected: false,
+  lastOnlineAt: null,
+  hasCheckedConnection: false,
+  syncStatus: 'idle',
+  syncError: null,
+  syncData: async () => {},
 };
 
+const NetworkContext = createContext<NetworkContextType>(initialState);
+
+export const useNetwork = () => useContext(NetworkContext);
+
 export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isConnected, setIsConnected] = useState(false);
   const [lastOnlineAt, setLastOnlineAt] = useState<Date | null>(null);
-  const [hasCheckedConnection, setHasCheckedConnection] = useState<boolean>(false);
+  const [hasCheckedConnection, setHasCheckedConnection] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'completed' | 'error'>('idle');
   const [syncError, setSyncError] = useState<string | null>(null);
   
-  // Get database context (warning: circular dependency if not handled properly)
-  const database = useDatabase();
+  const { user } = useAuth();
+  const { teachersTable, schedulesTable, absencesTable } = useDatabase();
 
+  // Initialize connection status and set up listeners
   useEffect(() => {
-    // Subscribe to network state changes
     const unsubscribe = NetInfo.addEventListener(handleConnectionChange);
     
     // Initial connection check
-    checkConnection();
+    NetInfo.fetch().then(state => {
+      handleConnectionChange(state);
+      setHasCheckedConnection(true);
+    });
     
     return () => {
       unsubscribe();
     };
   }, []);
 
-  const checkConnection = async () => {
-    try {
-      const state = await NetInfo.fetch();
-      handleConnectionChange(state);
-      setHasCheckedConnection(true);
-    } catch (error) {
-      console.error('Failed to check network connection:', error);
-      setIsConnected(false);
-      setHasCheckedConnection(true);
-    }
-  };
-
+  // Update connection status when it changes
   const handleConnectionChange = (state: NetInfoState) => {
-    const connected = state.isConnected === true && state.isInternetReachable !== false;
+    setIsConnected(state.isConnected ?? false);
     
-    // Update connection state
-    setIsConnected(connected);
-    
-    // Update last online timestamp if connected
-    if (connected) {
+    if (state.isConnected) {
       setLastOnlineAt(new Date());
     }
-    
-    // Auto-sync data if connected
-    if (connected && !isConnected) {
-      // Consider auto-syncing here if needed
-      console.log('Connection restored, auto-sync available');
-    }
   };
 
+  // Sync data with the server when connected
   const syncData = async () => {
     if (!isConnected) {
-      Alert.alert('No Connection', 'Cannot sync while offline. Please check your connection and try again.');
+      Alert.alert('Offline', 'Please connect to the internet to sync data.');
+      return;
+    }
+    
+    if (!user) {
+      Alert.alert('Not Logged In', 'Please log in to sync data.');
       return;
     }
     
@@ -84,26 +76,31 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setSyncStatus('syncing');
       setSyncError(null);
       
-      // This is where we would sync data with the server
-      // For now, we'll simulate a sync operation with a timeout
-      
-      console.log('Starting data sync...');
-      
-      // Sync would include these steps in a real implementation:
-      // 1. Push local changes to server
-      // 2. Pull server changes to local
-      // 3. Resolve conflicts
-      // 4. Update local database
-      
-      // Simulate sync delay
+      // Simulate API calls for syncing data
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      console.log('Data sync completed successfully');
+      // Retrieve local data
+      const teachers = await teachersTable.getAll();
+      const schedules = await schedulesTable.getAll();
+      const absences = await absencesTable.getAll();
+      
+      // In a real app, this would send data to the server
+      console.log('Syncing data...', { 
+        teachersCount: teachers.length,
+        schedulesCount: schedules.length,
+        absencesCount: absences.length 
+      });
+      
+      // Update last synced time
+      setLastOnlineAt(new Date());
       setSyncStatus('completed');
+      
+      Alert.alert('Sync Complete', 'All data has been synchronized with the server.');
     } catch (error) {
       console.error('Sync error:', error);
       setSyncStatus('error');
-      setSyncError('Failed to synchronize data with server');
+      setSyncError('Failed to sync data. Please try again later.');
+      Alert.alert('Sync Error', 'An error occurred while syncing data. Please try again.');
     }
   };
 
@@ -122,5 +119,3 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     </NetworkContext.Provider>
   );
 };
-
-export default NetworkContext;
