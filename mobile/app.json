@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "TeacherScheduleManager",
+    "name": "Teacher Schedule Manager",
     "slug": "teacher-schedule-manager",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,43 +11,41 @@
       "resizeMode": "contain",
       "backgroundColor": "#8A4FFF"
     },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.teacherschedulemanager"
+      "bundleIdentifier": "com.school.teachermanager"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#8A4FFF"
       },
-      "package": "com.yourcompany.teacherschedulemanager",
+      "package": "com.school.teachermanager",
       "permissions": [
-        "INTERNET",
-        "SEND_SMS",
-        "READ_CONTACTS",
-        "WRITE_CONTACTS",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "SMS"
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "extra": {
+      "eas": {
+        "projectId": "teacher-schedule-manager"
+      }
+    },
     "plugins": [
       [
-        "expo-build-properties",
+        "expo-document-picker",
         {
-          "android": {
-            "compileSdkVersion": 33,
-            "targetSdkVersion": 33,
-            "buildToolsVersion": "33.0.0"
-          },
-          "ios": {
-            "deploymentTarget": "13.0"
-          }
+          "iCloudContainerEnvironment": "Production"
         }
       ]
     ]
