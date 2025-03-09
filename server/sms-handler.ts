@@ -27,14 +27,14 @@ interface SMSHistoryEntry {
 }
 
 // Initialize SMS history file if it doesn't exist
-function initializeSMSHistory() {
+export function initializeSMSHistory() {
   if (!fs.existsSync(SMS_HISTORY_FILE)) {
     fs.writeFileSync(SMS_HISTORY_FILE, JSON.stringify([], null, 2));
   }
 }
 
 // Load SMS history
-function loadSMSHistory(): SMSHistoryEntry[] {
+export function loadSMSHistory(): SMSHistoryEntry[] {
   try {
     initializeSMSHistory();
     const data = fs.readFileSync(SMS_HISTORY_FILE, 'utf-8');
@@ -46,7 +46,7 @@ function loadSMSHistory(): SMSHistoryEntry[] {
 }
 
 // Save SMS history
-function saveSMSHistory(history: SMSHistoryEntry[]) {
+export function saveSMSHistory(history: SMSHistoryEntry[]) {
   try {
     fs.writeFileSync(SMS_HISTORY_FILE, JSON.stringify(history, null, 2));
   } catch (error) {
@@ -55,7 +55,7 @@ function saveSMSHistory(history: SMSHistoryEntry[]) {
 }
 
 // Add new SMS entry to history
-function addSMSToHistory(entry: Omit<SMSHistoryEntry, 'id' | 'sentAt'>) {
+export function addSMSToHistory(entry: Omit<SMSHistoryEntry, 'id' | 'sentAt'>) {
   const history = loadSMSHistory();
   const newEntry: SMSHistoryEntry = {
     ...entry,
