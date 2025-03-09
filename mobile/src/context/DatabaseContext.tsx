@@ -546,3 +546,22 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     </DatabaseContext.Provider>
   );
 };
+import React, { createContext, useContext } from 'react';
+
+interface DatabaseContextType {
+  initialized: boolean;
+}
+
+const DatabaseContext = createContext<DatabaseContextType>({
+  initialized: false,
+});
+
+export const useDatabase = () => useContext(DatabaseContext);
+
+export const DatabaseProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
+  return (
+    <DatabaseContext.Provider value={{ initialized: true }}>
+      {children}
+    </DatabaseContext.Provider>
+  );
+};
