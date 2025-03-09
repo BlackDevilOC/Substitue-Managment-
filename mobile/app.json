@@ -1,8 +1,7 @@
-
 {
   "expo": {
     "name": "Schedulizer",
-    "slug": "schedulizer-mobile",
+    "slug": "rest-express",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -24,7 +23,12 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.schedulizer.mobile"
+      "package": "com.schedulizer.mobile",
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET"
+      ]
     },
     "extra": {
       "eas": {
@@ -32,9 +36,9 @@
       }
     },
     "plugins": [
-      "expo-file-system",
-      "expo-sqlite"
+      "expo-file-system"
     ],
-    "sdkVersion": "48.0.18"
+    "sdkVersion": "48.0.0",
+    "owner": "blackdevil256"
   }
 }

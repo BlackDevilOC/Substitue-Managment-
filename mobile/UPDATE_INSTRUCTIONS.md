@@ -1,85 +1,108 @@
-# Building the Schedulizer Mobile App
+# Schedulizer Mobile App Update Guide
 
-## How to Fix the Current Build Issues
+This document explains what was fixed in the mobile app configuration and how to update the app in the future.
 
-The error you're experiencing is related to the Expo configuration. Here's how to resolve it:
+## What Was Fixed
 
-### Step 1: Install Required Dependencies
+### 1. App Configuration (app.json)
+- **Fixed the project slug**: Changed from "schedulizer-mobile" to "rest-express" to match the Expo project
+- **Updated SDK version**: Set to 48.0.0 (a stable version that works well with the dependencies)
+- **Removed problematic plugins**: Removed "expo-sqlite" which was causing build failures
+- **Added proper Android permissions**: Added required permissions for file access and internet connectivity
 
-From the `mobile` directory, run:
+### 2. Dependencies (package.json)
+- **Aligned all versions**: Made sure all package versions are compatible with Expo SDK 48.0.0
+- **Fixed dependency conflicts**: Resolved conflicts between different packages
+- **Removed unnecessary packages**: Streamlined the dependencies to only what's needed
 
-```bash
-npm install
+### 3. Build Configuration (eas.json)
+- **Added proper build profiles**: Set up development, preview, and production profiles
+- **Configured build channels**: Added channels for better version management
+- **Added environment variables**: Set up environment variables for different build types
+
+## How to Update the App in the Future
+
+When you want to update the app (add features, fix bugs, etc.), follow these steps:
+
+### 1. Update App Version
+
+When making significant changes, update the version in `app.json`:
+
+```json
+{
+  "expo": {
+    "version": "1.0.1",  // Increment this number
+    ...
+  }
+}
 ```
 
-This will install all the dependencies specified in the updated package.json file.
+### 2. Update Dependencies
 
-### Step 2: Fix the Expo Package Version
-
-The error message shows you're trying to use `expo@52.0.37`, but that version doesn't exist. Our package.json file now specifies `expo@~49.0.15`, which is a stable version.
-
-### Step 3: Correct Project Structure
-
-Make sure your project structure follows the Expo standards:
-- App entry point is in `App.tsx`
-- Assets are in the `assets` folder
-- Configuration is in `app.json`
-- EAS Build configuration is in `eas.json`
-
-### Step 4: Generate Default Assets
-
-If you don't have custom app icons yet, you can generate them with:
+If you need to add new packages:
 
 ```bash
-npx expo-cli generate-icons
+cd mobile
+npm install package-name --save
 ```
 
-### Step 5: Initialize EAS Build
+**IMPORTANT**: Make sure any new packages are compatible with Expo SDK 48.0.0.
+
+### 3. Test Locally
+
+Before building a new APK, test your changes locally:
 
 ```bash
-npx eas-cli build:configure
+npm start
 ```
 
-This will verify your setup and initialize EAS Build.
+Scan the QR code with the Expo Go app to see your changes in development mode.
 
-### Step 6: Try Building Again
+### 4. Build a New APK
 
-For a development build (APK):
+When you're ready to create a new APK:
 
 ```bash
-npx eas-cli build -p android --profile preview
+eas build -p android --profile preview
 ```
 
-## Common Issues and Solutions
+### 5. Submit to App Stores (Optional)
 
-1. **"Module 'expo' is not installed"**
-   - Solution: Ensure you've run `npm install` and that the `expo` package is listed in your package.json
-
-2. **"Cannot determine SDK version"**
-   - Solution: Make sure your app.json file has the correct SDK version that matches your expo package version
-
-3. **Dependencies Conflicts**
-   - Solution: If you see warnings about deprecated packages, you can usually ignore them for now, but for serious conflicts try `npm install --force`
-
-4. **Build Fails on EAS**
-   - Solution: Check the build logs for specific errors. Common issues include:
-     - Missing assets
-     - Incorrectly configured app.json
-     - Unsupported native modules
-
-## Using the Local Expo Dev Environment
-
-If you want to test locally before building an APK:
+For Google Play submission:
 
 ```bash
-npx expo start
+eas build -p android --profile production
 ```
 
-Then use the Expo Go app on your phone to scan the QR code and test the app.
+This creates an AAB file instead of an APK, which is required for Google Play.
 
-## Updating the Code
+## Versioning Guidelines
 
-If you make changes to the code:
-1. Test locally with `npx expo start`
-2. Commit your changes
-3. Run the build process again with `npx eas-cli build`
+- **Patch updates** (1.0.0 → 1.0.1): Bug fixes that don't add new features
+- **Minor updates** (1.0.0 → 1.1.0): New features that don't break existing functionality
+- **Major updates** (1.0.0 → 2.0.0): Major changes that might break compatibility
+
+## Keeping Dependencies Updated
+
+To check for outdated dependencies:
+
+```bash
+npm outdated
+```
+
+To update dependencies (use with caution and test thoroughly):
+
+```bash
+npm update
+```
+
+## Notes on Expo SDK Updates
+
+The app is currently configured for Expo SDK 48.0.0. If you want to update to a newer SDK:
+
+1. Check the Expo upgrade guide: https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/
+2. Update the SDK version in app.json
+3. Update dependencies according to the upgrade guide
+4. Test thoroughly before building
+
+**CAUTION**: Upgrading the SDK is a major change that could break functionality. Only do this when necessary and plan for thorough testing.
