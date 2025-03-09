@@ -1,0 +1,40 @@
+
+{
+  "expo": {
+    "name": "Schedulizer",
+    "slug": "schedulizer-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.schedulizer.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.schedulizer.mobile"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "133c7d9b-8e5d-46c5-b777-a9a3bc74b9aa"
+      }
+    },
+    "plugins": [
+      "expo-file-system",
+      "expo-sqlite"
+    ],
+    "sdkVersion": "48.0.18"
+  }
+}
