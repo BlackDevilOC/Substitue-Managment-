@@ -1,20 +1,16 @@
-# Building the Schedulizer APK
 
-This guide will walk you through the process of building the Android APK for the Schedulizer app using Expo EAS Build.
+# Building the Schedulizer Mobile App APK
+
+This guide will walk you through the process of building an Android APK for the Schedulizer mobile app.
 
 ## Prerequisites
 
-1. You need an Expo account (create one at [expo.dev](https://expo.dev/signup))
-2. Expo CLI installed globally:
-   ```
-   npm install -g expo-cli
-   ```
-3. EAS CLI installed globally:
-   ```
+1. An Expo account (create one at [expo.dev](https://expo.dev/signup))
+2. EAS CLI installed globally:
+   ```bash
    npm install -g eas-cli
    ```
-4. Node.js and npm
-5. Git (to clone the repository)
+3. Node.js and npm
 
 ## Step 1: Install dependencies
 
@@ -33,29 +29,25 @@ eas login
 
 Enter your Expo account credentials when prompted.
 
-## Step 3: Configure the build
+## Step 3: Build the APK
 
-Ensure your `eas.json` file is properly configured. The one in this repository is already set up for both development and production builds.
+For a development/preview build that you can directly install on your device:
 
-## Step 4: Start the build process
+```bash
+npm run build:apk
+```
 
-For a development/preview build:
+or
 
 ```bash
 eas build -p android --profile preview
 ```
 
-For a production build:
-
-```bash
-eas build -p android --profile production
-```
-
-## Step 5: Wait for the build to complete
+## Step 4: Wait for the build to complete
 
 The build process will run on Expo's servers. You can track the progress in the terminal or visit the build URL provided by EAS.
 
-## Step 6: Download the APK
+## Step 5: Download the APK
 
 When the build is complete, you'll receive a URL to download the APK file. You can:
 
@@ -65,24 +57,26 @@ When the build is complete, you'll receive a URL to download the APK file. You c
    eas build:list
    ```
 
-## Step 7: Install on your device
+## Step 6: Install on your device
 
 Transfer the APK to your Android device and install it. You might need to allow installation from unknown sources in your device settings.
 
-## Troubleshooting
+## Build Configuration
 
-- If you encounter credential issues: `eas credentials`
-- If you need to update the app version: Update `app.json` version field
-- For build-specific problems: Check the build logs on the Expo dashboard
+Our app has the following build profiles configured in `eas.json`:
+
+- **development**: For development and testing (includes development client)
+- **preview**: For internal distribution as APK files
+- **production**: For Play Store submission as AAB (Android App Bundle)
 
 ## Additional Commands
 
 - View build history: `eas build:list`
 - Cancel an in-progress build: `eas build:cancel`
-- Clear build cache: `eas build --clear-cache`
+- Build for production: `eas build -p android --profile production`
 
 ## Notes
 
-- The first build might take longer as Expo sets up the environment
-- Android builds typically take 10-15 minutes to complete
-- You need a valid app icon and splash screen in the `assets` folder as specified in `app.json`
+- The app is configured for offline capability with SQLite database
+- The app includes features for teacher management, absence tracking, and substitute assignment
+- All data is stored locally in the device for offline operation
