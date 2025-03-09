@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "Schedulizer",
@@ -40,6 +41,6 @@
       "expo-file-system",
       "expo-sqlite"
     ],
-    "sdkVersion": "48.0.0"
+    "sdkVersion": "48.0.18"
   }
 }
