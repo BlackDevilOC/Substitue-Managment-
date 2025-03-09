@@ -11,6 +11,11 @@ import { fileURLToPath } from 'url';
 import * as fs from 'fs';
 import { processTimetables } from "../utils/timetableProcessor";
 import * as csv from 'csv-parser';
+import { notifications, insertNotificationSchema } from "@shared/schema";
+import { getNotificationServer } from "./websocket";
+import { db } from "./db";
+import { eq, desc } from 'drizzle-orm';
+
 
 interface AbsentTeacher {
   id: number;
@@ -31,7 +36,7 @@ interface AssignmentData {
   warnings: string[];
 }
 
-const upload = multer({ 
+const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
@@ -67,17 +72,17 @@ async function processAndSaveTeachers(timetableContent?: string, substituteConte
 
     const teacherData = await processTeacherFiles(ttContent, subContent);
     const teachers = teacherData.split('\n')
-      .slice(1) 
+      .slice(1)
       .filter(line => line.trim())
       .map(line => {
         const parts = line.split(',').map(str => str.replace(/"/g, '').trim());
         const name = parts[0] || '';
         const phone = parts[1] || '';
         const variations = parts[2] || '';
-        return { 
-          name, 
-          phone, 
-          variations: variations ? variations.split('|') : [] 
+        return {
+          name,
+          phone,
+          variations: variations ? variations.split('|') : []
         };
       });
 
@@ -184,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If not found, try to find by partial match
       if (!teacherSchedule) {
         // Find keys that are close to the provided name
-        const possibleMatches = Object.keys(schedules).filter(key => 
+        const possibleMatches = Object.keys(schedules).filter(key =>
           key.includes(teacherName) || teacherName.includes(key)
         );
 
@@ -200,7 +205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(teacherSchedule);
     } catch (error) {
       console.error('Error fetching teacher schedule:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to fetch teacher schedule',
         details: error instanceof Error ? error.message : String(error)
       });
@@ -235,14 +240,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const teachers = await processAndSaveTeachers(timetableContent, substituteContent);
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: 'Teacher data refreshed successfully',
         teacherCount: teachers?.length || 0
       });
     } catch (error) {
       console.error('Error refreshing teacher data:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to refresh teacher data',
         message: error instanceof Error ? error.message : String(error)
       });
@@ -298,9 +303,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Auto-assign substitutes error:', error);
-      res.status(500).json({ 
-        message: "Failed to assign substitutes", 
-        error: error instanceof Error ? error.message : String(error) 
+      res.status(500).json({
+        message: "Failed to assign substitutes",
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   });
@@ -326,8 +331,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Add teacher if not already in list
         if (!absentTeachers.find((t: AbsentTeacher) => t.name === teacherName)) {
           // Get the last ID or start from 1
-          const lastId = absentTeachers.length > 0 
-            ? Math.max(...absentTeachers.map((t: AbsentTeacher) => t.id || 0)) 
+          const lastId = absentTeachers.length > 0
+            ? Math.max(...absentTeachers.map((t: AbsentTeacher) => t.id || 0))
             : 0;
 
           absentTeachers.push({
@@ -372,8 +377,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       console.error('Error marking attendance:', error);
-      res.status(500).json({ 
-        success: false, 
+      res.status(500).json({
+        success: false,
         error: 'Failed to mark attendance',
         details: error instanceof Error ? error.message : String(error)
       });
@@ -390,23 +395,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if all required files exist
       if (!fs.existsSync(absentTeachersPath)) {
-        return res.status(404).json({ 
-          success: false, 
-          message: "Absent teachers file not found at: " + absentTeachersPath 
+        return res.status(404).json({
+          success: false,
+          message: "Absent teachers file not found at: " + absentTeachersPath
         });
       }
 
       if (!fs.existsSync(timetablePath)) {
-        return res.status(404).json({ 
-          success: false, 
-          message: "Timetable file not found at: " + timetablePath 
+        return res.status(404).json({
+          success: false,
+          message: "Timetable file not found at: " + timetablePath
         });
       }
 
       if (!fs.existsSync(substitutePath)) {
-        return res.status(404).json({ 
-          success: false, 
-          message: "Substitute file not found at: " + substitutePath 
+        return res.status(404).json({
+          success: false,
+          message: "Substitute file not found at: " + substitutePath
         });
       }
 
@@ -415,8 +420,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const absentTeachers: AbsentTeacher[] = JSON.parse(absentTeachersContent);
 
       if (!absentTeachers || absentTeachers.length === 0) {
-        return res.status(200).json({ 
-          success: true, 
+        return res.status(200).json({
+          success: true,
           message: "No absent teachers found",
           assignments: []
         });
@@ -442,11 +447,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Run auto-assign functionality
       const { SubstituteManager } = await import('./substitute-manager.js');
       const manager = new SubstituteManager();
-      
+
       // Make sure to load data from the right files
       await manager.loadData(timetablePath, substitutePath);
 
-      // Pass the teacher names to autoAssignSubstitutes 
+      // Pass the teacher names to autoAssignSubstitutes
       const result = await manager.autoAssignSubstitutes(today, teacherNames);
       const { assignments, warnings } = result;
 
@@ -459,7 +464,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return teacher;
         });
         fs.writeFileSync(absentTeachersPath, JSON.stringify(updatedAbsentTeachers, null, 2));
-        
+
         // Save the assignments to the assigned_teacher.json file
         const assignedTeachersPath = path.join(__dirname, '../data/assigned_teacher.json');
         const assignmentData: AssignmentData = {
@@ -471,8 +476,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Auto-assigned ${assignments.length} substitutes for absent teachers`);
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: "Auto-assignment completed successfully",
         assignmentsCount: assignments.length,
         assignments,
@@ -481,9 +486,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Auto-assign from file error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         success: false,
-        message: "Failed to auto-assign substitutes", 
+        message: "Failed to auto-assign substitutes",
         error: error instanceof Error ? error.message : String(error),
         logs: error.logs || [] // Include logs if available for better error diagnostics
       });
@@ -577,7 +582,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Get substitute assignments error:', error);
       console.error('Error details:', error instanceof Error ? error.stack : String(error));
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to get substitute assignments",
         error: error instanceof Error ? error.message : String(error)
       });
@@ -651,13 +656,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await processTimetableCSV(fileContent);
       await processAndSaveTeachers(fileContent, undefined);
 
-      res.json({ 
-        success: true, 
-        message: 'Timetable file uploaded and processed successfully' 
+      res.json({
+        success: true,
+        message: 'Timetable file uploaded and processed successfully'
       });
     } catch (error) {
       console.error('Timetable upload error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to process timetable file',
         message: error instanceof Error ? error.message : String(error)
       });
@@ -679,13 +684,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await processSubstituteCSV(fileContent);
       await processAndSaveTeachers(undefined, fileContent);
 
-      res.json({ 
-        success: true, 
-        message: 'Substitute file uploaded and processed successfully' 
+      res.json({
+        success: true,
+        message: 'Substitute file uploaded and processed successfully'
       });
     } catch (error) {
       console.error('Substitute upload error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to process substitute file',
         message: error instanceof Error ? error.message : String(error)
       });
@@ -797,7 +802,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         assignedSubstitute: teacher.assignedSubstitute || false
       }));
 
-      res.json({ 
+      res.json({
         count: simpleList.length,
         teachers: simpleList
       });
@@ -812,13 +817,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("API: Processing timetables only for schedule data extraction...");
       await processTimetables();
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: 'Timetables processed and organized successfully'
       });
     } catch (error) {
       console.error('Error processing timetables:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to process timetables',
         message: error instanceof Error ? error.message : String(error)
       });
@@ -962,6 +967,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/notifications", async (req, res) => {
+    try {
+      const teacherId = parseInt(req.query.teacherId as string);
+      if (isNaN(teacherId)) {
+        return res.status(400).json({ error: "Invalid teacher ID" });
+      }
+
+      const result = await db.select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, teacherId))
+        .orderBy(desc(notifications.createdAt));
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
+
+  app.post("/api/notifications/:id/read", async (req, res) => {
+    try {
+      const notificationId = parseInt(req.params.id);
+      if (isNaN(notificationId)) {
+        return res.status(400).json({ error: "Invalid notification ID" });
+      }
+
+      await db.update(notifications)
+        .set({ isRead: true })
+        .where(eq(notifications.id, notificationId));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ error: "Failed to mark notification as read" });
+    }
+  });
+
+  app.delete("/api/notifications", async (req, res) => {
+    try {
+      const teacherId = parseInt(req.query.teacherId as string);
+      if (isNaN(teacherId)) {
+        return res.status(400).json({ error: "Invalid teacher ID" });
+      }
+
+      await db.delete(notifications)
+        .where(eq(notifications.recipientId, teacherId));
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error clearing notifications:", error);
+      res.status(500).json({ error: "Failed to clear notifications" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
@@ -979,9 +1038,9 @@ class SubstituteManager {
   async loadData(timetablePath: string, substitutePath: string) {
     this.timetable = await this.loadTimetable(timetablePath);
     this.substituteData = await this.loadSubstituteData(substitutePath);
-    
+
     //Timetable Loading Validation
-    if(this.timetable.length === 0){
+    if (this.timetable.length === 0) {
       throw new Error(`Timetable file empty at ${timetablePath}`);
     }
 
@@ -1010,13 +1069,13 @@ class SubstituteManager {
 
   private async loadSubstituteData(path: string): Promise<any[]> {
     //Implementation for loading substitute data
-    try{
-      if(fs.existsSync(path)){
+    try {
+      if (fs.existsSync(path)) {
         const data = fs.readFileSync(path, 'utf-8');
         return JSON.parse(data);
       }
       return [];
-    } catch(error){
+    } catch (error) {
       console.error("Error loading substitute data:", error);
       return [];
     }
@@ -1031,17 +1090,17 @@ class SubstituteManager {
     for (const teacherName of teacherNames) {
       const cleanName = teacherName.toLowerCase().trim();
       const periods = await this.getAllPeriodsForTeacher(cleanName);
-      
+
       if (periods.length > 0) {
-        // Assign substitutes based on periods 
+        // Assign substitutes based on periods
         assignments.push(...periods);
-        this.addLog('Assignment', `Assigned substitutes for ${teacherName}`, 'info', {periods})
+        this.addLog('Assignment', `Assigned substitutes for ${teacherName}`, 'info', { periods })
       } else {
         warnings.push(`No periods found for teacher: ${teacherName}`);
         this.addLog('NoPeriods', `No periods found for ${teacherName}`, 'warning')
       }
     }
-    
+
     this.saveLogs();
     return { assignments, warnings, logs: this.logs };
   }
@@ -1058,36 +1117,36 @@ class SubstituteManager {
   }
 
   private async getAllPeriodsForTeacher(teacherName: string): Promise<any[]> {
-      this.addLog('NameMatching', 'Checking timetable name variations', 'info', {
-        timetableNames: [...new Set(this.timetable.map(e => e.Teacher))],
-        targetName: teacherName
-      });
-    
-      const cleanName = teacherName.toLowerCase();
-      const similarNames = this.timetable
-        .map(e => e.Teacher)
-        .filter(name => 
-          name.toLowerCase().includes(cleanName.substring(0, 5))
-        );
-    
-      this.addLog('NameVariants', 'Potential timetable matches', 'info', {
-        searchTerm: cleanName,
-        matchesFound: similarNames
-      });
+    this.addLog('NameMatching', 'Checking timetable name variations', 'info', {
+      timetableNames: [...new Set(this.timetable.map(e => e.Teacher))],
+      targetName: teacherName
+    });
 
-      const periodsToAssign: any[] = [];
-      if (similarNames.length > 0) {
-        const foundTeacher = this.timetable.filter((entry) => similarNames.includes(entry.Teacher));
-        foundTeacher.forEach((entry) => {
-          periodsToAssign.push({
-            originalTeacher: entry.Teacher,
-            period: entry.Period,
-            day: entry.Day,
-            className: entry.className
-          });
+    const cleanName = teacherName.toLowerCase();
+    const similarNames = this.timetable
+      .map(e => e.Teacher)
+      .filter(name =>
+        name.toLowerCase().includes(cleanName.substring(0, 5))
+      );
+
+    this.addLog('NameVariants', 'Potential timetable matches', 'info', {
+      searchTerm: cleanName,
+      matchesFound: similarNames
+    });
+
+    const periodsToAssign: any[] = [];
+    if (similarNames.length > 0) {
+      const foundTeacher = this.timetable.filter((entry) => similarNames.includes(entry.Teacher));
+      foundTeacher.forEach((entry) => {
+        periodsToAssign.push({
+          originalTeacher: entry.Teacher,
+          period: entry.Period,
+          day: entry.Day,
+          className: entry.className
         });
-      }
-      return periodsToAssign;
+      });
+    }
+    return periodsToAssign;
   }
 
   clearAssignments() {
@@ -1095,7 +1154,7 @@ class SubstituteManager {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     const filePath = path.join(__dirname, '../data/assigned_teacher.json');
-    fs.writeFileSync(filePath, JSON.stringify({assignments:[], warnings: []}, null, 2))
+    fs.writeFileSync(filePath, JSON.stringify({ assignments: [], warnings: [] }, null, 2))
   }
 }
 
@@ -1150,34 +1209,34 @@ app.get('/api/archive-logs', async (req, res) => {
   try {
     const logsPath = path.join(__dirname, '../data/substitute_logs.json');
     const oldLogsDir = path.join(__dirname, '../data/old_logs');
-    
+
     // Ensure the old logs directory exists
     if (!fs.existsSync(oldLogsDir)) {
       fs.mkdirSync(oldLogsDir, { recursive: true });
     }
-    
+
     if (fs.existsSync(logsPath)) {
       // Format date for filename
       const now = new Date();
       const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${now.getHours()}-${now.getMinutes()}`;
       const archivePath = path.join(oldLogsDir, `substitute_logs_${formattedDate}.json`);
-      
+
       // Copy current logs to archive
       fs.copyFileSync(logsPath, archivePath);
-      
+
       // Create empty log file
       fs.writeFileSync(logsPath, JSON.stringify({}, null, 2));
-      
+
       console.log(`Archived logs to ${archivePath}`);
-      res.json({ 
-        success: true, 
-        message: "Logs archived successfully", 
-        archivePath: archivePath 
+      res.json({
+        success: true,
+        message: "Logs archived successfully",
+        archivePath: archivePath
       });
     } else {
-      res.json({ 
-        success: true, 
-        message: "No logs file found to archive" 
+      res.json({
+        success: true,
+        message: "No logs file found to archive"
       });
     }
   } catch (error) {
