@@ -94,6 +94,18 @@ export const versionControl = pgTable("version_control", {
   validationErrors: jsonb("validation_errors"),
 });
 
+// Add new notifications table
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // schedule_change, substitute_assignment, etc.
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  recipientId: integer("recipient_id").notNull(), // References teachers.id
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  data: jsonb("data"), // Additional context data
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -120,6 +132,12 @@ export const insertUploadedFileSchema = createInsertSchema(uploadedFiles);
 export const insertExperimentSchema = createInsertSchema(experiments);
 export const insertVersionControlSchema = createInsertSchema(versionControl);
 
+// Add notification schema
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true
+});
+
 // Experiment submission schema
 export const experimentSubmissionSchema = z.object({
   change_type: z.enum(["add", "modify", "delete"]),
@@ -144,3 +162,6 @@ export type Experiment = typeof experiments.$inferSelect;
 export type InsertExperiment = z.infer<typeof insertExperimentSchema>;
 export type VersionControl = typeof versionControl.$inferSelect;
 export type ExperimentSubmission = z.infer<typeof experimentSubmissionSchema>;
+// Add notification type
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;

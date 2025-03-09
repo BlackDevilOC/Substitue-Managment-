@@ -1,0 +1,1182 @@
+{
+  "2025-03-08": [
+    {
+      "timestamp": "2025-03-08T21:03:15.802Z",
+      "action": "ProcessStart",
+      "details": "Initializing substitute assignment system",
+      "status": "info",
+      "data": {
+        "version": "2.1-diagnostic"
+      },
+      "durationMs": 0
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.802Z",
+      "action": "DataLoading",
+      "details": "Using 3 provided absent teachers",
+      "status": "info",
+      "durationMs": 0
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.802Z",
+      "action": "DataLoading",
+      "details": "Loading source files",
+      "status": "info",
+      "data": {
+        "files": [
+          "/home/runner/workspace/data/total_teacher.json",
+          "/home/runner/workspace/data/teacher_schedules.json",
+          "/home/runner/workspace/data/assigned_teacher.json",
+          "/home/runner/workspace/data/timetable_file.csv"
+        ]
+      },
+      "durationMs": 0
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.808Z",
+      "action": "DataVerification",
+      "details": "Validating loaded data",
+      "status": "info",
+      "data": {
+        "teachersCount": 35,
+        "schedulesCount": 36,
+        "assignedTeachersCount": 0,
+        "timetableEntries": 46
+      },
+      "durationMs": 6
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.808Z",
+      "action": "DayCalculation",
+      "details": "Calculated working day",
+      "status": "info",
+      "data": {
+        "inputDate": "2025-03-08",
+        "normalizedDay": "saturday"
+      },
+      "durationMs": 6
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.808Z",
+      "action": "Processing",
+      "details": "Processed 0 existing assignments with workload tracking",
+      "status": "info",
+      "durationMs": 6
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.808Z",
+      "action": "Processing",
+      "details": "Created teacher lookup map with 39 entries",
+      "status": "info",
+      "durationMs": 6
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.808Z",
+      "action": "Processing",
+      "details": "Created schedule lookup map with 36 entries",
+      "status": "info",
+      "durationMs": 6
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.808Z",
+      "action": "TeacherResolution",
+      "details": "Validating absent teacher list",
+      "status": "info",
+      "durationMs": 6
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.808Z",
+      "action": "TeacherResolution",
+      "details": "Resolved 3 absent teachers out of 3 provided names",
+      "status": "info",
+      "durationMs": 6
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "Processing",
+      "details": "Found 26 available substitutes out of 28 total",
+      "status": "info",
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "TeacherProcessing",
+      "details": "Starting processing for Sir Wajiudin Shaikh",
+      "status": "info",
+      "data": {
+        "teacherId": "",
+        "variants": [
+          "Sir Wajiudin Shaikh",
+          "sir wajiudin",
+          "sir Wajiudin"
+        ]
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "NameProcessing",
+      "details": "Starting name normalization",
+      "status": "info",
+      "data": {
+        "originalName": "Sir Wajiudin Shaikh",
+        "normalizedName": "sir wajiudin shaikh"
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "ClassMapLookup",
+      "details": "Checking teacher classes map",
+      "status": "info",
+      "data": {
+        "teacherName": "sir wajiudin shaikh",
+        "entriesFound": 0
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "ClassMapProcessing",
+      "details": "Processed class map periods",
+      "status": "info",
+      "data": {
+        "rawCount": 0,
+        "filteredCount": 0,
+        "periods": []
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "ScheduleAnalysis",
+      "details": "Processed schedule periods",
+      "status": "info",
+      "data": {
+        "rawEntries": 0,
+        "validCount": 0,
+        "periods": []
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "VariationCheck",
+      "details": "Checking name variations",
+      "status": "info",
+      "data": {
+        "variations": [
+          "Sir Wajiudin Shaikh",
+          "sir wajiudin",
+          "sir Wajiudin"
+        ]
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "VariationResults",
+      "details": "Found periods from variations",
+      "status": "info",
+      "data": {
+        "count": 4,
+        "periods": [
+          {
+            "period": 3,
+            "className": "6A",
+            "source": "variation:sir wajiudin"
+          },
+          {
+            "period": 8,
+            "className": "7A",
+            "source": "variation:sir wajiudin"
+          },
+          {
+            "period": 3,
+            "className": "6A",
+            "source": "variation:sir Wajiudin"
+          },
+          {
+            "period": 8,
+            "className": "7A",
+            "source": "variation:sir Wajiudin"
+          }
+        ]
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "PeriodValidation",
+      "details": "Final period validation",
+      "status": "info",
+      "data": {
+        "totalCandidates": 4,
+        "validPeriods": [
+          {
+            "period": 3,
+            "className": "6A",
+            "source": "variation:sir wajiudin"
+          },
+          {
+            "period": 8,
+            "className": "7A",
+            "source": "variation:sir wajiudin"
+          },
+          {
+            "period": 3,
+            "className": "6A",
+            "source": "variation:sir Wajiudin"
+          },
+          {
+            "period": 8,
+            "className": "7A",
+            "source": "variation:sir Wajiudin"
+          }
+        ],
+        "invalidPeriods": []
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "Deduplication",
+      "details": "Removed duplicate periods",
+      "status": "info",
+      "data": {
+        "beforeDedupe": 4,
+        "afterDedupe": 2,
+        "resultPeriods": [
+          {
+            "period": 3,
+            "className": "6A",
+            "source": "variation:sir wajiudin"
+          },
+          {
+            "period": 8,
+            "className": "7A",
+            "source": "variation:sir wajiudin"
+          }
+        ]
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "PeriodDetection",
+      "details": "Found 2 affected periods for Sir Wajiudin Shaikh",
+      "status": "info",
+      "data": {
+        "periodDetails": [
+          {
+            "period": 3,
+            "className": "6A",
+            "source": "variation:sir wajiudin"
+          },
+          {
+            "period": 8,
+            "className": "7A",
+            "source": "variation:sir wajiudin"
+          }
+        ]
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "PeriodAssignment",
+      "details": "Processing assignment",
+      "status": "info",
+      "data": {
+        "assignmentKey": "Sir Wajiudin Shaikh-3-6A",
+        "period": 3,
+        "className": "6A",
+        "source": "variation:sir wajiudin"
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "AssignmentSuccess",
+      "details": "Assigned Sir Bakir Shah to Sir Wajiudin Shaikh-3-6A",
+      "status": "info",
+      "data": {
+        "substituteWorkload": 1
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "PeriodAssignment",
+      "details": "Processing assignment",
+      "status": "info",
+      "data": {
+        "assignmentKey": "Sir Wajiudin Shaikh-8-7A",
+        "period": 8,
+        "className": "7A",
+        "source": "variation:sir wajiudin"
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "AssignmentSuccess",
+      "details": "Assigned Sir Irshad Qureshi to Sir Wajiudin Shaikh-8-7A",
+      "status": "info",
+      "data": {
+        "substituteWorkload": 1
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "TeacherProcessing",
+      "details": "Starting processing for Sir Iqbal Ahmed",
+      "status": "info",
+      "data": {
+        "teacherId": "+923063624407",
+        "variants": [
+          "Sir Iqbal Ahmed",
+          "sir iqbal ahmed",
+          "sir Iqbal ahmed"
+        ]
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "NameProcessing",
+      "details": "Starting name normalization",
+      "status": "info",
+      "data": {
+        "originalName": "Sir Iqbal Ahmed",
+        "normalizedName": "sir iqbal ahmed"
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "ClassMapLookup",
+      "details": "Checking teacher classes map",
+      "status": "info",
+      "data": {
+        "teacherName": "sir iqbal ahmed",
+        "entriesFound": 23
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "ClassMapProcessing",
+      "details": "Processed class map periods",
+      "status": "info",
+      "data": {
+        "rawCount": 23,
+        "filteredCount": 4,
+        "periods": [
+          {
+            "period": 1,
+            "className": "9C",
+            "source": "classMap"
+          },
+          {
+            "period": 2,
+            "className": "9C",
+            "source": "classMap"
+          },
+          {
+            "period": 4,
+            "className": "10C",
+            "source": "classMap"
+          },
+          {
+            "period": 5,
+            "className": "9C",
+            "source": "classMap"
+          }
+        ]
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "ScheduleAnalysis",
+      "details": "Processed schedule periods",
+      "status": "info",
+      "data": {
+        "rawEntries": 23,
+        "validCount": 4,
+        "periods": [
+          {
+            "period": 1,
+            "className": "9C",
+            "source": "schedule"
+          },
+          {
+            "period": 2,
+            "className": "9C",
+            "source": "schedule"
+          },
+          {
+            "period": 4,
+            "className": "10C",
+            "source": "schedule"
+          },
+          {
+            "period": 5,
+            "className": "9C",
+            "source": "schedule"
+          }
+        ]
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "VariationCheck",
+      "details": "Checking name variations",
+      "status": "info",
+      "data": {
+        "variations": [
+          "Sir Iqbal Ahmed",
+          "sir iqbal ahmed",
+          "sir Iqbal ahmed"
+        ]
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "VariationResults",
+      "details": "Found periods from variations",
+      "status": "info",
+      "data": {
+        "count": 12,
+        "periods": [
+          {
+            "period": 1,
+            "className": "9C",
+            "source": "variation:Sir Iqbal Ahmed"
+          },
+          {
+            "period": 2,
+            "className": "9C",
+            "source": "variation:Sir Iqbal Ahmed"
+          },
+          {
+            "period": 4,
+            "className": "10C",
+            "source": "variation:Sir Iqbal Ahmed"
+          },
+          {
+            "period": 5,
+            "className": "9C",
+            "source": "variation:Sir Iqbal Ahmed"
+          },
+          {
+            "period": 1,
+            "className": "9C",
+            "source": "variation:sir iqbal ahmed"
+          },
+          {
+            "period": 2,
+            "className": "9C",
+            "source": "variation:sir iqbal ahmed"
+          },
+          {
+            "period": 4,
+            "className": "10C",
+            "source": "variation:sir iqbal ahmed"
+          },
+          {
+            "period": 5,
+            "className": "9C",
+            "source": "variation:sir iqbal ahmed"
+          },
+          {
+            "period": 1,
+            "className": "9C",
+            "source": "variation:sir Iqbal ahmed"
+          },
+          {
+            "period": 2,
+            "className": "9C",
+            "source": "variation:sir Iqbal ahmed"
+          },
+          {
+            "period": 4,
+            "className": "10C",
+            "source": "variation:sir Iqbal ahmed"
+          },
+          {
+            "period": 5,
+            "className": "9C",
+            "source": "variation:sir Iqbal ahmed"
+          }
+        ]
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "PeriodValidation",
+      "details": "Final period validation",
+      "status": "info",
+      "data": {
+        "totalCandidates": 20,
+        "validPeriods": [
+          {
+            "period": 1,
+            "className": "9C",
+            "source": "classMap"
+          },
+          {
+            "period": 2,
+            "className": "9C",
+            "source": "classMap"
+          },
+          {
+            "period": 4,
+            "className": "10C",
+            "source": "classMap"
+          },
+          {
+            "period": 5,
+            "className": "9C",
+            "source": "classMap"
+          },
+          {
+            "period": 1,
+            "className": "9C",
+            "source": "schedule"
+          },
+          {
+            "period": 2,
+            "className": "9C",
+            "source": "schedule"
+          },
+          {
+            "period": 4,
+            "className": "10C",
+            "source": "schedule"
+          },
+          {
+            "period": 5,
+            "className": "9C",
+            "source": "schedule"
+          },
+          {
+            "period": 1,
+            "className": "9C",
+            "source": "variation:Sir Iqbal Ahmed"
+          },
+          {
+            "period": 2,
+            "className": "9C",
+            "source": "variation:Sir Iqbal Ahmed"
+          },
+          {
+            "period": 4,
+            "className": "10C",
+            "source": "variation:Sir Iqbal Ahmed"
+          },
+          {
+            "period": 5,
+            "className": "9C",
+            "source": "variation:Sir Iqbal Ahmed"
+          },
+          {
+            "period": 1,
+            "className": "9C",
+            "source": "variation:sir iqbal ahmed"
+          },
+          {
+            "period": 2,
+            "className": "9C",
+            "source": "variation:sir iqbal ahmed"
+          },
+          {
+            "period": 4,
+            "className": "10C",
+            "source": "variation:sir iqbal ahmed"
+          },
+          {
+            "period": 5,
+            "className": "9C",
+            "source": "variation:sir iqbal ahmed"
+          },
+          {
+            "period": 1,
+            "className": "9C",
+            "source": "variation:sir Iqbal ahmed"
+          },
+          {
+            "period": 2,
+            "className": "9C",
+            "source": "variation:sir Iqbal ahmed"
+          },
+          {
+            "period": 4,
+            "className": "10C",
+            "source": "variation:sir Iqbal ahmed"
+          },
+          {
+            "period": 5,
+            "className": "9C",
+            "source": "variation:sir Iqbal ahmed"
+          }
+        ],
+        "invalidPeriods": []
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "Deduplication",
+      "details": "Removed duplicate periods",
+      "status": "info",
+      "data": {
+        "beforeDedupe": 20,
+        "afterDedupe": 4,
+        "resultPeriods": [
+          {
+            "period": 1,
+            "className": "9C",
+            "source": "classMap"
+          },
+          {
+            "period": 2,
+            "className": "9C",
+            "source": "classMap"
+          },
+          {
+            "period": 4,
+            "className": "10C",
+            "source": "classMap"
+          },
+          {
+            "period": 5,
+            "className": "9C",
+            "source": "classMap"
+          }
+        ]
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "PeriodDetection",
+      "details": "Found 4 affected periods for Sir Iqbal Ahmed",
+      "status": "info",
+      "data": {
+        "periodDetails": [
+          {
+            "period": 1,
+            "className": "9C",
+            "source": "classMap"
+          },
+          {
+            "period": 2,
+            "className": "9C",
+            "source": "classMap"
+          },
+          {
+            "period": 4,
+            "className": "10C",
+            "source": "classMap"
+          },
+          {
+            "period": 5,
+            "className": "9C",
+            "source": "classMap"
+          }
+        ]
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.809Z",
+      "action": "PeriodAssignment",
+      "details": "Processing assignment",
+      "status": "info",
+      "data": {
+        "assignmentKey": "Sir Iqbal Ahmed-1-9C",
+        "period": 1,
+        "className": "9C",
+        "source": "classMap"
+      },
+      "durationMs": 7
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "AssignmentSuccess",
+      "details": "Assigned Sir Waqar Ali to Sir Iqbal Ahmed-1-9C",
+      "status": "info",
+      "data": {
+        "substituteWorkload": 1
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "PeriodAssignment",
+      "details": "Processing assignment",
+      "status": "info",
+      "data": {
+        "assignmentKey": "Sir Iqbal Ahmed-2-9C",
+        "period": 2,
+        "className": "9C",
+        "source": "classMap"
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "AssignmentSuccess",
+      "details": "Assigned Sir Faisal Ali to Sir Iqbal Ahmed-2-9C",
+      "status": "info",
+      "data": {
+        "substituteWorkload": 1
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "PeriodAssignment",
+      "details": "Processing assignment",
+      "status": "info",
+      "data": {
+        "assignmentKey": "Sir Iqbal Ahmed-4-10C",
+        "period": 4,
+        "className": "10C",
+        "source": "classMap"
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "AssignmentSuccess",
+      "details": "Assigned Sir Muhammad Taha to Sir Iqbal Ahmed-4-10C",
+      "status": "info",
+      "data": {
+        "substituteWorkload": 1
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "PeriodAssignment",
+      "details": "Processing assignment",
+      "status": "info",
+      "data": {
+        "assignmentKey": "Sir Iqbal Ahmed-5-9C",
+        "period": 5,
+        "className": "9C",
+        "source": "classMap"
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "AssignmentSuccess",
+      "details": "Assigned Sir Asif Nawaz to Sir Iqbal Ahmed-5-9C",
+      "status": "info",
+      "data": {
+        "substituteWorkload": 1
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "TeacherProcessing",
+      "details": "Starting processing for Sir Jamalullah",
+      "status": "info",
+      "data": {
+        "teacherId": "+923133362621",
+        "variants": [
+          "Sir Jamalullah",
+          "sir Jamalullah"
+        ]
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "NameProcessing",
+      "details": "Starting name normalization",
+      "status": "info",
+      "data": {
+        "originalName": "Sir Jamalullah",
+        "normalizedName": "sir jamalullah"
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "ClassMapLookup",
+      "details": "Checking teacher classes map",
+      "status": "info",
+      "data": {
+        "teacherName": "sir jamalullah",
+        "entriesFound": 22
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "ClassMapProcessing",
+      "details": "Processed class map periods",
+      "status": "info",
+      "data": {
+        "rawCount": 22,
+        "filteredCount": 3,
+        "periods": [
+          {
+            "period": 1,
+            "className": "7A",
+            "source": "classMap"
+          },
+          {
+            "period": 2,
+            "className": "7A",
+            "source": "classMap"
+          },
+          {
+            "period": 7,
+            "className": "7A",
+            "source": "classMap"
+          }
+        ]
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "ScheduleAnalysis",
+      "details": "Processed schedule periods",
+      "status": "info",
+      "data": {
+        "rawEntries": 22,
+        "validCount": 3,
+        "periods": [
+          {
+            "period": 1,
+            "className": "7A",
+            "source": "schedule"
+          },
+          {
+            "period": 2,
+            "className": "7A",
+            "source": "schedule"
+          },
+          {
+            "period": 7,
+            "className": "7A",
+            "source": "schedule"
+          }
+        ]
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "VariationCheck",
+      "details": "Checking name variations",
+      "status": "info",
+      "data": {
+        "variations": [
+          "Sir Jamalullah",
+          "sir Jamalullah"
+        ]
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "VariationResults",
+      "details": "Found periods from variations",
+      "status": "info",
+      "data": {
+        "count": 6,
+        "periods": [
+          {
+            "period": 1,
+            "className": "7A",
+            "source": "variation:Sir Jamalullah"
+          },
+          {
+            "period": 2,
+            "className": "7A",
+            "source": "variation:Sir Jamalullah"
+          },
+          {
+            "period": 7,
+            "className": "7A",
+            "source": "variation:Sir Jamalullah"
+          },
+          {
+            "period": 1,
+            "className": "7A",
+            "source": "variation:sir Jamalullah"
+          },
+          {
+            "period": 2,
+            "className": "7A",
+            "source": "variation:sir Jamalullah"
+          },
+          {
+            "period": 7,
+            "className": "7A",
+            "source": "variation:sir Jamalullah"
+          }
+        ]
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "PeriodValidation",
+      "details": "Final period validation",
+      "status": "info",
+      "data": {
+        "totalCandidates": 12,
+        "validPeriods": [
+          {
+            "period": 1,
+            "className": "7A",
+            "source": "classMap"
+          },
+          {
+            "period": 2,
+            "className": "7A",
+            "source": "classMap"
+          },
+          {
+            "period": 7,
+            "className": "7A",
+            "source": "classMap"
+          },
+          {
+            "period": 1,
+            "className": "7A",
+            "source": "schedule"
+          },
+          {
+            "period": 2,
+            "className": "7A",
+            "source": "schedule"
+          },
+          {
+            "period": 7,
+            "className": "7A",
+            "source": "schedule"
+          },
+          {
+            "period": 1,
+            "className": "7A",
+            "source": "variation:Sir Jamalullah"
+          },
+          {
+            "period": 2,
+            "className": "7A",
+            "source": "variation:Sir Jamalullah"
+          },
+          {
+            "period": 7,
+            "className": "7A",
+            "source": "variation:Sir Jamalullah"
+          },
+          {
+            "period": 1,
+            "className": "7A",
+            "source": "variation:sir Jamalullah"
+          },
+          {
+            "period": 2,
+            "className": "7A",
+            "source": "variation:sir Jamalullah"
+          },
+          {
+            "period": 7,
+            "className": "7A",
+            "source": "variation:sir Jamalullah"
+          }
+        ],
+        "invalidPeriods": []
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "Deduplication",
+      "details": "Removed duplicate periods",
+      "status": "info",
+      "data": {
+        "beforeDedupe": 12,
+        "afterDedupe": 3,
+        "resultPeriods": [
+          {
+            "period": 1,
+            "className": "7A",
+            "source": "classMap"
+          },
+          {
+            "period": 2,
+            "className": "7A",
+            "source": "classMap"
+          },
+          {
+            "period": 7,
+            "className": "7A",
+            "source": "classMap"
+          }
+        ]
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "PeriodDetection",
+      "details": "Found 3 affected periods for Sir Jamalullah",
+      "status": "info",
+      "data": {
+        "periodDetails": [
+          {
+            "period": 1,
+            "className": "7A",
+            "source": "classMap"
+          },
+          {
+            "period": 2,
+            "className": "7A",
+            "source": "classMap"
+          },
+          {
+            "period": 7,
+            "className": "7A",
+            "source": "classMap"
+          }
+        ]
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "PeriodAssignment",
+      "details": "Processing assignment",
+      "status": "info",
+      "data": {
+        "assignmentKey": "Sir Jamalullah-1-7A",
+        "period": 1,
+        "className": "7A",
+        "source": "classMap"
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "AssignmentSuccess",
+      "details": "Assigned Sir Romanulabdin to Sir Jamalullah-1-7A",
+      "status": "info",
+      "data": {
+        "substituteWorkload": 1
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "PeriodAssignment",
+      "details": "Processing assignment",
+      "status": "info",
+      "data": {
+        "assignmentKey": "Sir Jamalullah-2-7A",
+        "period": 2,
+        "className": "7A",
+        "source": "classMap"
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "AssignmentSuccess",
+      "details": "Assigned Sir Aman Arif to Sir Jamalullah-2-7A",
+      "status": "info",
+      "data": {
+        "substituteWorkload": 1
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.810Z",
+      "action": "PeriodAssignment",
+      "details": "Processing assignment",
+      "status": "info",
+      "data": {
+        "assignmentKey": "Sir Jamalullah-7-7A",
+        "period": 7,
+        "className": "7A",
+        "source": "classMap"
+      },
+      "durationMs": 8
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.811Z",
+      "action": "AssignmentSuccess",
+      "details": "Assigned Sir Shafique Ahmed to Sir Jamalullah-7-7A",
+      "status": "info",
+      "data": {
+        "substituteWorkload": 1
+      },
+      "durationMs": 9
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.811Z",
+      "action": "Validation",
+      "details": "Validating 9 assignments",
+      "status": "info",
+      "durationMs": 9
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.811Z",
+      "action": "Validation",
+      "details": "Grade conflict: Sir Bakir Shah (grade 10) assigned to 6A",
+      "status": "warning",
+      "durationMs": 9
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.811Z",
+      "action": "Validation",
+      "details": "Grade conflict: Sir Irshad Qureshi (grade 10) assigned to 7A",
+      "status": "warning",
+      "durationMs": 9
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.811Z",
+      "action": "Validation",
+      "details": "Grade conflict: Sir Romanulabdin (grade 10) assigned to 7A",
+      "status": "warning",
+      "durationMs": 9
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.811Z",
+      "action": "Validation",
+      "details": "Grade conflict: Sir Aman Arif (grade 10) assigned to 7A",
+      "status": "warning",
+      "durationMs": 9
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.811Z",
+      "action": "Validation",
+      "details": "Grade conflict: Sir Shafique Ahmed (grade 10) assigned to 7A",
+      "status": "warning",
+      "durationMs": 9
+    },
+    {
+      "timestamp": "2025-03-08T21:03:15.811Z",
+      "action": "DataSave",
+      "details": "Saved 9 assignments to file",
+      "status": "info",
+      "durationMs": 9
+    }
+  ]
+}
