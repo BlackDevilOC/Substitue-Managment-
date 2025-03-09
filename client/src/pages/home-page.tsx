@@ -26,12 +26,19 @@ export default function HomePage() {
     <div className="container mx-auto p-4">
       {/* Logo Section */}
       <div className="flex flex-col items-center mb-8">
-        <img 
-          src="/icons/icon-192x192.png"
-          alt="Schedulizer Logo"
-          className="w-24 h-24 mb-2"
-        />
-        <h2 className="text-lg font-medium text-muted-foreground">
+        <div className="w-24 h-24 relative mb-2">
+          <img 
+            src="/schedulizer-logo.png"
+            alt="Schedulizer Logo"
+            className="w-full h-full object-contain"
+            loading="eager"
+            onError={(e) => {
+              const img = e.target as HTMLImageElement;
+              img.src = "/icons/icon-192x192.png"; // Fallback to icon if main logo fails
+            }}
+          />
+        </div>
+        <h2 className="text-lg font-medium text-muted-foreground text-center">
           Stay Organized, Stay Ahead!
         </h2>
       </div>
