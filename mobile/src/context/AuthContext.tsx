@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
 interface User {
   id: number;
@@ -16,11 +17,11 @@ interface AuthContextType {
   clearError: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
@@ -28,59 +29,61 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Check for existing session on app start
+  // Initialize auth state
   useEffect(() => {
-    const checkUser = async () => {
+    const loadUser = async () => {
       try {
         const storedUser = await AsyncStorage.getItem('user');
+        
         if (storedUser) {
           setUser(JSON.parse(storedUser));
         }
       } catch (err) {
-        console.error('Failed to restore authentication state:', err);
+        console.error('Error loading user from storage:', err);
       } finally {
         setIsLoading(false);
       }
     };
-
-    checkUser();
+    
+    loadUser();
   }, []);
 
-  // Login function - works offline with predefined credentials
+  // Login function - in a real app, this would call an API
   const login = async (username: string, password: string) => {
     try {
       setIsLoading(true);
       setError(null);
-
-      // For offline usage, we'll hardcode some credentials
-      // In a real app, we would validate against the database
-      if (username === 'admin' && password === 'password') {
-        const user = {
-          id: 1,
-          username: 'admin',
-          isAdmin: true
-        };
-        
-        await AsyncStorage.setItem('user', JSON.stringify(user));
-        setUser(user);
-      } else if (username === 'teacher' && password === 'password') {
-        const user = {
-          id: 2,
-          username: 'teacher',
-          isAdmin: false
-        };
-        
-        await AsyncStorage.setItem('user', JSON.stringify(user));
-        setUser(user);
-      } else {
-        throw new Error('Invalid username or password');
+      
+      // For demo purposes only - in a real app, validate with server
+      if (!username.trim() || !password.trim()) {
+        throw new Error('Username and password are required');
       }
+      
+      // Simple validation - in production, this would be an API call
+      if (password !== 'password') { // Demo password
+        throw new Error('Invalid credentials');
+      }
+      
+      // Create a user object - in production, this would come from the server
+      const newUser: User = {
+        id: 1,
+        username,
+        isAdmin: username.toLowerCase() === 'admin',
+      };
+      
+      // Store user data
+      await AsyncStorage.setItem('user', JSON.stringify(newUser));
+      setUser(newUser);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred during login';
-      setError(errorMessage);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unknown error occurred');
+      }
+      console.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -90,32 +93,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       setIsLoading(true);
+      // Clear user data from storage
       await AsyncStorage.removeItem('user');
       setUser(null);
     } catch (err) {
       console.error('Logout error:', err);
+      Alert.alert('Error', 'Failed to logout');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Clear any error
   const clearError = () => {
     setError(null);
   };
 
-  const value = {
-    user,
-    isLoading,
-    error,
-    login,
-    logout,
-    clearError
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        error,
+        login,
+        logout,
+        clearError,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
+
+export default AuthContext;

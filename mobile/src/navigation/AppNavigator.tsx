@@ -2,7 +2,8 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../context/AuthContext';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTheme } from 'react-native-paper';
 
 // Import screens
 import LoginScreen from '../screens/LoginScreen';
@@ -14,109 +15,107 @@ import TeacherDetailScreen from '../screens/TeacherDetailScreen';
 import ManageAbsencesScreen from '../screens/ManageAbsencesScreen';
 import SubstituteAssignmentScreen from '../screens/SubstituteAssignmentScreen';
 import DataImportScreen from '../screens/DataImportScreen';
-import { useTheme } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 
-const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+// Define navigation types
+type RootStackParamList = {
+  Login: undefined;
+  Main: undefined;
+  TeacherDetail: { teacherId: number | string };
+  ManageAbsences: { date?: string };
+  SubstituteAssignment: { date?: string };
+  DataImport: undefined;
+};
 
-// Main tab navigation that will be displayed when logged in
-const TabNavigator = () => {
+type MainTabParamList = {
+  Home: undefined;
+  Teachers: undefined;
+  Absences: undefined;
+  Settings: undefined;
+};
+
+// Create navigators
+const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator<MainTabParamList>();
+
+// Main tab navigator
+function MainTabNavigator() {
   const theme = useTheme();
   
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName: string;
-
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Teachers') {
-            iconName = focused ? 'people' : 'people-outline';
-          } else if (route.name === 'Absences') {
-            iconName = focused ? 'calendar' : 'calendar-outline';
-          } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
-          } else {
-            iconName = 'help-circle-outline';
-          }
-
-          return <Ionicons name={iconName as any} size={size} color={color} />;
-        },
+      screenOptions={{
         tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: 'gray',
-        headerStyle: {
-          backgroundColor: theme.colors.primary,
+        tabBarInactiveTintColor: '#777777',
+        tabBarStyle: {
+          height: 60,
+          paddingBottom: 5,
         },
-        headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-      })}
+        headerShown: false,
+      }}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Teachers" component={TeachersScreen} />
-      <Tab.Screen name="Absences" component={AbsencesScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          tabBarLabel: ({ color }) => (
+            <Text style={{ color, fontSize: 12 }}>Home</Text>
+          ),
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="home" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Teachers"
+        component={TeachersScreen}
+        options={{
+          tabBarLabel: ({ color }) => (
+            <Text style={{ color, fontSize: 12 }}>Teachers</Text>
+          ),
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="account-group" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Absences"
+        component={AbsencesScreen}
+        options={{
+          tabBarLabel: ({ color }) => (
+            <Text style={{ color, fontSize: 12 }}>Absences</Text>
+          ),
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="calendar-remove" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          tabBarLabel: ({ color }) => (
+            <Text style={{ color, fontSize: 12 }}>Settings</Text>
+          ),
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="cog" color={color} size={size} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
-};
+}
 
-// Stack navigator for teachers
-const TeachersNavigator = () => {
-  const theme = useTheme();
-  
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: theme.colors.primary,
-        },
-        headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-      }}
-    >
-      <Stack.Screen name="TeacherList" component={TeachersScreen} options={{ title: 'Teachers' }} />
-      <Stack.Screen name="TeacherDetail" component={TeacherDetailScreen} options={{ title: 'Teacher Details' }} />
-    </Stack.Navigator>
-  );
-};
-
-// Stack navigator for absences
-const AbsencesNavigator = () => {
-  const theme = useTheme();
-  
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: {
-          backgroundColor: theme.colors.primary,
-        },
-        headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-      }}
-    >
-      <Stack.Screen name="AbsencesList" component={AbsencesScreen} options={{ title: 'Absences' }} />
-      <Stack.Screen name="ManageAbsences" component={ManageAbsencesScreen} options={{ title: 'Manage Absences' }} />
-      <Stack.Screen name="SubstituteAssignment" component={SubstituteAssignmentScreen} options={{ title: 'Assign Substitutes' }} />
-    </Stack.Navigator>
-  );
-};
-
-// Main app navigator
-const AppNavigator = () => {
+// Root navigator
+function AppNavigator() {
   const { user, isLoading } = useAuth();
   const theme = useTheme();
-
+  
+  // Show loading or splash screen if loading
   if (isLoading) {
-    // You could display a splash screen here
-    return null;
+    return null; // In a real app, you'd show a splash screen here
   }
-
+  
   return (
     <Stack.Navigator
       screenOptions={{
@@ -130,17 +129,19 @@ const AppNavigator = () => {
       }}
     >
       {user ? (
-        // User is logged in
+        // Authenticated screens
         <>
           <Stack.Screen 
-            name="TabNavigator" 
-            component={TabNavigator} 
+            name="Main" 
+            component={MainTabNavigator} 
             options={{ headerShown: false }}
           />
           <Stack.Screen 
             name="TeacherDetail" 
             component={TeacherDetailScreen} 
-            options={{ title: 'Teacher Details' }}
+            options={({ route }) => ({
+              title: route.params.teacherId === 'new' ? 'Add Teacher' : 'Teacher Details',
+            })}
           />
           <Stack.Screen 
             name="ManageAbsences" 
@@ -159,7 +160,7 @@ const AppNavigator = () => {
           />
         </>
       ) : (
-        // User is not logged in
+        // Authentication screens
         <Stack.Screen 
           name="Login" 
           component={LoginScreen} 
@@ -168,6 +169,6 @@ const AppNavigator = () => {
       )}
     </Stack.Navigator>
   );
-};
+}
 
 export default AppNavigator;
