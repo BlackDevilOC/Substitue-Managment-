@@ -7,10 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Loader2, User, Lock, Edit } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { changePasswordSchema, type ChangePassword } from "@shared/schema";
+import { changePasswordSchema, type ChangePassword, type User as UserType } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
 
 // Create schema for username change
@@ -42,9 +41,22 @@ export default function ProfilePage() {
     },
   });
 
-  const changePasswordMutation = useMutation({
+  const changePasswordMutation = useMutation<{ success: boolean }, Error, ChangePassword>({
     mutationFn: async (data: ChangePassword) => {
-      const response = await apiRequest("POST", "/api/user/change-password", data);
+      const response = await fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to change password');
+      }
+      
       return await response.json();
     },
     onSuccess: () => {
@@ -63,9 +75,22 @@ export default function ProfilePage() {
     },
   });
   
-  const changeUsernameMutation = useMutation({
+  const changeUsernameMutation = useMutation<{ success: boolean, user: UserType }, Error, UsernameChange>({
     mutationFn: async (data: UsernameChange) => {
-      const response = await apiRequest("POST", "/api/user/change-username", data);
+      const response = await fetch('/api/user/change-username', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to change username');
+      }
+      
       return await response.json();
     },
     onSuccess: (data) => {

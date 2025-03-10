@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const logoutMutation = useMutation({
+  const logoutMutation = useMutation<{ success: boolean }, Error, void>({
     mutationFn: async () => {
       const response = await fetch('/api/logout', {
         method: 'POST',
