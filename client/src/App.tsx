@@ -31,10 +31,7 @@ function Router() {
     <Switch>
       {/* Redirect from auth page to home since we're auto-logged in */}
       <Route path="/auth">
-        {() => {
-          window.location.href = "/";
-          return null;
-        }}
+        {() => <Redirect to="/" />}
       </Route>
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/schedule" component={SchedulePage} />

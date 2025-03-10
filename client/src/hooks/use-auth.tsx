@@ -34,7 +34,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAdmin: true
   };
 
-  // Load user from server API - with auto-login fallback
+  // Automatically perform login on load
+  const autoLoginMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        body: JSON.stringify({ username: "Rehan", password: "0315" }),
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Auto-login failed');
+      }
+      
+      return await response.json() as User;
+    }
+  });
+  
+  // Load user from server API
   const {
     data: user,
     error,
@@ -55,22 +73,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return userData as User;
         }
         
-        // If not authenticated, try to auto-login
-        try {
-          await fetch('/api/login', {
-            method: 'POST',
-            body: JSON.stringify({ username: "Rehan", password: "0315" }),
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-          });
-          
-          // If auto-login succeeds, return the default user
-          return defaultUser;
-        } catch (loginError) {
-          console.error('Auto-login failed:', loginError);
-          // Even if auto-login fails, return default user for offline use
-          return defaultUser;
+        // If not authenticated, try auto-login
+        await autoLoginMutation.mutateAsync();
+        
+        // After auto-login, try fetching the user again
+        const loginResponse = await fetch('/api/user', {
+          method: 'GET',
+          credentials: 'include',
+        });
+        
+        if (loginResponse.ok) {
+          return await loginResponse.json() as User;
         }
+        
+        // If we still can't get the user, use the default
+        console.warn('Authentication failed, using default user');
+        return defaultUser;
       } catch (error) {
         console.error('Error in auth flow:', error);
         // In case of any errors, still use the default user
