@@ -44,10 +44,8 @@ export default function ProfilePage() {
 
   const changePasswordMutation = useMutation({
     mutationFn: async (data: ChangePassword) => {
-      return apiRequest("/api/user/change-password", {
-        method: "POST",
-        data,
-      });
+      const response = await apiRequest("POST", "/api/user/change-password", data);
+      return await response.json();
     },
     onSuccess: () => {
       passwordForm.reset();
@@ -67,14 +65,14 @@ export default function ProfilePage() {
   
   const changeUsernameMutation = useMutation({
     mutationFn: async (data: UsernameChange) => {
-      return apiRequest("/api/user/change-username", {
-        method: "POST",
-        data,
-      });
+      const response = await apiRequest("POST", "/api/user/change-username", data);
+      return await response.json();
     },
     onSuccess: (data) => {
       setIsEditingUsername(false);
-      queryClient.setQueryData(["/api/user"], data.user);
+      if (data.user) {
+        queryClient.setQueryData(["/api/user"], data.user);
+      }
       
       toast({
         title: "Success",

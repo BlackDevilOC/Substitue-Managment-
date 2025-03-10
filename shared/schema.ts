@@ -103,11 +103,15 @@ export const insertUserSchema = createInsertSchema(users).pick({
 // Add the changePasswordSchema that was missing
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+  newPassword: z.string().min(1, "Password must contain at least 1 character"),
   confirmPassword: z.string().min(1, "Please confirm your password"),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
+});
+
+export const usernameChangeSchema = z.object({
+  newUsername: z.string().min(1, "Username is required"),
 });
 
 export const insertTeacherSchema = createInsertSchema(teachers);
@@ -140,6 +144,7 @@ export type TeacherAttendance = typeof teacherAttendance.$inferSelect;
 export type SmsHistory = typeof smsHistory.$inferSelect;
 export type UploadedFile = typeof uploadedFiles.$inferSelect;
 export type ChangePassword = z.infer<typeof changePasswordSchema>;
+export type UsernameChange = z.infer<typeof usernameChangeSchema>;
 export type Experiment = typeof experiments.$inferSelect;
 export type InsertExperiment = z.infer<typeof insertExperimentSchema>;
 export type VersionControl = typeof versionControl.$inferSelect;

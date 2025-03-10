@@ -46,17 +46,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      // Check against hardcoded admin credentials
-      if (credentials.username === ADMIN_USERNAME && credentials.password === ADMIN_PASSWORD) {
-        const user = {
-          id: 1,
-          username: ADMIN_USERNAME,
-          isAdmin: true
-        };
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(credentials),
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || 'Login failed');
+        }
+        
+        const user = await response.json();
         localStorage.setItem('currentUser', JSON.stringify(user));
         return user;
+      } catch (error) {
+        throw error;
       }
-      throw new Error('Invalid credentials');
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -76,7 +86,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      localStorage.removeItem('currentUser');
+      try {
+        const response = await fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || 'Logout failed');
+        }
+        
+        localStorage.removeItem('currentUser');
+        return true;
+      } catch (error) {
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
