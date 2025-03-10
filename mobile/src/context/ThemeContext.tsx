@@ -47,9 +47,9 @@ const customLightTheme = {
 };
 
 const customDarkTheme = {
-  ...PaperDarkTheme,
+  ...MD3DarkTheme,
   colors: {
-    ...PaperDarkTheme.colors,
+    ...MD3DarkTheme.colors,
     ...darkColors,
   },
 };
