@@ -40,27 +40,33 @@ export class MemStorage implements IStorage {
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const { getUserById } = await import('./user-file-manager.js');
+    return getUserById(id);
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const { getUserByUsername } = await import('./user-file-manager.js');
+    return getUserByUsername(username);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
+    const { readUsersFile, writeUsersFile } = await import('./user-file-manager.js');
+    const users = readUsersFile();
+    const id = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
     const user: User = { ...insertUser, id, isAdmin: false };
-    this.users.set(id, user);
+    users.push(user);
+    writeUsersFile(users);
     return user;
   }
 
   async updateUserPassword(id: number, password: string): Promise<void> {
-    const user = this.users.get(id);
-    if (user) {
-      this.users.set(id, { ...user, password });
-    }
+    const { updateUserPassword } = await import('./user-file-manager.js');
+    updateUserPassword(id, password);
+  }
+  
+  async updateUsername(id: number, newUsername: string): Promise<boolean> {
+    const { updateUsername } = await import('./user-file-manager.js');
+    return updateUsername(id, newUsername);
   }
 
   // Teacher methods

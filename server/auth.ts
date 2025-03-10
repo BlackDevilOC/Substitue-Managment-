@@ -52,11 +52,17 @@ export function setupAuth(app: Express) {
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      const user = await storage.getUserByUsername(username);
-      if (!user || !(await comparePasswords(password, user.password))) {
-        return done(null, false);
-      } else {
+      try {
+        const { verifyPassword } = await import('./user-file-manager.js');
+        const user = verifyPassword(username, password);
+        
+        if (!user) {
+          return done(null, false);
+        }
+        
         return done(null, user);
+      } catch (error) {
+        return done(error as Error);
       }
     }),
   );
@@ -98,5 +104,74 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
+  });
+
+  // Change password route
+  app.post("/api/user/change-password", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Not authenticated" });
+    
+    const { currentPassword, newPassword } = req.body;
+    
+    try {
+      // Get user from file
+      const { verifyPassword, updateUserPassword } = await import('./user-file-manager.js');
+      const user = verifyPassword(req.user.username, currentPassword);
+      
+      if (!user) {
+        return res.status(400).json({ error: "Current password is incorrect" });
+      }
+      
+      // Update password
+      const success = updateUserPassword(req.user.id, newPassword);
+      
+      if (!success) {
+        return res.status(500).json({ error: "Failed to update password" });
+      }
+      
+      res.status(200).json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ error: "An error occurred while changing password" });
+    }
+  });
+
+  // Change username route
+  app.post("/api/user/change-username", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Not authenticated" });
+    
+    const { newUsername } = req.body;
+    
+    if (!newUsername || typeof newUsername !== 'string') {
+      return res.status(400).json({ error: "New username is required" });
+    }
+    
+    try {
+      // Check if username already exists
+      const { getUserByUsername, updateUsername } = await import('./user-file-manager.js');
+      const existingUser = getUserByUsername(newUsername);
+      
+      if (existingUser && existingUser.id !== req.user.id) {
+        return res.status(400).json({ error: "Username already taken" });
+      }
+      
+      // Update username
+      const success = updateUsername(req.user.id, newUsername);
+      
+      if (!success) {
+        return res.status(500).json({ error: "Failed to update username" });
+      }
+      
+      // Update session
+      const updatedUser = { ...req.user, username: newUsername };
+      req.login(updatedUser, (err) => {
+        if (err) {
+          return res.status(500).json({ error: "Error updating session" });
+        }
+        res.status(200).json({ message: "Username updated successfully", user: updatedUser });
+      });
+    } catch (error) {
+      console.error("Error changing username:", error);
+      res.status(500).json({ error: "An error occurred while changing username" });
+    }
   });
 }

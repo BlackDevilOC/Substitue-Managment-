@@ -4,23 +4,41 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, User, Lock } from "lucide-react";
+import { Loader2, User, Lock, Edit } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { changePasswordSchema, type ChangePassword } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { z } from "zod";
+
+// Create schema for username change
+const usernameChangeSchema = z.object({
+  newUsername: z.string().min(3, "Username must be at least 3 characters")
+});
+
+type UsernameChange = z.infer<typeof usernameChangeSchema>;
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const form = useForm<ChangePassword>({
+  const queryClient = useQueryClient();
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  
+  const passwordForm = useForm<ChangePassword>({
     resolver: zodResolver(changePasswordSchema),
     defaultValues: {
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
+    },
+  });
+  
+  const usernameForm = useForm<UsernameChange>({
+    resolver: zodResolver(usernameChangeSchema),
+    defaultValues: {
+      newUsername: user?.username || "",
     },
   });
 
@@ -32,7 +50,7 @@ export default function ProfilePage() {
       });
     },
     onSuccess: () => {
-      form.reset();
+      passwordForm.reset();
       toast({
         title: "Success",
         description: "Password changed successfully",
@@ -46,8 +64,33 @@ export default function ProfilePage() {
       });
     },
   });
+  
+  const changeUsernameMutation = useMutation({
+    mutationFn: async (data: UsernameChange) => {
+      return apiRequest("/api/user/change-username", {
+        method: "POST",
+        data,
+      });
+    },
+    onSuccess: (data) => {
+      setIsEditingUsername(false);
+      queryClient.setQueryData(["/api/user"], data.user);
+      
+      toast({
+        title: "Success",
+        description: "Username changed successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to change username",
+        variant: "destructive",
+      });
+    },
+  });
 
-  const onSubmit = (data: ChangePassword) => {
+  const onPasswordSubmit = (data: ChangePassword) => {
     if (data.newPassword !== data.confirmPassword) {
       toast({
         title: "Error",
@@ -57,6 +100,14 @@ export default function ProfilePage() {
       return;
     }
     changePasswordMutation.mutate(data);
+  };
+  
+  const onUsernameSubmit = (data: UsernameChange) => {
+    if (data.newUsername === user?.username) {
+      setIsEditingUsername(false);
+      return;
+    }
+    changeUsernameMutation.mutate(data);
   };
 
   return (
@@ -76,8 +127,61 @@ export default function ProfilePage() {
           <CardContent>
             <div className="space-y-4">
               <div>
-                <Label>Username</Label>
-                <div className="text-lg font-medium">{user?.username}</div>
+                <div className="flex justify-between items-center mb-2">
+                  <Label>Username</Label>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setIsEditingUsername(!isEditingUsername)}
+                    className="h-8 px-2"
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    {isEditingUsername ? "Cancel" : "Edit"}
+                  </Button>
+                </div>
+                
+                {isEditingUsername ? (
+                  <form onSubmit={usernameForm.handleSubmit(onUsernameSubmit)} className="space-y-2">
+                    <Input
+                      id="newUsername"
+                      {...usernameForm.register("newUsername")}
+                    />
+                    {usernameForm.formState.errors.newUsername && (
+                      <p className="text-sm text-destructive">
+                        {usernameForm.formState.errors.newUsername.message}
+                      </p>
+                    )}
+                    <div className="flex space-x-2 mt-2">
+                      <Button
+                        type="submit"
+                        size="sm"
+                        disabled={changeUsernameMutation.isPending}
+                      >
+                        {changeUsernameMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                            Saving...
+                          </>
+                        ) : (
+                          "Save"
+                        )}
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setIsEditingUsername(false);
+                          usernameForm.reset();
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="text-lg font-medium">{user?.username}</div>
+                )}
               </div>
               <div>
                 <Label>Role</Label>
@@ -97,17 +201,17 @@ export default function ProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="currentPassword">Current Password</Label>
                 <Input
                   id="currentPassword"
                   type="password"
-                  {...form.register("currentPassword")}
+                  {...passwordForm.register("currentPassword")}
                 />
-                {form.formState.errors.currentPassword && (
+                {passwordForm.formState.errors.currentPassword && (
                   <p className="text-sm text-destructive">
-                    {form.formState.errors.currentPassword.message}
+                    {passwordForm.formState.errors.currentPassword.message}
                   </p>
                 )}
               </div>
@@ -117,11 +221,11 @@ export default function ProfilePage() {
                 <Input
                   id="newPassword"
                   type="password"
-                  {...form.register("newPassword")}
+                  {...passwordForm.register("newPassword")}
                 />
-                {form.formState.errors.newPassword && (
+                {passwordForm.formState.errors.newPassword && (
                   <p className="text-sm text-destructive">
-                    {form.formState.errors.newPassword.message}
+                    {passwordForm.formState.errors.newPassword.message}
                   </p>
                 )}
               </div>
@@ -131,11 +235,11 @@ export default function ProfilePage() {
                 <Input
                   id="confirmPassword"
                   type="password"
-                  {...form.register("confirmPassword")}
+                  {...passwordForm.register("confirmPassword")}
                 />
-                {form.formState.errors.confirmPassword && (
+                {passwordForm.formState.errors.confirmPassword && (
                   <p className="text-sm text-destructive">
-                    {form.formState.errors.confirmPassword.message}
+                    {passwordForm.formState.errors.confirmPassword.message}
                   </p>
                 )}
               </div>
