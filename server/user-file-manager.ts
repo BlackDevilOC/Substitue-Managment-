@@ -1,47 +1,39 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 import { User } from '@shared/schema';
+import { safeReadJsonFile, safeWriteJsonFile } from '../utils/fileUtils';
+import crypto from 'crypto';
 
-const USERS_FILE_PATH = path.join(process.cwd(), 'data', 'users.json');
+const USERS_FILE = path.join(process.cwd(), 'data', 'users.json');
+
+/**
+ * Hashes a password using SHA-256
+ * Simple implementation for demonstration purposes
+ */
+function hashPassword(password: string): string {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+/**
+ * Verifies a password against a stored hash
+ */
+function verifyPassword(password: string, hash: string): boolean {
+  const hashedInput = hashPassword(password);
+  return hashedInput === hash;
+}
 
 /**
  * Read users from the JSON file
  */
 export function readUsersFile(): User[] {
-  try {
-    if (!fs.existsSync(USERS_FILE_PATH)) {
-      // Create default user if file doesn't exist
-      const defaultUsers = [
-        {
-          id: 1,
-          username: 'Rehan',
-          password: '0315',
-          isAdmin: true
-        }
-      ];
-      fs.writeFileSync(USERS_FILE_PATH, JSON.stringify(defaultUsers, null, 2));
-      return defaultUsers;
-    }
-    
-    const fileContent = fs.readFileSync(USERS_FILE_PATH, 'utf-8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    console.error('Error reading users file:', error);
-    return [];
-  }
+  return safeReadJsonFile<User[]>(USERS_FILE, []);
 }
 
 /**
  * Write users to the JSON file
  */
 export function writeUsersFile(users: User[]): boolean {
-  try {
-    fs.writeFileSync(USERS_FILE_PATH, JSON.stringify(users, null, 2));
-    return true;
-  } catch (error) {
-    console.error('Error writing users file:', error);
-    return false;
-  }
+  return safeWriteJsonFile(USERS_FILE, users);
 }
 
 /**
@@ -71,7 +63,7 @@ export function updateUserPassword(id: number, newPassword: string): boolean {
     return false;
   }
   
-  users[userIndex].password = newPassword;
+  users[userIndex].password = hashPassword(newPassword);
   return writeUsersFile(users);
 }
 
@@ -81,9 +73,9 @@ export function updateUserPassword(id: number, newPassword: string): boolean {
 export function updateUsername(id: number, newUsername: string): boolean {
   const users = readUsersFile();
   
-  // Check if username already exists
-  if (users.some(user => user.id !== id && user.username.toLowerCase() === newUsername.toLowerCase())) {
-    return false;
+  // Check if the new username already exists
+  if (users.some(user => user.username.toLowerCase() === newUsername.toLowerCase() && user.id !== id)) {
+    return false; // Username already exists
   }
   
   const userIndex = users.findIndex(user => user.id === id);
@@ -99,12 +91,30 @@ export function updateUsername(id: number, newUsername: string): boolean {
 /**
  * Verify a user's password
  */
-export function verifyPassword(username: string, password: string): User | null {
+export function verifyUserPassword(username: string, password: string): User | null {
   const user = getUserByUsername(username);
   
-  if (!user || user.password !== password) {
+  if (!user) {
     return null;
   }
   
-  return user;
+  const isValid = verifyPassword(password, user.password);
+  return isValid ? user : null;
+}
+
+/**
+ * Initialize the users file with a default admin user if it doesn't exist
+ */
+export function initializeUsersFile(): void {
+  if (!fs.existsSync(USERS_FILE)) {
+    const defaultUser: User = {
+      id: 1,
+      username: 'Rehan',
+      password: hashPassword('0315'),
+      isAdmin: true
+    };
+    
+    writeUsersFile([defaultUser]);
+    console.log('Created default user file with admin account');
+  }
 }
