@@ -29,7 +29,13 @@ import SMSConfirmPage from "@/pages/sms-confirm"; // Added import
 function Router() {
   return (
     <Switch>
-      <Route path="/auth" component={AuthPage} />
+      {/* Redirect from auth page to home since we're auto-logged in */}
+      <Route path="/auth">
+        {() => {
+          window.location.href = "/";
+          return null;
+        }}
+      </Route>
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/schedule" component={SchedulePage} />
       <ProtectedRoute path="/attendees" component={Attendees} />

@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import { Redirect, Route } from "wouter";
+import { Route } from "wouter";
 
 export function ProtectedRoute({
   path,
@@ -9,8 +9,9 @@ export function ProtectedRoute({
   path: string;
   component: () => React.JSX.Element;
 }) {
-  const { user, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
+  // Show loading indicator only while the auth is being checked
   if (isLoading) {
     return (
       <Route path={path}>
@@ -21,13 +22,6 @@ export function ProtectedRoute({
     );
   }
 
-  if (!user) {
-    return (
-      <Route path={path}>
-        <Redirect to="/auth" />
-      </Route>
-    );
-  }
-
-  return <Component />
+  // No redirects - always render the component as we've auto-logged in
+  return <Route path={path} component={Component} />;
 }

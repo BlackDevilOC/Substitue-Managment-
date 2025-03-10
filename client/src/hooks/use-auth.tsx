@@ -27,7 +27,14 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
-  // Load user from server API
+  // Default user for auto-login
+  const defaultUser: User = {
+    id: 1,
+    username: "Rehan",
+    isAdmin: true
+  };
+
+  // Load user from server API - with auto-login fallback
   const {
     data: user,
     error,
@@ -37,26 +44,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
-        // Use fetch directly to handle errors properly
+        // First try to get user from server
         const response = await fetch('/api/user', {
           method: 'GET',
           credentials: 'include',
         });
         
-        if (!response.ok) {
-          // For authentication errors, just return null instead of throwing
-          if (response.status === 401) {
-            return null;
-          }
-          throw new Error('Failed to fetch user data');
+        if (response.ok) {
+          const userData = await response.json();
+          return userData as User;
         }
         
-        const userData = await response.json();
-        return userData as User;
+        // If not authenticated, try to auto-login
+        try {
+          await fetch('/api/login', {
+            method: 'POST',
+            body: JSON.stringify({ username: "Rehan", password: "0315" }),
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+          });
+          
+          // If auto-login succeeds, return the default user
+          return defaultUser;
+        } catch (loginError) {
+          console.error('Auto-login failed:', loginError);
+          // Even if auto-login fails, return default user for offline use
+          return defaultUser;
+        }
       } catch (error) {
-        // For network errors or other issues, return null
-        console.error('Error fetching user data:', error);
-        return null;
+        console.error('Error in auth flow:', error);
+        // In case of any errors, still use the default user
+        return defaultUser;
       }
     },
   });
