@@ -1,11 +1,7 @@
-import { createContext, ReactNode, useContext, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { createContext, ReactNode, useContext } from "react";
+import { useQuery, useMutation, UseMutationResult } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "../lib/queryClient";
-
-// Define admin credentials
-const ADMIN_USERNAME = 'Rehan';
-const ADMIN_PASSWORD = '0315';
 
 interface User {
   id: number;
@@ -17,8 +13,8 @@ type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: any;
-  logoutMutation: any;
+  loginMutation: UseMutationResult<User, Error, LoginData>;
+  logoutMutation: UseMutationResult<{ success: boolean }, Error, void>;
 };
 
 interface LoginData {
@@ -31,42 +27,57 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
-  // Load user from localStorage on mount
+  // Load user from server API
   const {
     data: user,
     error,
     isLoading,
-  } = useQuery<User | null>({
+    refetch: refetchUser,
+  } = useQuery({
     queryKey: ["/api/user"],
-    queryFn: () => {
-      const storedUser = localStorage.getItem('currentUser');
-      return storedUser ? JSON.parse(storedUser) : null;
-    },
-  });
-
-  const loginMutation = useMutation({
-    mutationFn: async (credentials: LoginData) => {
+    queryFn: async () => {
       try {
-        const response = await fetch('/api/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(credentials),
-          credentials: 'include'
+        // Use fetch directly to handle errors properly
+        const response = await fetch('/api/user', {
+          method: 'GET',
+          credentials: 'include',
         });
         
         if (!response.ok) {
-          const text = await response.text();
-          throw new Error(text || 'Login failed');
+          // For authentication errors, just return null instead of throwing
+          if (response.status === 401) {
+            return null;
+          }
+          throw new Error('Failed to fetch user data');
         }
         
-        const user = await response.json();
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        return user;
+        const userData = await response.json();
+        return userData as User;
       } catch (error) {
-        throw error;
+        // For network errors or other issues, return null
+        console.error('Error fetching user data:', error);
+        return null;
       }
+    },
+  });
+
+  const loginMutation = useMutation<User, Error, LoginData>({
+    mutationFn: async (credentials: LoginData) => {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        body: JSON.stringify(credentials),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Login failed');
+      }
+      
+      return await response.json() as User;
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -74,11 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Welcome back!",
         description: `Logged in as ${user.username}`,
       });
+      // Refetch user data to ensure we have the latest
+      refetchUser();
     },
     onError: (error: Error) => {
       toast({
         title: "Login failed",
-        description: error.message,
+        description: error.message || "Invalid credentials",
         variant: "destructive",
       });
     },
@@ -86,22 +99,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      try {
-        const response = await fetch('/api/logout', {
-          method: 'POST',
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(text || 'Logout failed');
-        }
-        
-        localStorage.removeItem('currentUser');
-        return true;
-      } catch (error) {
-        throw error;
+      const response = await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Logout failed');
       }
+      
+      return await response.json() as { success: boolean };
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
@@ -113,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onError: (error: Error) => {
       toast({
         title: "Logout failed",
-        description: error.message,
+        description: error.message || "Failed to logout",
         variant: "destructive",
       });
     },
