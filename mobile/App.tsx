@@ -1,11 +1,10 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, SafeAreaView, ActivityIndicator, View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { Provider as PaperProvider } from 'react-native-paper';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 // Import screens
@@ -151,7 +150,6 @@ export default function App() {
     <SafeAreaView style={styles.safeArea}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <PaperProvider>
             <NetworkProvider>
               <DatabaseProvider>
                 <AuthProvider>
@@ -162,7 +160,6 @@ export default function App() {
                 </AuthProvider>
               </DatabaseProvider>
             </NetworkProvider>
-          </PaperProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </SafeAreaView>
