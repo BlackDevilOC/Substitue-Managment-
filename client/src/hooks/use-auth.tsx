@@ -34,25 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAdmin: true
   };
 
-  // Automatically perform login on load
-  const autoLoginMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        body: JSON.stringify({ username: "Rehan", password: "0315" }),
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Auto-login failed');
-      }
-      
-      return await response.json() as User;
-    }
-  });
-  
-  // Load user from server API
+  // Load user from server API with auto-login
   const {
     data: user,
     error,
@@ -62,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: async () => {
       try {
-        // First try to get user from server
+        // First try to get user from session
         const response = await fetch('/api/user', {
           method: 'GET',
           credentials: 'include',
@@ -73,12 +55,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return userData as User;
         }
         
-        // If not authenticated, try auto-login
-        await autoLoginMutation.mutateAsync();
-        
-        // After auto-login, try fetching the user again
-        const loginResponse = await fetch('/api/user', {
-          method: 'GET',
+        // If not authenticated, perform auto-login
+        const loginResponse = await fetch('/api/login', {
+          method: 'POST',
+          body: JSON.stringify({ username: "Rehan", password: "0315" }),
+          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
         });
         
@@ -86,15 +67,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return await loginResponse.json() as User;
         }
         
-        // If we still can't get the user, use the default
-        console.warn('Authentication failed, using default user');
+        // If auto-login fails, use default user as fallback
+        console.warn('Auto-login failed, using default user');
         return defaultUser;
       } catch (error) {
         console.error('Error in auth flow:', error);
-        // In case of any errors, still use the default user
+        // In case of any errors, use default user
         return defaultUser;
       }
     },
+    // Refresh auth state every 5 minutes to keep session alive
+    refetchInterval: 5 * 60 * 1000,
+    // Don't refetch on window focus - rely on interval only
+    refetchOnWindowFocus: false,
+    // Retry 3 times if authentication fails
+    retry: 3,
+    retryDelay: 1000,
   });
 
   const loginMutation = useMutation<User, Error, LoginData>({

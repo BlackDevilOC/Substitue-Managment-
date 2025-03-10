@@ -84,8 +84,17 @@ export function updateUsername(id: number, newUsername: string): boolean {
     return false;
   }
   
+  // Update username and ensure it's saved
   users[userIndex].username = newUsername;
-  return writeUsersFile(users);
+  const saved = writeUsersFile(users);
+  
+  if (saved) {
+    console.log(`Username updated successfully for user ID ${id} to: ${newUsername}`);
+  } else {
+    console.error(`Failed to save username change for user ID ${id}`);
+  }
+  
+  return saved;
 }
 
 /**

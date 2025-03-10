@@ -7,17 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Loader2, User, Lock, Edit } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { changePasswordSchema, type ChangePassword, type User as UserType } from "@shared/schema";
+import { changePasswordSchema, usernameChangeSchema, type ChangePassword, type User as UserType, type UsernameChange } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-
-// Create schema for username change
-const usernameChangeSchema = z.object({
-  newUsername: z.string().min(3, "Username must be at least 3 characters")
-});
-
-type UsernameChange = z.infer<typeof usernameChangeSchema>;
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -95,13 +88,18 @@ export default function ProfilePage() {
     },
     onSuccess: (data) => {
       setIsEditingUsername(false);
+      // Update cache with the new user data
       if (data.user) {
+        // Update the user data in the query cache
         queryClient.setQueryData(["/api/user"], data.user);
+        
+        // Trigger an additional refetch to ensure we have the latest data from the server
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       }
       
       toast({
         title: "Success",
-        description: "Username changed successfully",
+        description: "Username changed successfully. Your new username will be displayed everywhere.",
       });
     },
     onError: (error: Error) => {
