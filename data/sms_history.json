@@ -43,5 +43,14 @@
     "method": "api",
     "id": "b88913evo",
     "sentAt": "2025-03-11T00:36:37.011Z"
+  },
+  {
+    "teacherId": "2",
+    "teacherName": "Sir Mushtaque Ahmed",
+    "message": "Reminder: Staff meeting tomorrow at {time} in {location}. Agenda: {agenda}",
+    "status": "failed",
+    "method": "api",
+    "id": "b7qhhdgz7",
+    "sentAt": "2025-03-11T00:40:14.492Z"
   }
 ]

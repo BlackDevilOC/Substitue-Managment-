@@ -41,6 +41,9 @@ interface ApiConfig {
 export function initializeSMSHistory() {
   if (!fs.existsSync(SMS_HISTORY_FILE)) {
     fs.writeFileSync(SMS_HISTORY_FILE, JSON.stringify([], null, 2));
+  } else {
+    // Clear existing history
+    fs.writeFileSync(SMS_HISTORY_FILE, JSON.stringify([], null, 2));
   }
 }
 
@@ -233,7 +236,7 @@ Please confirm your availability.
   const history = loadSMSHistory();
   const updatedHistory = history.map(entry => 
     entry.id === historyEntry.id 
-      ? { ...entry, status: smsSent ? 'sent' : 'failed' as const }
+      ? { ...entry, status: smsSent ? 'sent' as const : 'failed' as const }
       : entry
   );
   saveSMSHistory(updatedHistory);
