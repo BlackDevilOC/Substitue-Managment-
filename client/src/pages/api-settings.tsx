@@ -12,6 +12,7 @@ interface ApiConfig {
   id: string;
   name: string;
   key: string;
+  deviceId: string; // Added deviceId field
   type: 'sms' | 'whatsapp';
   isActive?: boolean;
 }
@@ -21,6 +22,7 @@ export default function ApiSettingsPage() {
   const [apiConfigs, setApiConfigs] = useState<ApiConfig[]>([]);
   const [newApiName, setNewApiName] = useState('');
   const [newApiKey, setNewApiKey] = useState('');
+  const [newDeviceId, setNewDeviceId] = useState(''); // Added device ID state
   const [newApiType, setNewApiType] = useState<'sms' | 'whatsapp'>('sms');
   const [devMode, setDevMode] = useState(false);
 
@@ -52,10 +54,10 @@ export default function ApiSettingsPage() {
   }, [apiConfigs]);
 
   const handleAddApi = () => {
-    if (!newApiName.trim() || !newApiKey.trim()) {
+    if (!newApiName.trim() || !newApiKey.trim() || !newDeviceId.trim()) {
       toast({
         title: "Validation Error",
-        description: "Please fill in both name and API key.",
+        description: "Please fill in all fields: name, API key, and device ID.",
         variant: "destructive"
       });
       return;
@@ -65,13 +67,15 @@ export default function ApiSettingsPage() {
       id: Math.random().toString(36).substr(2, 9),
       name: newApiName.trim(),
       key: newApiKey.trim(),
+      deviceId: newDeviceId.trim(),
       type: newApiType,
-      isActive: false // New APIs are not active by default
+      isActive: false
     };
 
     setApiConfigs(prev => [...prev, newConfig]);
     setNewApiName('');
     setNewApiKey('');
+    setNewDeviceId('');
 
     toast({
       title: "API Added",
@@ -257,6 +261,16 @@ export default function ApiSettingsPage() {
                   onChange={(e) => setNewApiKey(e.target.value)}
                   placeholder="Enter API key"
                   type="password"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="device-id">Device ID</Label>
+                <Input
+                  id="device-id"
+                  value={newDeviceId}
+                  onChange={(e) => setNewDeviceId(e.target.value)}
+                  placeholder="Enter device ID"
                 />
               </div>
 

@@ -33,6 +33,7 @@ interface ApiConfig {
   id: string;
   name: string;
   key: string;
+  deviceId: string; // Added deviceId field
   type: 'sms' | 'whatsapp';
   isActive: boolean;
 }
@@ -133,17 +134,19 @@ async function sendSMSViaAPI(phoneNumber: string, message: string, apiConfig: Ap
 
     console.log('Formatted phone number:', formattedPhone);
 
-    const response = await axios.post('https://api.textbee.pk/v1/send', {
-      phone: formattedPhone,
-      text: message,
-      sender: "SMS",  // Required by TextBee
-      route: "direct" // Required by TextBee
-    }, {
-      headers: {
-        'Authorization': `Bearer ${apiConfig.key}`,
-        'Content-Type': 'application/json'
+    const response = await axios.post(
+      `https://api.textbee.dev/api/v1/gateway/devices/${apiConfig.deviceId}/send-sms`,
+      {
+        recipients: [formattedPhone],
+        message: message
+      },
+      {
+        headers: {
+          'x-api-key': apiConfig.key,
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
     console.log('TextBee API Response:', response.data);
 

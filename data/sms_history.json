@@ -7,5 +7,14 @@
     "method": "api",
     "id": "7hmgs9suu",
     "sentAt": "2025-03-11T06:44:22.299Z"
+  },
+  {
+    "teacherId": "2",
+    "teacherName": "Sir Mushtaque Ahmed",
+    "message": "You have been assigned exam duty for {class} on {date} during {period} period.",
+    "status": "failed",
+    "method": "api",
+    "id": "co7ntm25q",
+    "sentAt": "2025-03-11T07:02:13.115Z"
   }
 ]
