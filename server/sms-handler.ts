@@ -3,13 +3,15 @@ import { storage } from './storage';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import axios from 'axios';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Development mode configuration
-const TEST_PHONE_NUMBER = "+923124406273";
+const TEST_PHONE_NUMBER = "+923133469238";
 const SMS_HISTORY_FILE = path.join(__dirname, '../data/sms_history.json');
+const API_CONFIG_FILE = path.join(__dirname, '../data/api_config.json');
 
 interface SMSMessage {
   recipient: string;  // Phone number
@@ -24,6 +26,15 @@ interface SMSHistoryEntry {
   sentAt: string;
   status: 'sent' | 'failed' | 'pending';
   method: 'api' | 'mobile' | 'whatsapp';
+  phone: string;
+}
+
+interface ApiConfig {
+  id: string;
+  name: string;
+  key: string;
+  type: 'sms' | 'whatsapp';
+  isActive: boolean;
 }
 
 // Initialize SMS history file if it doesn't exist
@@ -54,6 +65,26 @@ export function saveSMSHistory(history: SMSHistoryEntry[]) {
   }
 }
 
+// Load API configurations
+export function loadApiConfigs(): ApiConfig[] {
+  try {
+    if (!fs.existsSync(API_CONFIG_FILE)) {
+      return [];
+    }
+    const data = fs.readFileSync(API_CONFIG_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Error loading API configs:', error);
+    return [];
+  }
+}
+
+// Get active API for a specific type
+function getActiveApi(type: 'sms' | 'whatsapp'): ApiConfig | null {
+  const configs = loadApiConfigs();
+  return configs.find(config => config.type === type && config.isActive) || null;
+}
+
 // Add new SMS entry to history
 export function addSMSToHistory(entry: Omit<SMSHistoryEntry, 'id' | 'sentAt'>) {
   const history = loadSMSHistory();
@@ -67,29 +98,73 @@ export function addSMSToHistory(entry: Omit<SMSHistoryEntry, 'id' | 'sentAt'>) {
   return newEntry;
 }
 
+// Send SMS using TextBee API
+async function sendSMSViaAPI(phoneNumber: string, message: string, apiConfig: ApiConfig): Promise<boolean> {
+  try {
+    const response = await axios.post('https://api.textbee.pk/sms/send', {
+      recipient: phoneNumber,
+      message: message
+    }, {
+      headers: {
+        'Authorization': `Bearer ${apiConfig.key}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return response.status === 200;
+  } catch (error) {
+    console.error('TextBee API Error:', error);
+    return false;
+  }
+}
+
 /**
- * Sends an SMS message (development mode)
+ * Sends an SMS message
  */
-export async function sendSMS(phoneNumber: string, message: string, method: 'api' | 'mobile' | 'whatsapp' = 'api'): Promise<boolean> {
+export async function sendSMS(
+  phoneNumber: string, 
+  message: string, 
+  method: 'api' | 'mobile' | 'whatsapp' = 'api',
+  isDevMode: boolean = false
+): Promise<boolean> {
   // Check if phone number is valid format (Pakistan numbers start with +92)
   if (!phoneNumber || (!phoneNumber.startsWith('+92') && !phoneNumber.startsWith('92'))) {
     console.error(`Invalid Pakistan phone number format: ${phoneNumber}`);
     return false;
   }
 
-  try {
-    // In development mode, just log the message
-    console.log('\n=== SMS Message Log ===');
-    console.log(`To: ${phoneNumber}`);
-    console.log(`Method: ${method}`);
-    console.log('Message:');
-    console.log(message);
-    console.log('=====================\n');
+  // In dev mode, always send to test number
+  const finalPhoneNumber = isDevMode ? TEST_PHONE_NUMBER : phoneNumber;
 
-    // For testing, we'll consider the message as "sent" if it was logged
-    return true;
+  try {
+    if (method === 'api') {
+      const apiConfig = getActiveApi('sms');
+      if (!apiConfig) {
+        console.error('No active SMS API configured');
+        return false;
+      }
+      return await sendSMSViaAPI(finalPhoneNumber, message, apiConfig);
+    } else if (method === 'whatsapp') {
+      const apiConfig = getActiveApi('whatsapp');
+      if (!apiConfig) {
+        console.error('No active WhatsApp API configured');
+        return false;
+      }
+      // Implement WhatsApp sending logic here
+      console.log('WhatsApp sending not implemented yet');
+      return false;
+    } else {
+      // For mobile method, just log the message in development
+      console.log('\n=== SMS Message Log ===');
+      console.log(`To: ${finalPhoneNumber}`);
+      console.log(`Method: ${method}`);
+      console.log('Message:');
+      console.log(message);
+      console.log('=====================\n');
+      return true;
+    }
   } catch (error) {
-    console.error('Failed to log SMS:', error);
+    console.error('Failed to send SMS:', error);
     return false;
   }
 }
@@ -98,9 +173,6 @@ export async function sendSubstituteNotification(
   substitute: Teacher,
   assignments: {day: string; period: number; className: string; originalTeacher: string}[]
 ) {
-  // In development, use the test phone number
-  const phoneNumber = TEST_PHONE_NUMBER;
-
   const message = `
 Dear ${substitute.name},
 
@@ -122,21 +194,21 @@ Please confirm your availability.
     teacherName: substitute.name,
     message: message,
     status: 'pending',
-    method: 'api'
+    method: 'api',
+    phone: substitute.phoneNumber || TEST_PHONE_NUMBER
   });
 
-  const smsSent = await sendSMS(phoneNumber, message);
+  const smsSent = await sendSMS(substitute.phoneNumber || TEST_PHONE_NUMBER, message);
 
   // Update SMS status
   const history = loadSMSHistory();
   const updatedHistory = history.map(entry => 
     entry.id === historyEntry.id 
-      ? { ...entry, status: smsSent ? 'sent' : 'failed' }
+      ? { ...entry, status: smsSent ? 'sent' : 'failed' as const }
       : entry
   );
   saveSMSHistory(updatedHistory);
 
-  console.log(`SMS logged for ${substitute.name}: ${smsSent ? 'Success' : 'Failed'}`);
   return message;
 }
 
