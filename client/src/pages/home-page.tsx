@@ -12,7 +12,8 @@ import {
   Search,
   FileUp,
   BarChart3,
-  AlertCircle
+  AlertCircle,
+  Key
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -25,7 +26,7 @@ import { useEffect } from "react";
 export default function HomePage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   // Fetch notifications
   const { data: notifications } = useQuery<any[]>({
     queryKey: ["/api/notifications"],
@@ -37,7 +38,7 @@ export default function HomePage() {
       return response.json();
     }
   });
-  
+
   // Show notifications as toasts on first load
   useEffect(() => {
     if (notifications && notifications.length > 0) {
@@ -56,7 +57,7 @@ export default function HomePage() {
       {/* Logo Section */}
       <div className="flex flex-col items-center mb-8">
         <div className="w-24 h-24 relative mb-2">
-          <img 
+          <img
             src="/schedulizer-logo.png"
             alt="Schedulizer Logo"
             className="w-full h-full object-contain"
@@ -175,6 +176,12 @@ export default function HomePage() {
         <div className="mt-4 bg-card rounded-lg p-4 shadow-sm border">
           <h2 className="text-lg font-semibold mb-4">Admin Tools</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <Link href="/api-settings">
+              <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center gap-1">
+                <Key className="h-5 w-5" />
+                <span className="text-xs">API Settings</span>
+              </Button>
+            </Link>
             <Link href="/experiments">
               <Button variant="outline" className="w-full h-20 flex flex-col items-center justify-center gap-1">
                 <BookOpen className="h-5 w-5" />
