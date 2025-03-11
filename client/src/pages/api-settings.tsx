@@ -39,12 +39,17 @@ export default function ApiSettingsPage() {
   // Save configurations to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('smsApiConfigs', JSON.stringify(apiConfigs));
+    // Also save to the server-side file
+    fetch('/api/save-api-config', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(apiConfigs)
+    }).catch(error => {
+      console.error('Failed to save API config to server:', error);
+    });
   }, [apiConfigs]);
-
-  // Save dev mode state
-  useEffect(() => {
-    localStorage.setItem('smsDevMode', JSON.stringify(devMode));
-  }, [devMode]);
 
   const handleAddApi = () => {
     if (!newApiName.trim() || !newApiKey.trim()) {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ export default function SmsConfirmPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [sendMethod, setSendMethod] = useState<'api' | 'mobile' | 'whatsapp'>('api');
+  const [loading, setLoading] = useState(false);
 
   // Parse state from URL query parameters since wouter doesn't support state
   const params = new URLSearchParams(window.location.search);
@@ -59,6 +60,8 @@ export default function SmsConfirmPage() {
       return;
     }
 
+    setLoading(true);
+
     try {
       // Prepare the data for sending
       const teachersWithPhones = selectedTeachers.map(teacher => ({
@@ -79,7 +82,7 @@ export default function SmsConfirmPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send messages');
+        throw new Error(await response.text());
       }
 
       toast({
@@ -90,11 +93,14 @@ export default function SmsConfirmPage() {
       // Redirect to SMS history page
       setLocation('/sms-history');
     } catch (error) {
+      console.error('Error sending messages:', error);
       toast({
         title: "Error",
-        description: "Failed to send messages. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to send messages. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -185,9 +191,13 @@ export default function SmsConfirmPage() {
           <Button variant="outline" onClick={() => setLocation('/sms-send')}>
             Back
           </Button>
-          <Button onClick={handleSendMessages} className="min-w-[120px]">
+          <Button 
+            onClick={handleSendMessages} 
+            className="min-w-[120px]" 
+            disabled={loading}
+          >
             <Send className="h-4 w-4 mr-2" />
-            Send Messages
+            {loading ? 'Sending...' : 'Send Messages'}
           </Button>
         </div>
       </div>

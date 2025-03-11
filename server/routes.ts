@@ -1025,6 +1025,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add this endpoint after the other API routes
+  app.get("/api/current-api-config", (req, res) => {
+    try {
+      const configPath = path.join(__dirname, '../data/api_config.json');
+      if (!fs.existsSync(configPath)) {
+        return res.json({ active: null });
+      }
+      const configs = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      const activeSmsApi = configs.find((config: any) => config.type === 'sms' && config.isActive);
+      res.json({ active: activeSmsApi });
+    } catch (error) {
+      console.error('Error getting current API config:', error);
+      res.status(500).json({ error: 'Failed to get API configuration' });
+    }
+  });
+
+  app.post("/api/save-api-config", async (req, res) => {
+    try {
+      const apiConfigs = req.body;
+      const configPath = path.join(__dirname, '../data/api_config.json');
+
+      // Create data directory if it doesn't exist
+      const dataDir = path.dirname(configPath);
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+
+      fs.writeFileSync(configPath, JSON.stringify(apiConfigs, null, 2));
+      console.log('Saved API configurations:', apiConfigs);
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error saving API configurations:', error);
+      res.status(500).json({ 
+        error: 'Failed to save API configurations',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  app.get("/api/test-sms-config", async (req, res) => {
+    try {
+      // 1. Load current API config
+      const configPath = path.join(__dirname, '../data/api_config.json');
+      if (!fs.existsSync(configPath)) {
+        return res.status(404).json({ error: 'No API configuration found' });
+      }
+
+      const configs = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      const activeSmsApi = configs.find((config: any) => config.type === 'sms' && config.isActive);
+
+      if (!activeSmsApi) {
+        return res.status(400).json({ error: 'No active SMS API configured' });
+      }
+
+      // 2. Send a test message
+      const { sendSMS } = await import('./sms-handler.js');
+      const testResult = await sendSMS(
+        '+923133469238', // Your test number
+        'This is a test message from your School Management System',
+        'api',
+        true // Dev mode
+      );
+
+      res.json({ 
+        success: testResult,
+        activeApi: {
+          name: activeSmsApi.name,
+          type: activeSmsApi.type,
+          keyLastFour: activeSmsApi.key.slice(-4)
+        }
+      });
+    } catch (error) {
+      console.error('SMS test error:', error);
+      res.status(500).json({ 
+        error: 'Failed to test SMS configuration',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
@@ -1129,7 +1210,6 @@ class SubstituteManager {
         targetName: teacherName
       });
     
-
       const cleanName = teacherName.toLowerCase();
       const similarNames = this.timetable
         .map(e => e.Teacher)

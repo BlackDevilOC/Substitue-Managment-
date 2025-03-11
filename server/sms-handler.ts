@@ -39,18 +39,27 @@ interface ApiConfig {
 
 // Initialize SMS history file if it doesn't exist
 export function initializeSMSHistory() {
-  if (!fs.existsSync(SMS_HISTORY_FILE)) {
+  try {
+    // Create data directory if it doesn't exist
+    const dataDir = path.join(__dirname, '../data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+
+    // Initialize empty SMS history file
     fs.writeFileSync(SMS_HISTORY_FILE, JSON.stringify([], null, 2));
-  } else {
-    // Clear existing history
-    fs.writeFileSync(SMS_HISTORY_FILE, JSON.stringify([], null, 2));
+    console.log('SMS history file initialized successfully');
+  } catch (error) {
+    console.error('Error initializing SMS history file:', error);
   }
 }
 
 // Load SMS history
 export function loadSMSHistory(): SMSHistoryEntry[] {
   try {
-    initializeSMSHistory();
+    if (!fs.existsSync(SMS_HISTORY_FILE)) {
+      initializeSMSHistory();
+    }
     const data = fs.readFileSync(SMS_HISTORY_FILE, 'utf-8');
     return JSON.parse(data);
   } catch (error) {
@@ -75,7 +84,9 @@ export function loadApiConfigs(): ApiConfig[] {
       return [];
     }
     const data = fs.readFileSync(API_CONFIG_FILE, 'utf-8');
-    return JSON.parse(data);
+    const configs = JSON.parse(data);
+    console.log('Loaded API configs:', configs);
+    return configs;
   } catch (error) {
     console.error('Error loading API configs:', error);
     return [];
@@ -85,7 +96,9 @@ export function loadApiConfigs(): ApiConfig[] {
 // Get active API for a specific type
 function getActiveApi(type: 'sms' | 'whatsapp'): ApiConfig | null {
   const configs = loadApiConfigs();
-  return configs.find(config => config.type === type && config.isActive) || null;
+  const activeApi = configs.find(config => config.type === type && config.isActive);
+  console.log(`Active ${type} API:`, activeApi);
+  return activeApi || null;
 }
 
 // Add new SMS entry to history
@@ -110,8 +123,18 @@ async function sendSMSViaAPI(phoneNumber: string, message: string, apiConfig: Ap
       apiName: apiConfig.name
     });
 
+    // Format phone number: remove '+' and ensure it starts with '92'
+    let formattedPhone = phoneNumber.replace('+', '');
+    if (formattedPhone.startsWith('0')) {
+      formattedPhone = '92' + formattedPhone.substring(1);
+    } else if (!formattedPhone.startsWith('92')) {
+      formattedPhone = '92' + formattedPhone;
+    }
+
+    console.log('Formatted phone number:', formattedPhone);
+
     const response = await axios.post('https://api.textbee.pk/v1/send', {
-      phone: phoneNumber,
+      phone: formattedPhone,
       text: message,
       sender: "SMS",  // Required by TextBee
       route: "direct" // Required by TextBee
@@ -155,7 +178,7 @@ export async function sendSMS(
   method: 'api' | 'mobile' | 'whatsapp' = 'api',
   isDevMode: boolean = false
 ): Promise<boolean> {
-  console.log('sendSMS called with:', { phoneNumber, method, isDevMode });
+  console.log('sendSMS called with:', { phoneNumber, message, method, isDevMode });
 
   // Check if phone number is valid format (Pakistan numbers start with +92)
   if (!phoneNumber || (!phoneNumber.startsWith('+92') && !phoneNumber.startsWith('92'))) {
