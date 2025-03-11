@@ -961,6 +961,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API endpoint to get notifications
+  app.get("/api/notifications", async (req, res) => {
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const filePath = path.join(__dirname, '../data/notifications.json');
+      
+      if (!fs.existsSync(filePath)) {
+        return res.json([]);
+      }
+
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      const notificationsData = JSON.parse(fileContent);
+      res.json(notificationsData.notifications || []);
+    } catch (error) {
+      console.error('Error reading notifications:', error);
+      res.status(500).json({ error: 'Failed to load notifications' });
+    }
+  });
+
   app.get("/api/period-config", async (req, res) => {
     try {
       const __filename = fileURLToPath(import.meta.url);
