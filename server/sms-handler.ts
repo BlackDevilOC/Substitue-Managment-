@@ -115,13 +115,16 @@ export function addSMSToHistory(entry: Omit<SMSHistoryEntry, 'id' | 'sentAt'>) {
   return newEntry;
 }
 
-// Send SMS using TextBee API
+/**
+ * Sends SMS using TextBee API
+ */
 async function sendSMSViaAPI(phoneNumber: string, message: string, apiConfig: ApiConfig): Promise<boolean> {
   try {
     console.log('Attempting to send SMS via TextBee API:', {
       phoneNumber,
       messageLength: message.length,
-      apiName: apiConfig.name
+      apiName: apiConfig.name,
+      deviceId: apiConfig.deviceId // Log device ID being used
     });
 
     // Format phone number: remove '+' and ensure it starts with '92'
@@ -134,8 +137,11 @@ async function sendSMSViaAPI(phoneNumber: string, message: string, apiConfig: Ap
 
     console.log('Formatted phone number:', formattedPhone);
 
+    const endpoint = `https://api.textbee.dev/api/v1/gateway/devices/${apiConfig.deviceId}/send-sms`;
+    console.log('Using API endpoint:', endpoint);
+
     const response = await axios.post(
-      `https://api.textbee.dev/api/v1/gateway/devices/${apiConfig.deviceId}/send-sms`,
+      endpoint,
       {
         recipients: [formattedPhone],
         message: message
@@ -148,7 +154,10 @@ async function sendSMSViaAPI(phoneNumber: string, message: string, apiConfig: Ap
       }
     );
 
-    console.log('TextBee API Response:', response.data);
+    console.log('TextBee API Response:', {
+      status: response.status,
+      data: response.data
+    });
 
     // Check for specific success indicators in the response
     if (response.data && response.data.status === 'success') {
@@ -163,7 +172,8 @@ async function sendSMSViaAPI(phoneNumber: string, message: string, apiConfig: Ap
       console.error('TextBee API Error:', {
         status: error.response?.status,
         data: error.response?.data,
-        message: error.message
+        message: error.message,
+        headers: error.response?.headers
       });
     } else {
       console.error('Unexpected error while sending SMS:', error);

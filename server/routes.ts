@@ -1124,17 +1124,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No active SMS API configured' });
       }
 
+      console.log('Testing SMS with active API config:', {
+        name: activeSmsApi.name,
+        deviceId: activeSmsApi.deviceId
+      });
+
       // Send test SMS
       const { sendSMS } = await import('./sms-handler.js');
       const testResult = await sendSMS(
-        '1234567890', // Replace with your test phone number
+        '+923133469238', // Using the correct test number
         message,
         'api',
         true // Dev mode enabled for testing
       );
 
       if (!testResult) {
-        return res.status(500).json({ error: 'Failed to send test SMS' });
+        return res.status(500).json({ error: 'Failed to send test SMS. Check server logs for details.' });
       }
 
       res.json({ 
@@ -1142,7 +1147,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Test SMS sent successfully',
         api: {
           name: activeSmsApi.name,
-          type: activeSmsApi.type
+          type: activeSmsApi.type,
+          deviceId: activeSmsApi.deviceId // Include deviceId in response
         }
       });
     } catch (error) {
