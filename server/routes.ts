@@ -18,6 +18,7 @@ interface AbsentTeacher {
   phoneNumber: string | null;
   timestamp: string;
   assignedSubstitute: boolean;
+  substituteId?: number; // Added substituteId to AbsentTeacher
 }
 
 interface AssignmentData {
@@ -1106,6 +1107,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add this endpoint after the other API routes
+  app.post("/api/test-sms", async (req, res) => {
+    try {
+      const { message = "Test message" } = req.body;
+      const configPath = path.join(__dirname, '../data/api_config.json');
+
+      if (!fs.existsSync(configPath)) {
+        return res.status(404).json({ error: 'No API configuration found' });
+      }
+
+      const configs = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+      const activeSmsApi = configs.find((config: any) => config.type === 'sms' && config.isActive);
+
+      if (!activeSmsApi) {
+        return res.status(400).json({ error: 'No active SMS API configured' });
+      }
+
+      // Send test SMS
+      const { sendSMS } = await import('./sms-handler.js');
+      const testResult = await sendSMS(
+        '1234567890', // Replace with your test phone number
+        message,
+        'api',
+        true // Dev mode enabled for testing
+      );
+
+      if (!testResult) {
+        return res.status(500).json({ error: 'Failed to send test SMS' });
+      }
+
+      res.json({ 
+        success: true,
+        message: 'Test SMS sent successfully',
+        api: {
+          name: activeSmsApi.name,
+          type: activeSmsApi.type
+        }
+      });
+    } catch (error) {
+      console.error('Test SMS error:', error);
+      res.status(500).json({ 
+        error: 'Failed to send test SMS',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
@@ -1338,3 +1386,4 @@ app.get('/api/archive-logs', async (req, res) => {
     res.status(500).json({ error: 'Failed to archive logs' });
   }
 });
+const TEST_PHONE_NUMBER = '1234567890'; // Replace with your actual test phone number

@@ -103,11 +103,42 @@ export default function ApiSettingsPage() {
     setDevMode(checked);
     toast({
       title: checked ? "Developer Mode Enabled" : "Developer Mode Disabled",
-      description: checked 
+      description: checked
         ? "All SMS will be sent to the test number: +923133469238"
         : "SMS will be sent to actual recipients"
     });
   };
+
+  const handleTestSMS = async (apiId: string) => {
+    try {
+      const response = await fetch('/api/test-sms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: "This is a test message from your School Management System"
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to send test SMS');
+      }
+
+      toast({
+        title: "Test SMS Sent",
+        description: "Please check your test phone number for the message.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send test SMS",
+        variant: "destructive"
+      });
+    }
+  };
+
 
   const renderApiSection = (type: 'sms' | 'whatsapp') => {
     const typeConfigs = apiConfigs.filter(config => config.type === type);
@@ -150,6 +181,15 @@ export default function ApiSettingsPage() {
                         onClick={() => handleSetActiveApi(config.id, config.type)}
                       >
                         Set Active
+                      </Button>
+                    )}
+                    {config.isActive && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleTestSMS(config.id)}
+                      >
+                        Test SMS
                       </Button>
                     )}
                     <Button
