@@ -1,24 +1,5 @@
 {
   "notifications": [
-    {
-      "id": "1",
-      "type": "warning",
-      "title": "Substitute Required",
-      "description": "Class 10A requires a substitute teacher for Mathematics",
-      "note": "Urgent: Please assign before Period 2",
-      "sourcePage": "/schedule",
-      "actionLink": "/assign-substitute",
-      "timestamp": "2023-07-19T08:00:00Z"
-    },
-    {
-      "id": "2",
-      "type": "info",
-      "title": "New Schedule Update",
-      "description": "Updated timetable for Class 8B",
-      "note": "Changes effective from next week",
-      "sourcePage": "/schedules",
-      "actionLink": "/schedule",
-      "timestamp": "2023-07-19T07:30:00Z"
-    }
+
   ]
 }
