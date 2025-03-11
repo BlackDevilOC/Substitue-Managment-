@@ -6,13 +6,14 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Key } from "lucide-react";
+import { Plus, Trash2, Key, CheckCircle2 } from "lucide-react";
 
 interface ApiConfig {
   id: string;
   name: string;
   key: string;
   type: 'sms' | 'whatsapp';
+  isActive?: boolean;
 }
 
 export default function ApiSettingsPage() {
@@ -59,13 +60,14 @@ export default function ApiSettingsPage() {
       id: Math.random().toString(36).substr(2, 9),
       name: newApiName.trim(),
       key: newApiKey.trim(),
-      type: newApiType
+      type: newApiType,
+      isActive: false // New APIs are not active by default
     };
 
     setApiConfigs(prev => [...prev, newConfig]);
     setNewApiName('');
     setNewApiKey('');
-    
+
     toast({
       title: "API Added",
       description: "The API configuration has been saved successfully."
@@ -80,14 +82,87 @@ export default function ApiSettingsPage() {
     });
   };
 
+  const handleSetActiveApi = (id: string, type: 'sms' | 'whatsapp') => {
+    setApiConfigs(prev => prev.map(config => ({
+      ...config,
+      isActive: config.type === type ? config.id === id : config.isActive
+    })));
+
+    toast({
+      title: "API Activated",
+      description: `This API is now active for ${type.toUpperCase()} messages.`
+    });
+  };
+
   const handleDevModeToggle = (checked: boolean) => {
     setDevMode(checked);
     toast({
       title: checked ? "Developer Mode Enabled" : "Developer Mode Disabled",
       description: checked 
-        ? "All SMS will be sent to the test number: +92133469238"
+        ? "All SMS will be sent to the test number: +923133469238"
         : "SMS will be sent to actual recipients"
     });
+  };
+
+  const renderApiSection = (type: 'sms' | 'whatsapp') => {
+    const typeConfigs = apiConfigs.filter(config => config.type === type);
+    return (
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>{type === 'sms' ? 'SMS Gateway APIs' : 'WhatsApp APIs'}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {typeConfigs.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                No {type === 'sms' ? 'SMS Gateway' : 'WhatsApp'} APIs configured
+              </p>
+            ) : (
+              typeConfigs.map((config) => (
+                <div
+                  key={config.id}
+                  className={`flex items-center justify-between p-4 bg-muted rounded-lg ${
+                    config.isActive ? 'border-2 border-primary' : ''
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{config.name}</p>
+                      {config.isActive && (
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                      )}
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Key className="h-4 w-4 mr-1" />
+                      <span>••••••••{config.key.slice(-4)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!config.isActive && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSetActiveApi(config.id, config.type)}
+                      >
+                        Set Active
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteApi(config.id)}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
@@ -107,7 +182,7 @@ export default function ApiSettingsPage() {
                 id="dev-mode"
               />
               <Label htmlFor="dev-mode">
-                Send all messages to test number (+92133469238)
+                Send all messages to test number (+923133469238)
               </Label>
             </div>
           </CardContent>
@@ -128,7 +203,7 @@ export default function ApiSettingsPage() {
                   placeholder="Enter API name"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="api-key">API Key</Label>
                 <Input
@@ -166,46 +241,9 @@ export default function ApiSettingsPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Saved APIs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {apiConfigs.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4">
-                  No API configurations saved
-                </p>
-              ) : (
-                apiConfigs.map((config) => (
-                  <div
-                    key={config.id}
-                    className="flex items-center justify-between p-4 bg-muted rounded-lg"
-                  >
-                    <div className="space-y-1">
-                      <p className="font-medium">{config.name}</p>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Key className="h-4 w-4 mr-1" />
-                        <span>••••••••{config.key.slice(-4)}</span>
-                      </div>
-                      <span className="text-xs px-2 py-1 bg-primary/10 rounded-full">
-                        {config.type === 'sms' ? 'SMS Gateway' : 'WhatsApp'}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteApi(config.id)}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Separate sections for SMS and WhatsApp APIs */}
+        {renderApiSection('sms')}
+        {renderApiSection('whatsapp')}
       </div>
     </div>
   );
