@@ -101,9 +101,17 @@ export function addSMSToHistory(entry: Omit<SMSHistoryEntry, 'id' | 'sentAt'>) {
 // Send SMS using TextBee API
 async function sendSMSViaAPI(phoneNumber: string, message: string, apiConfig: ApiConfig): Promise<boolean> {
   try {
-    const response = await axios.post('https://api.textbee.pk/sms/send', {
-      recipient: phoneNumber,
-      message: message
+    console.log('Attempting to send SMS via TextBee API:', {
+      phoneNumber,
+      messageLength: message.length,
+      apiName: apiConfig.name
+    });
+
+    const response = await axios.post('https://api.textbee.pk/v1/send', {
+      phone: phoneNumber,
+      text: message,
+      sender: "SMS",  // Required by TextBee
+      route: "direct" // Required by TextBee
     }, {
       headers: {
         'Authorization': `Bearer ${apiConfig.key}`,
@@ -111,9 +119,26 @@ async function sendSMSViaAPI(phoneNumber: string, message: string, apiConfig: Ap
       }
     });
 
-    return response.status === 200;
+    console.log('TextBee API Response:', response.data);
+
+    // Check for specific success indicators in the response
+    if (response.data && response.data.status === 'success') {
+      console.log('SMS sent successfully');
+      return true;
+    } else {
+      console.error('SMS sending failed:', response.data);
+      return false;
+    }
   } catch (error) {
-    console.error('TextBee API Error:', error);
+    if (axios.isAxiosError(error)) {
+      console.error('TextBee API Error:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+    } else {
+      console.error('Unexpected error while sending SMS:', error);
+    }
     return false;
   }
 }
@@ -127,6 +152,8 @@ export async function sendSMS(
   method: 'api' | 'mobile' | 'whatsapp' = 'api',
   isDevMode: boolean = false
 ): Promise<boolean> {
+  console.log('sendSMS called with:', { phoneNumber, method, isDevMode });
+
   // Check if phone number is valid format (Pakistan numbers start with +92)
   if (!phoneNumber || (!phoneNumber.startsWith('+92') && !phoneNumber.startsWith('92'))) {
     console.error(`Invalid Pakistan phone number format: ${phoneNumber}`);
@@ -135,6 +162,7 @@ export async function sendSMS(
 
   // In dev mode, always send to test number
   const finalPhoneNumber = isDevMode ? TEST_PHONE_NUMBER : phoneNumber;
+  console.log('Using phone number:', finalPhoneNumber, isDevMode ? '(dev mode)' : '');
 
   try {
     if (method === 'api') {
@@ -143,6 +171,7 @@ export async function sendSMS(
         console.error('No active SMS API configured');
         return false;
       }
+      console.log('Using API config:', { name: apiConfig.name, type: apiConfig.type });
       return await sendSMSViaAPI(finalPhoneNumber, message, apiConfig);
     } else if (method === 'whatsapp') {
       const apiConfig = getActiveApi('whatsapp');
