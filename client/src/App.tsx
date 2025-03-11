@@ -24,7 +24,9 @@ import ExperimentScreen from "@/pages/experiment-screen";
 import SMSSendPage from "@/pages/sms-send";
 import TestingPage from "@/pages/testing-page";
 import LookupPage from "@/pages/lookup-page";
-import SMSConfirmPage from "@/pages/sms-confirm"; // Added import
+import SMSConfirmPage from "@/pages/sms-confirm";
+import ApiSettingsPage from "@/pages/api-settings"; // Added import
+
 
 function Router() {
   return (
@@ -54,6 +56,7 @@ function Router() {
       <Route path="/sms-confirm" component={SMSConfirmPage} />
       <Route path="/testing" component={TestingPage} />
       <ProtectedRoute path="/lookup" component={LookupPage} />
+      <ProtectedRoute path="/api-settings" component={ApiSettingsPage} /> {/* Added route */}
       <Route component={NotFound} />
     </Switch>
   );
