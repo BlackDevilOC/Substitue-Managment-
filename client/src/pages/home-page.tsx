@@ -18,9 +18,38 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { PeriodStatusWidget } from "@/components/period-status-widget";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 export default function HomePage() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  
+  // Fetch notifications
+  const { data: notifications } = useQuery<any[]>({
+    queryKey: ["/api/notifications"],
+    queryFn: async () => {
+      const response = await fetch("/api/notifications");
+      if (!response.ok) {
+        throw new Error("Failed to fetch notifications");
+      }
+      return response.json();
+    }
+  });
+  
+  // Show notifications as toasts on first load
+  useEffect(() => {
+    if (notifications && notifications.length > 0) {
+      // Only show the most recent notification as a toast
+      const latestNotification = notifications[0];
+      toast({
+        title: latestNotification.title,
+        description: latestNotification.description,
+        variant: latestNotification.type === "warning" ? "destructive" : "default"
+      });
+    }
+  }, [notifications, toast]);
 
   return (
     <div className="container mx-auto p-4">
@@ -47,8 +76,13 @@ export default function HomePage() {
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="flex gap-2">
           <Link href="/notifications">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8 relative">
               <Bell className="h-5 w-5" />
+              {notifications && notifications.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {notifications.length}
+                </span>
+              )}
             </Button>
           </Link>
           <Link href="/settings">
